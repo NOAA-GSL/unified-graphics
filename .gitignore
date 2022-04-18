@@ -1,3 +1,6 @@
+# Create a tmp/ directory if you need a place for files you don't want to commit
+tmp/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +130,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Node packages
+node_modules/
+
+# Editor/IDE files
+*.code-*
+*.sublime-*
+.vscode
+.idea
+
+# OS Cruft
+.DS_Store
