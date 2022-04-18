@@ -131,6 +131,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Node packages
+node_modules/
+
 # Editor/IDE files
 *.code-*
 *.sublime-*
