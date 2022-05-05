@@ -1,20 +1,22 @@
 import adapter from '@sveltejs/adapter-auto';
 import preprocess from 'svelte-preprocess';
-import { sass } from 'sass';
 
-const USWDS_PACKAGES = new URL('./node_modules/@uswds/uswds/packages', import.meta.url).toString();
-
-console.log(USWDS_PACKAGES);
+const scss = {
+  includePaths: [
+    'node_modules/@uswds/uswds/packages'
+  ]
+};
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: preprocess({
-    implementation: sass({
-      includePaths: [USWDS_PACKAGES]
-    })
-  }),
+  preprocess: preprocess({ scss }),
   kit: {
-    adapter: adapter()
+    adapter: adapter(),
+    vite: {
+      css: {
+        preprocessorOptions: { scss }
+      }
+    }
   }
 };
 
