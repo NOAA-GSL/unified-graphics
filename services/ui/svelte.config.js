@@ -21,6 +21,9 @@ const config = {
       },
       resolve: {
         alias: {
+          '/fonts': fileURLToPath(
+            new URL('./node_modules/@uswds/uswds/dist/fonts', import.meta.url)
+          ),
           styles: fileURLToPath(new URL('./src/styles/_index.scss', import.meta.url))
         }
       }
