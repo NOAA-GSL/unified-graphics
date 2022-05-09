@@ -1,2 +1,6 @@
 @forward "uswds-theme";
-@forward "uswds";
+@forward "uswds-global";
+@forward "uswds-helpers";
+@forward "uswds-typography";
+
+@forward "uswds-utilities/src/styles";
