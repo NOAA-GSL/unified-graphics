@@ -1,4 +1,19 @@
 {
-    "extends": "stylelint-prettier/recommended",
-    "customSyntax": "postcss-html"
+    "extends": ["stylelint-config-recommended-scss", "stylelint-prettier/recommended"],
+    "overrides": [
+        {
+            "files": ["*.scss", "**/*.scss"],
+            "customSyntax": "postcss-scss"
+        },
+        {
+            "files": ["*.svelte", "**/*.svelte"],
+            "customSyntax": "postcss-html",
+            "rules": {
+                "selector-pseudo-class-no-unknown": [
+                    true,
+                    { "ignorePseudoClasses": ["global"] }
+                ]
+            }
+        }
+    ]
 }
