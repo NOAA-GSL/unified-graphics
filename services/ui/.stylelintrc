@@ -5,10 +5,13 @@
         "order/order": [
             "dollar-variables",
             "custom-properties",
-            "at-rules",
+            { "type": "at-rule", "hasBlock": false },
             "declarations",
+            { "type": "rule", "selector": "^&?:[\\w-]+$" },
+            { "type": "rule", "selector": "^&?::[\\w-]+$" },
             { "type": "at-rule", "name": "supports" },
             { "type": "at-rule", "name": "media" },
+            "at-rules",
             "rules"
         ],
         "order/properties-order": [
