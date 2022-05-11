@@ -19,6 +19,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!**/src/lib
 lib64/
 package/
 parts/
