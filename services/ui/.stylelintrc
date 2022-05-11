@@ -27,6 +27,7 @@
                     "noEmptyLineBetween": true,
                     "properties": [
                         "position",
+                        "isolation",
                         "z-index",
                         "top",
                         "right",
@@ -43,6 +44,7 @@
                         "flex-wrap",
                         "justify-content",
                         "align-content",
+                        "place-items",
                         "justify-items",
                         "align-items",
                         "gap",

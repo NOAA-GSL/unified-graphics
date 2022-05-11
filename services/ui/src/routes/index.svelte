@@ -1,3 +1,3 @@
 <p>
-  Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation
+  This space intentionally blank.
 </p>
