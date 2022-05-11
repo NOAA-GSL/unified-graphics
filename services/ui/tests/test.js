@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('index page has expected h1', async ({ page }) => {
+test('application has expected title', async ({ page }) => {
   await page.goto('/');
-  expect(await page.textContent('h1')).toBe('Welcome to SvelteKit');
+  expect(await page.textContent('header')).toBe('Unified Graphics');
 });
