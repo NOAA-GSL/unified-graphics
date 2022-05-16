@@ -11,6 +11,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+.svelte-kit
 build/
 develop-eggs/
 dist/
@@ -18,7 +19,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+!**/src/lib
 lib64/
+package/
 parts/
 sdist/
 var/

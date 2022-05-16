@@ -1,0 +1,223 @@
+{
+    "extends": ["stylelint-config-recommended-scss", "stylelint-prettier/recommended"],
+    "plugins": ["stylelint-order"],
+    "rules": {
+        "order/order": [
+            "dollar-variables",
+            "custom-properties",
+            { "type": "at-rule", "hasBlock": false },
+            "declarations",
+            { "type": "rule", "selector": "^&?:[\\w-]+$" },
+            { "type": "rule", "selector": "^&?::[\\w-]+$" },
+            { "type": "at-rule", "name": "supports" },
+            { "type": "at-rule", "name": "media" },
+            "at-rules",
+            "rules"
+        ],
+        "order/properties-order": [
+            [
+                {
+                    "groupName": "generated content",
+                    "emptyLineBefore": "always",
+                    "properties": ["content"]
+                },
+                {
+                    "groupName": "position and layout",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": [
+                        "position",
+                        "isolation",
+                        "z-index",
+                        "top",
+                        "right",
+                        "bottom",
+                        "left",
+                        "justify-self",
+                        "align-self",
+                        "flex",
+                        "flex-basis",
+                        "flex-grow",
+                        "flex-shrink",
+                        "flex-flow",
+                        "flex-direction",
+                        "flex-wrap",
+                        "justify-content",
+                        "align-content",
+                        "place-items",
+                        "justify-items",
+                        "align-items",
+                        "gap",
+                        "order",
+                        "float",
+                        "clear"
+                    ]
+                },
+                {
+                    "groupName": "display and visibility",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": ["display", "opacity", "transform"]
+                },
+                {
+                    "groupName": "clipping",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": ["overflow", "clip"]
+                },
+                {
+                    "groupName": "animation",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": [
+                        "animation",
+                        "animation-name",
+                        "animation-duration",
+                        "animation-timing-function",
+                        "animation-delay",
+                        "animation-iteration-count",
+                        "animation-direction",
+                        "animation-fill-mode",
+                        "animation-play-state",
+                        "transition",
+                        "transition-property",
+                        "transition-duration",
+                        "transition-timing-function",
+                        "transition-delay"
+                    ]
+                },
+                {
+                    "groupName": "box model",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": [
+                        "margin",
+                        "margin-inline",
+                        "margin-inline-start",
+                        "margin-inline-end",
+                        "margin-block",
+                        "margin-block-start",
+                        "margin-block-end",
+                        "margin-top",
+                        "margin-right",
+                        "margin-bottom",
+                        "margin-left",
+                        "box-shadow",
+                        "border",
+                        "border-spacing",
+                        "border-collapse",
+                        "border-width",
+                        "border-style",
+                        "border-color",
+                        "border-top",
+                        "border-top-width",
+                        "border-top-style",
+                        "border-top-color",
+                        "border-right",
+                        "border-right-width",
+                        "border-right-style",
+                        "border-right-color",
+                        "border-bottom",
+                        "border-bottom-width",
+                        "border-bottom-style",
+                        "border-bottom-color",
+                        "border-left",
+                        "border-left-width",
+                        "border-left-style",
+                        "border-left-color",
+                        "border-image",
+                        "border-image-source",
+                        "border-image-slice",
+                        "border-image-width",
+                        "border-image-outset",
+                        "border-image-repeat",
+                        "border-top-image",
+                        "border-right-image",
+                        "border-bottom-image",
+                        "border-left-image",
+                        "border-corner-image",
+                        "border-top-left-image",
+                        "border-top-right-image",
+                        "border-bottom-right-image",
+                        "border-bottom-left-image",
+                        "border-radius",
+                        "border-top-left-radius",
+                        "border-top-right-radius",
+                        "border-bottom-right-radius",
+                        "border-bottom-left-radius",
+                        "box-sizing",
+                        "width",
+                        "height",
+                        "padding",
+                        "padding-inline",
+                        "padding-inline-start",
+                        "padding-inline-end",
+                        "padding-block",
+                        "padding-block-start",
+                        "padding-block-end",
+                        "padding-top",
+                        "padding-right",
+                        "padding-bottom",
+                        "padding-left"
+                    ]
+                },
+                {
+                    "groupName": "background",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": [
+                        "background",
+                        "background-color",
+                        "background-image",
+                        "background-attachment",
+                        "background-position",
+                        "background-position-x",
+                        "background-position-y",
+                        "background-clip",
+                        "background-origin",
+                        "background-size",
+                        "background-repeat",
+                        "cursor"
+                    ]
+                },
+                {
+                    "groupName": "typography",
+                    "emptyLineBefore": "always",
+                    "noEmptyLineBetween": true,
+                    "properties": [
+                        "font-size",
+                        "line-height",
+                        "font-family",
+                        "font-weight",
+                        "font-style",
+                        "text-align",
+                        "text-transform",
+                        "word-spacing",
+                        "color"
+                    ]
+                }
+            ],
+            {
+                "unspecified": "bottomAlphabetical",
+                "emptyLineBeforeUnspecified": "always",
+                "severity": "warning"
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": ["*.scss", "**/*.scss"],
+            "customSyntax": "postcss-scss"
+        },
+        {
+            "files": ["*.svelte", "**/*.svelte"],
+            "customSyntax": "postcss-html",
+            "rules": {
+                "selector-pseudo-class-no-unknown": [
+                    true,
+                    { "ignorePseudoClasses": ["global"] }
+                ]
+            }
+        }
+    ]
+}

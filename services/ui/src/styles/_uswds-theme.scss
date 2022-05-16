@@ -1,0 +1,10 @@
+@use 'uswds-core' with (
+  $theme-show-notifications: false,
+
+  $output-these-utilities: (
+    'align-items',
+    'border',
+    'margin',
+    'padding'
+  )
+);
