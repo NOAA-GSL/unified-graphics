@@ -1,3 +1,1 @@
-<p>
-  This space intentionally blank.
-</p>
+<p>This space intentionally blank.</p>
