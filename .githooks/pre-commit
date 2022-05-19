@@ -51,7 +51,7 @@ check_py() {
 check_web() {
   # FIXME: We should probably determine the service directory dynamically from
   # the file path instead of hard-coding. We could conceivably end up with
-  # multiple Python services.
+  # multiple Node services.
   cd "services/ui"
   case "$2" in
     js|cjs|ts|svelte)
