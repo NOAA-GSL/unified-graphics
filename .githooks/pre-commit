@@ -49,6 +49,9 @@ check_py() {
 #   Type of file being checked (js, cjs, svelte, css, or scss)
 ########################
 check_web() {
+  # FIXME: We should probably determine the service directory dynamically from
+  # the file path instead of hard-coding. We could conceivably end up with
+  # multiple Python services.
   cd "services/ui"
   case "$2" in
     js|cjs|svelte)
