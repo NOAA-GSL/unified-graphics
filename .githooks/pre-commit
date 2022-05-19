@@ -3,8 +3,8 @@
 set -eu -o pipefail
 
 # Project root for easy directory navigation. In order for our
-# linters/formatters to find their configs, we need to be the service directory
-# where the config lives.
+# linters/formatters to find their configs, we need to be the in service
+# directory where the config lives.
 PROJ_ROOT="$(pwd)"
 
 # Used as the exit code for the script; if any file fails linting/formatting
@@ -46,6 +46,7 @@ check_py() {
 #   PROJ_ROOT
 # Arguments:
 #   File to check, a path
+#   Type of file being checked (js, cjs, svelte, css, or scss)
 ########################
 check_web() {
   cd "services/ui"
@@ -71,7 +72,7 @@ check_web() {
 
 main() {
   for file in $(git diff --cached --name-only); do
-    ext="${file##*.}"
+    local ext="${file##*.}"
     case "${ext}" in
       py)
         check_py "${file}"
