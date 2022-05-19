@@ -54,7 +54,7 @@ check_web() {
   # multiple Python services.
   cd "services/ui"
   case "$2" in
-    js|cjs|svelte)
+    js|cjs|ts|svelte)
       git show ":$1" \
         | ./node_modules/.bin/eslint "--stdin" "--stdin-filename" "$1" > /dev/null 2>&1 \
         || err "[eslint   ]: $1 failed linting"
@@ -74,13 +74,17 @@ check_web() {
 }
 
 main() {
+  # FIXME: It might be a good idea to determine how to lint things based on
+  # which service they belong to, rather than the file extension. Right now,
+  # some of our config files like .prettierrc and .stylelintrc aren't being
+  # linted here, but they are linted with npm run lint.
   for file in $(git diff --cached --name-only); do
     local ext="${file##*.}"
     case "${ext}" in
       py)
         check_py "${file}"
         ;;
-      js|cjs|css|scss|svelte)
+      js|cjs|ts|css|scss|svelte)
         check_web "${file}" "${ext}"
         ;;
       esac
