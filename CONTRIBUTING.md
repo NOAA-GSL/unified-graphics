@@ -86,8 +86,8 @@ poetry run pytest
 ```
 
 **Note**: There aren’t any type definitions for `pytest`, so running `mypy` on
-*the `tests/` directory results in errors. As such, it’s best to run `mypy` just
-*for our `src/` directory.
+the `tests/` directory results in errors. As such, it’s best to run `mypy` just
+for our `src/` directory.
 
 ### JavaScript
 
