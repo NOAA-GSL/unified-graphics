@@ -9,5 +9,5 @@ COPY . .
 
 RUN poetry install --no-interaction --no-ansi --no-dev
 
-EXPOSE 8000
-CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:8000"]
+EXPOSE 80
+CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:80"]
