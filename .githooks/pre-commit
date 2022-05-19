@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+# Project root for easy directory navigation. In order for our
+# linters/formatters to find their configs, we need to be the in service
+# directory where the config lives.
+PROJ_ROOT="$(pwd)"
+
+# Used as the exit code for the script; if any file fails linting/formatting
+# checks, abort the commit.
+CHECK_FAILED=0
+
+########################
+# Print error message to stderr and set CHECK_FAILED
+# Globals:
+#   CHECK_FAILED
+# Arguments:
+#   Message to display
+########################
+err() {
+  echo "$*" >&2
+  CHECK_FAILED=1
+}
+
+########################
+# Run linting and format checking over a Python file
+# Globals:
+#   PROJ_ROOT
+# Arguments:
+#   File to check, a path
+########################
+check_py() {
+  # FIXME: We should probably determine the service directory dynamically from
+  # the file path instead of hard-coding. We could conceivably end up with
+  # multiple Python services.
+  cd "services/api"
+  git show ":$1" | poetry run flake8 "-qq" "-" || err "[flake8   ]: $1 failed linting"
+  git show ":$1" | poetry run black "--check" "--quiet" "-" || err "[black    ]: $1 needs formatting"
+  cd "${PROJ_ROOT}"
+}
+
+########################
+# Run linting and format checking over a JS, CJS, CSS, SCSS, or Svelte file.
+# Globals:
+#   PROJ_ROOT
+# Arguments:
+#   File to check, a path
+#   Type of file being checked (js, cjs, svelte, css, or scss)
+########################
+check_web() {
+  # FIXME: We should probably determine the service directory dynamically from
+  # the file path instead of hard-coding. We could conceivably end up with
+  # multiple Node services.
+  cd "services/ui"
+  case "$2" in
+    js|cjs|ts|svelte)
+      git show ":$1" \
+        | ./node_modules/.bin/eslint "--stdin" "--stdin-filename" "$1" > /dev/null 2>&1 \
+        || err "[eslint   ]: $1 failed linting"
+      ;;&
+    css|scss|svelte)
+      git show ":$1" \
+        | ./node_modules/.bin/stylelint "--stdin" "--stdin-filename" "$1" > /dev/null 2>&1 \
+        || err "[stylelint]: $1 failed linting"
+      ;;
+  esac
+
+  git show ":$1" \
+    | ./node_modules/.bin/prettier "--check" "--stdin-filepath" "$1" > /dev/null 2>&1 \
+    || err "[prettier ]: $1 needs formatting"
+
+  cd "${PROJ_ROOT}"
+}
+
+main() {
+  # FIXME: It might be a good idea to determine how to lint things based on
+  # which service they belong to, rather than the file extension. Right now,
+  # some of our config files like .prettierrc and .stylelintrc aren't being
+  # linted here, but they are linted with npm run lint.
+  for file in $(git diff --cached --name-only); do
+    local ext="${file##*.}"
+    case "${ext}" in
+      py)
+        check_py "${file}"
+        ;;
+      js|cjs|ts|css|scss|svelte)
+        check_web "${file}" "${ext}"
+        ;;
+      esac
+  done
+
+  return "${CHECK_FAILED}"
+}
+
+main
