@@ -80,15 +80,15 @@ jobs:
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             # PR build
-            echo "BRANCH=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+            echo "BRANCH=${GITHUB_HEAD_REF}" >> ${GITHUB_ENV}
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             # Handle differences between branches/tags
             if [[ "${GITHUB_REF}" == *"heads"* ]]; then
               # Branch build
-              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> ${GITHUB_ENV}
             elif [[ "${GITHUB_REF}" == *"tags"* ]]; then
               # Tag build
-              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
             else
               echo "ERROR: Unanticipated Git Ref"
               exit 1
@@ -118,15 +118,15 @@ jobs:
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
             # PR build
-            echo "BRANCH=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+            echo "BRANCH=${GITHUB_HEAD_REF}" >> ${GITHUB_ENV}
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             # Handle differences between branches/tags
             if [[ "${GITHUB_REF}" == *"heads"* ]]; then
               # Branch build
-              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> ${GITHUB_ENV}
             elif [[ "${GITHUB_REF}" == *"tags"* ]]; then
               # Tag build
-              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
             else
               echo "ERROR: Unanticipated Git Ref"
               exit 1
