@@ -1,0 +1,20 @@
+name: Cleanup PR images
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - '.nvmrc'
+      - 'services/ui/**'
+jobs:
+  purge-images:
+    name: Cleanup PR images from ghcr.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup images
+        uses: bots-house/ghcr-delete-image-action@v1.0.1
+        with:
+          owner: noaa-gsl
+          name: unified-graphics/ui
+          token: ${{ secrets.GHCR_CLEANUP_PAT }}
+          tag: ${GITHUB_HEAD_REF}
