@@ -1,4 +1,4 @@
-name: "UI Build"
+name: "UI Service Build"
 on:
   push:
     tags:
@@ -9,11 +9,14 @@ on:
     paths:
       - '.nvmrc'
       - 'services/ui/**'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - '.nvmrc'
       - 'services/ui/**'
+      - '.github/workflows/**'
     branches: [ $default-branch ]
+  workflow_dispatch: # Manually
 env:
   REGISTRY: ghcr.io/noaa-gsl/unified-graphics/ui
 
@@ -71,27 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Extract branch/tag name
-        shell: bash
-        run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            # PR build
-            echo "BRANCH=${GITHUB_HEAD_REF}" >> ${GITHUB_ENV}
-          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            # Handle differences between branches/tags
-            if [[ "${GITHUB_REF}" == *"heads"* ]]; then
-              # Branch build
-              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> ${GITHUB_ENV}
-            elif [[ "${GITHUB_REF}" == *"tags"* ]]; then
-              # Tag build
-              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
-            else
-              echo "ERROR: Unanticipated Git Ref"
-              exit 1
-            fi
-          else
-            echo "ERROR: Unanticipated GitHub Event"
-            exit 1
-          fi
+        run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Build & tag image
         run: |
           docker build -t ${{ env.REGISTRY }}:${{ env.BRANCH }} services/ui
@@ -109,27 +92,7 @@ jobs:
     needs: build
     steps:
       - name: Extract branch/tag name
-        shell: bash
-        run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-            # PR build
-            echo "BRANCH=${GITHUB_HEAD_REF}" >> ${GITHUB_ENV}
-          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            # Handle differences between branches/tags
-            if [[ "${GITHUB_REF}" == *"heads"* ]]; then
-              # Branch build
-              echo "BRANCH=${GITHUB_REF#refs/heads/}" >> ${GITHUB_ENV}
-            elif [[ "${GITHUB_REF}" == *"tags"* ]]; then
-              # Tag build
-              echo "BRANCH=${GITHUB_REF#refs/tags/}" >> ${GITHUB_ENV}
-            else
-              echo "ERROR: Unanticipated Git Ref"
-              exit 1
-            fi
-          else
-            echo "ERROR: Unanticipated GitHub Event"
-            exit 1
-          fi
+        run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:

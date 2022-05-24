@@ -1,4 +1,4 @@
-name: Cleanup PR images
+name: Cleanup API PR images
 
 on:
   pull_request:
