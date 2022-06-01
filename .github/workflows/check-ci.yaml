@@ -1,0 +1,33 @@
+name: Check CI scripts
+
+on:
+  pull_request:
+    branches: [ $default-branch ]
+    paths:
+      - '.github/scripts/**'
+  push:
+    branches: [ $default-branch ]
+    paths:
+      - '.github/scripts/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          pip install black flake8 pytest mypy
+          python --version
+      - name: Lint with Black
+        working-directory: .github/scripts
+        run: black --check .
+      - name: Lint with Flake8
+        working-directory: .github/scripts
+        run: flake8 --count --show-source --statistics .
+      - name: Check with mypy
+        working-directory: .github/scripts
+        run: mypy --exclude '/*_test\.py$' .
+      - name: Test with Pytest
+        working-directory: .github/scripts
+        run: pytest *.py
