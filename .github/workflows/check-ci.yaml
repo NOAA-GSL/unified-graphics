@@ -27,7 +27,7 @@ jobs:
         run: flake8 --count --show-source --statistics .
       - name: Check with mypy
         working-directory: .github/scripts
-        run: mypy --exclude '/*-test\.py$' .
+        run: mypy --exclude '/*_test\.py$' .
       - name: Test with Pytest
         working-directory: .github/scripts
         run: pytest *.py
