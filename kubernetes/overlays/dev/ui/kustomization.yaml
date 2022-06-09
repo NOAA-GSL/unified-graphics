@@ -1,0 +1,9 @@
+bases:
+- ../../base/ui
+namePrefix: dev-
+images:
+- name: unified-graphics/ui
+#   newName: my.docker.registry.com/my-project/myapp
+  newTag: latest
+commonLabels:
+  environment: dev

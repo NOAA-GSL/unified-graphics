@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: graphics-ui
+  name: graphics-ui
+spec:
+  ports:
+  - port: 4000
+    targetPort: 80 # Port to forward to in the pod
+    protocol: TCP
+  selector:
+    app: graphics-ui
+  type: NodePort

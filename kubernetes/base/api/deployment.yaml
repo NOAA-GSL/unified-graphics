@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    labels:
+        app.kubernets.io/name: api
+        app.kubernets.io/instance:
+        app.kubernets.io/part-of: unified-graphics
+        app.kubernets.io/component: backend
+        app: graphics-api
+        tier: backend
+    name: graphics-api
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: graphics-api
+    template:
+        metadata:
+            labels:
+                app: graphics-api
+        spec:
+            containers:
+                - image: unified-graphics/api
+                  imagePullPolicy: IfNotPresent
+                  name: graphics-api
+                  # FIXME - we should specify resource limits to make sure pods don't dominate the nodes they're on
+                  resources: {}
+                  ports:
+                      - containerPort: 80
+                        protocol: TCP
