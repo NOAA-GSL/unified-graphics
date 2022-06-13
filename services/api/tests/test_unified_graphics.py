@@ -1,3 +1,4 @@
+from unittest.mock import patch
 import pytest
 
 from unified_graphics import create_app
@@ -21,8 +22,10 @@ def test_root_endpoint(client):
 
 
 def test_temperature_diag_distribution(client):
-    response = client.get("/diag/temperature/")
+    with patch("unified_graphics.diag.get_diagnostics") as get_diagnostics_mock:
+        response = client.get("/diag/temperature/")
 
+    assert get_diagnostics_mock.called
     assert response.json == {
         "background": {
             "bins": [],
