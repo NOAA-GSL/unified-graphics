@@ -1,5 +1,8 @@
 from flask import Blueprint, current_app, jsonify
 
+from unified_graphics import diag
+
+
 bp = Blueprint("api", __name__)
 
 
@@ -12,6 +15,9 @@ def index():
 @bp.route("/diag/temperature/")
 def diag_temperature():
     current_app.logger.info("diag_temperature()")
+
+    diag.get_diagnostics()
+
     return jsonify(
         {
             "background": {
