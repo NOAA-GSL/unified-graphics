@@ -1,8 +1,7 @@
-from unified_graphics import diag
-
+from unittest.mock import call, patch
 import xarray as xr
 
-from unittest.mock import call, patch
+from unified_graphics import diag
 
 
 @patch("xarray.open_dataset")
