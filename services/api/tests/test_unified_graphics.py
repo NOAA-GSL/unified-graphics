@@ -18,3 +18,22 @@ def test_root_endpoint(client):
     response = client.get("/")
 
     assert response.json == {"msg": "Hello, Dave"}
+
+
+def test_temperature_diag_distribution(client):
+    response = client.get("/diag/temperature/")
+
+    assert response.json == {
+        "background": {
+            "bins": [],
+            "observations": 0,
+            "std": 0,
+            "mean": 0,
+        },
+        "analysis": {
+            "bins": [],
+            "observations": 0,
+            "std": 0,
+            "mean": 0,
+        },
+    }
