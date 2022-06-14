@@ -1,6 +1,12 @@
 from typing import Dict
+
+from flask import current_app
 import numpy as np
 import xarray as xr
+
+
+def get_filepath() -> str:
+    return current_app.config["DIAG_DIR"]
 
 
 def get_diagnostics() -> Dict:
