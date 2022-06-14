@@ -1,22 +1,23 @@
-from unittest.mock import call, patch
 import xarray as xr
 
 from unified_graphics import diag
 
 
-@patch("xarray.open_dataset")
-def test_get_diagnostics(open_dataset_mock):
-    ds = xr.Dataset()
-    open_dataset_mock.return_value = ds
+def test_get_diagnostics(monkeypatch):
+    def mock_open_dataset(*args, **kwargs):
+        return xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
 
+    monkeypatch.setattr(xr, "open_dataset", mock_open_dataset)
     result = diag.get_diagnostics()
 
-    open_dataset_mock.assert_has_calls(
-        [
-            call("data/ncdiag_conv_t_ges.nc4.20220514"),
-            call("data/ncdiag_conv_t_anl.nc4.20220514"),
+    assert result == {
+        "bins": [
+            {"lower": -1, "upper": 0, "value": 1},
+            {"lower": 0, "upper": 1, "value": 0},
+            {"lower": 1, "upper": 2, "value": 2},
+            {"lower": 2, "upper": 3, "value": 2},
         ],
-        any_order=True,
-    )
-
-    assert result == (ds, ds)
+        "observations": 5,
+        "std": 1.32664991614216,
+        "mean": 1.2,
+    }
