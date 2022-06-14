@@ -23,12 +23,12 @@ def test_root_endpoint(client):
 
 
 def test_temperature_diag_distribution(client):
+    # Mock the get_diagnostics() function so we can return test data
     with patch("unified_graphics.diag.get_diagnostics") as get_diagnostics_mock:
         ds = xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
         get_diagnostics_mock.return_value = (ds, ds)
         response = client.get("/diag/temperature/")
 
-    assert get_diagnostics_mock.called
     assert response.json == {
         "guess": {
             "bins": [
