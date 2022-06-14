@@ -5,9 +5,9 @@ from unified_graphics import diag
 
 def test_get_diag_filepath(app):
     with app.app_context():
-        result = diag.get_filepath()
+        result = diag.get_filepath(diag.MinimLoop.GUESS)
 
-    assert result == "/test/data/"
+    assert result == "/test/data/ncdiag_conv_t_ges.nc4.20220514"
 
 
 def test_get_diagnostics(monkeypatch):

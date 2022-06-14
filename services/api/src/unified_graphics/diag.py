@@ -1,12 +1,21 @@
+from enum import Enum
 from typing import Dict
+import os
 
 from flask import current_app
 import numpy as np
 import xarray as xr
 
 
-def get_filepath() -> str:
-    return current_app.config["DIAG_DIR"]
+class MinimLoop(Enum):
+    GUESS = "ges"
+    ANALYSIS = "anl"
+
+
+def get_filepath(loop) -> str:
+    return os.path.join(
+        current_app.config["DIAG_DIR"], f"ncdiag_conv_t_{loop.value}.nc4.20220514"
+    )
 
 
 def get_diagnostics() -> Dict:
