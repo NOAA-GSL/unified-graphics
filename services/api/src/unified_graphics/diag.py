@@ -1,11 +1,25 @@
-from typing import Tuple
+from typing import Dict
+import numpy as np
 import xarray as xr
 
 
-# FIXME: typing.Tuple is deprecated in Python 3.9. Once we are off 3.8 in CI, we
-# should replace this tuple[xr.Dataset, xr.Dataset]
-def get_diagnostics() -> Tuple[xr.Dataset, xr.Dataset]:
-    guess = xr.open_dataset("data/ncdiag_conv_t_ges.nc4.20220514")
-    analysis = xr.open_dataset("data/ncdiag_conv_t_anl.nc4.20220514")
+def get_diagnostics() -> Dict:
+    ds = xr.open_dataset("data/ncdiag_conv_t_ges.nc4.20220514")
+    obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
 
-    return (guess, analysis)
+    obs_count = len(obs_minus_fcast)
+    mean = np.mean(obs_minus_fcast)
+    std = np.std(obs_minus_fcast)
+    counts, bins = np.histogram(obs_minus_fcast, bins="auto")
+
+    distribution = [
+        {"lower": bins[idx], "upper": bins[idx + 1], "value": int(count)}
+        for idx, count in enumerate(counts)
+    ]
+
+    return {
+        "bins": distribution,
+        "observations": obs_count,
+        "std": std,
+        "mean": mean,
+    }
