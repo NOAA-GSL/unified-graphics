@@ -1,18 +1,4 @@
-import pytest
 import xarray as xr
-
-from unified_graphics import create_app
-
-
-@pytest.fixture()
-def app():
-    app = create_app()
-    yield app
-
-
-@pytest.fixture()
-def client(app):
-    return app.test_client()
 
 
 def test_root_endpoint(client):

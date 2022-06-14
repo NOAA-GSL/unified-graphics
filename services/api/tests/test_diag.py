@@ -3,6 +3,13 @@ import xarray as xr
 from unified_graphics import diag
 
 
+def test_get_diag_filepath(app):
+    with app.app_context():
+        result = diag.get_filepath()
+
+    assert result == "/test/data/"
+
+
 def test_get_diagnostics(monkeypatch):
     def mock_open_dataset(*args, **kwargs):
         return xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
