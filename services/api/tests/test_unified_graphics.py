@@ -1,4 +1,3 @@
-from unittest.mock import patch
 import pytest
 import xarray as xr
 
@@ -22,12 +21,13 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-def test_temperature_diag_distribution(client):
-    # Mock the get_diagnostics() function so we can return test data
-    with patch("unified_graphics.diag.get_diagnostics") as get_diagnostics_mock:
-        ds = xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
-        get_diagnostics_mock.return_value = (ds, ds)
-        response = client.get("/diag/temperature/")
+def test_temperature_diag_distribution(monkeypatch, client):
+    def mock_open_dataset(*args, **kwargs):
+        return xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
+
+    monkeypatch.setattr(xr, "open_dataset", mock_open_dataset)
+
+    response = client.get("/diag/temperature/")
 
     assert response.json == {
         "guess": {
