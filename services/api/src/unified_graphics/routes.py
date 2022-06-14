@@ -1,4 +1,5 @@
 from flask import Blueprint, current_app, jsonify
+import numpy as np
 
 from unified_graphics import diag
 
@@ -14,23 +15,27 @@ def index():
 
 @bp.route("/diag/temperature/")
 def diag_temperature():
+    def histogram(data):
+        counts, bins = np.histogram(data, bins="auto")
+        for idx, count in enumerate(counts):
+            yield {"lower": bins[idx], "upper": bins[idx + 1], "value": int(count)}
+
     current_app.logger.info("diag_temperature()")
 
-    diag.get_diagnostics()
+    guess, analysis = diag.get_diagnostics()
 
-    return jsonify(
-        {
-            "background": {
-                "bins": [],
-                "observations": 0,
-                "std": 0,
-                "mean": 0,
-            },
-            "analysis": {
-                "bins": [],
-                "observations": 0,
-                "std": 0,
-                "mean": 0,
-            },
-        }
-    )
+    guess_diag = {
+        "bins": list(histogram(guess["Obs_Minus_Forecast_adjusted"].values)),
+        "observations": len(guess["Obs_Minus_Forecast_adjusted"]),
+        "std": np.std(guess["Obs_Minus_Forecast_adjusted"].values),
+        "mean": np.mean(guess["Obs_Minus_Forecast_adjusted"].values),
+    }
+
+    analysis_diag = {
+        "bins": list(histogram(analysis["Obs_Minus_Forecast_adjusted"].values)),
+        "observations": len(analysis["Obs_Minus_Forecast_adjusted"]),
+        "std": np.std(analysis["Obs_Minus_Forecast_adjusted"].values),
+        "mean": np.mean(analysis["Obs_Minus_Forecast_adjusted"].values),
+    }
+
+    return jsonify(guess=guess_diag, analysis=analysis_diag)

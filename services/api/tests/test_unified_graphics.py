@@ -1,5 +1,6 @@
 from unittest.mock import patch
 import pytest
+import xarray as xr
 
 from unified_graphics import create_app
 
@@ -23,20 +24,32 @@ def test_root_endpoint(client):
 
 def test_temperature_diag_distribution(client):
     with patch("unified_graphics.diag.get_diagnostics") as get_diagnostics_mock:
+        ds = xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
+        get_diagnostics_mock.return_value = (ds, ds)
         response = client.get("/diag/temperature/")
 
     assert get_diagnostics_mock.called
     assert response.json == {
-        "background": {
-            "bins": [],
-            "observations": 0,
-            "std": 0,
-            "mean": 0,
+        "guess": {
+            "bins": [
+                {"lower": -1, "upper": 0, "value": 1},
+                {"lower": 0, "upper": 1, "value": 0},
+                {"lower": 1, "upper": 2, "value": 2},
+                {"lower": 2, "upper": 3, "value": 2},
+            ],
+            "observations": 5,
+            "std": 1.32664991614216,
+            "mean": 1.2,
         },
         "analysis": {
-            "bins": [],
-            "observations": 0,
-            "std": 0,
-            "mean": 0,
+            "bins": [
+                {"lower": -1, "upper": 0, "value": 1},
+                {"lower": 0, "upper": 1, "value": 0},
+                {"lower": 1, "upper": 2, "value": 2},
+                {"lower": 2, "upper": 3, "value": 2},
+            ],
+            "observations": 5,
+            "std": 1.32664991614216,
+            "mean": 1.2,
         },
     }
