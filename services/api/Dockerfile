@@ -8,6 +8,9 @@ RUN pip3 install gunicorn poetry \
 COPY . .
 
 RUN poetry install --no-interaction --no-ansi --no-dev
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
 CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:80"]
