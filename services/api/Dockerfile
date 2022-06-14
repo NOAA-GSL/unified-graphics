@@ -2,7 +2,7 @@ FROM python:3.9
 
 WORKDIR /usr/src/app
 
-RUN pip3 install gunicorn poetry \
+RUN pip3 install --no-cache-dir gunicorn poetry \
     && poetry config virtualenvs.create false
 
 COPY . .
