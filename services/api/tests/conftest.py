@@ -4,10 +4,10 @@ from unified_graphics import create_app
 
 
 @pytest.fixture
-def app(monkeypatch):
-    monkeypatch.setenv("FLASK_DIAG_DIR", "/test/data/")
-
+def app():
     app = create_app()
+    app.config["DIAG_DIR"] = "/test/data/"
+
     yield app
 
 

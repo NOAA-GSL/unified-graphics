@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 import xarray as xr
 
@@ -18,14 +20,14 @@ def test_get_diag_filepath(app, test_input, expected):
     assert result == expected
 
 
-def test_get_diagnostics(app, monkeypatch):
-    def mock_open_dataset(*args, **kwargs):
-        return xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
+def test_get_diagnostics(app):
+    with patch("xarray.open_dataset") as mock_open_dataset:
+        mock_open_dataset.return_value = xr.Dataset(
+            {"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]}
+        )
 
-    monkeypatch.setattr(xr, "open_dataset", mock_open_dataset)
-
-    with app.app_context():
-        result = diag.get_diagnostics(diag.MinimLoop.GUESS)
+        with app.app_context():
+            result = diag.get_diagnostics(diag.MinimLoop.GUESS)
 
     assert result == {
         "bins": [
