@@ -9,10 +9,12 @@ on:
     paths:
       - 'services/api/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
   pull_request:
     paths:
       - 'services/api/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
     branches: [ main ]
   workflow_dispatch: # Manually
 env:
