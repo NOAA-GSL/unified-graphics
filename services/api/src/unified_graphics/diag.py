@@ -24,12 +24,12 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
 
     obs_count = len(obs_minus_fcast)
-    mean = np.mean(obs_minus_fcast)
-    std = np.std(obs_minus_fcast)
+    mean = float(np.mean(obs_minus_fcast))
+    std = float(np.std(obs_minus_fcast))
     counts, bins = np.histogram(obs_minus_fcast, bins="auto")
 
     distribution = [
-        {"lower": bins[idx], "upper": bins[idx + 1], "value": int(count)}
+        {"lower": float(bins[idx]), "upper": float(bins[idx + 1]), "value": int(count)}
         for idx, count in enumerate(counts)
     ]
 
