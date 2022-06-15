@@ -14,7 +14,7 @@ class MinimLoop(Enum):
 
 def get_filepath(loop) -> str:
     return os.path.join(
-        current_app.config["DIAG_DIR"], f"ncdiag_conv_t_{loop.value}.nc4.20220514"
+        current_app.config["DIAG_DIR"], f"ncdiag_conv_t_{loop.value}.nc4.2022050514"
     )
 
 

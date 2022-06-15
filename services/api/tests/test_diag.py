@@ -7,8 +7,8 @@ from unified_graphics import diag
 @pytest.mark.parametrize(
     "test_input,expected",
     [
-        (diag.MinimLoop.GUESS, "/test/data/ncdiag_conv_t_ges.nc4.20220514"),
-        (diag.MinimLoop.ANALYSIS, "/test/data/ncdiag_conv_t_anl.nc4.20220514"),
+        (diag.MinimLoop.GUESS, "/test/data/ncdiag_conv_t_ges.nc4.2022050514"),
+        (diag.MinimLoop.ANALYSIS, "/test/data/ncdiag_conv_t_anl.nc4.2022050514"),
     ],
 )
 def test_get_diag_filepath(app, test_input, expected):

@@ -24,8 +24,8 @@ def test_temperature_diag_distribution(client):
     # filenames.
     mock_open_dataset.assert_has_calls(
         [
-            call("/test/data/ncdiag_conv_t_ges.nc4.20220514"),
-            call("/test/data/ncdiag_conv_t_anl.nc4.20220514"),
+            call("/test/data/ncdiag_conv_t_ges.nc4.2022050514"),
+            call("/test/data/ncdiag_conv_t_anl.nc4.2022050514"),
         ],
         any_order=True,
     )
