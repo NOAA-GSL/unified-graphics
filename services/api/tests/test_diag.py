@@ -1,21 +1,31 @@
+import pytest
 import xarray as xr
 
 from unified_graphics import diag
 
 
-def test_get_diag_filepath(app):
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        (diag.MinimLoop.GUESS, "/test/data/ncdiag_conv_t_ges.nc4.20220514"),
+        (diag.MinimLoop.ANALYSIS, "/test/data/ncdiag_conv_t_anl.nc4.20220514"),
+    ],
+)
+def test_get_diag_filepath(app, test_input, expected):
     with app.app_context():
-        result = diag.get_filepath(diag.MinimLoop.GUESS)
+        result = diag.get_filepath(test_input)
 
-    assert result == "/test/data/ncdiag_conv_t_ges.nc4.20220514"
+    assert result == expected
 
 
-def test_get_diagnostics(monkeypatch):
+def test_get_diagnostics(app, monkeypatch):
     def mock_open_dataset(*args, **kwargs):
         return xr.Dataset({"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]})
 
     monkeypatch.setattr(xr, "open_dataset", mock_open_dataset)
-    result = diag.get_diagnostics()
+
+    with app.app_context():
+        result = diag.get_diagnostics(diag.MinimLoop.GUESS)
 
     assert result == {
         "bins": [
