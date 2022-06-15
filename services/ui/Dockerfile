@@ -11,3 +11,6 @@ RUN npm run build \
 
 FROM nginx:1.21
 COPY --from=build /home/node/app/build /usr/share/nginx/html
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
