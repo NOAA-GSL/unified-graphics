@@ -34,5 +34,5 @@ jobs:
       - name: Cleanup image
         run: |
           aws ecr batch-delete-image \
-            --repository-name rtma-viz/api \
+            --repository-name rtma-vis/api \
             --image-ids imageTag=${GITHUB_HEAD_REF}
