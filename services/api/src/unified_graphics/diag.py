@@ -18,8 +18,9 @@ def get_filepath(loop) -> str:
     )
 
 
-def get_diagnostics() -> Dict:
-    ds = xr.open_dataset("data/ncdiag_conv_t_ges.nc4.20220514")
+def get_diagnostics(loop: MinimLoop) -> Dict:
+    diag_file = get_filepath(loop)
+    ds = xr.open_dataset(diag_file)
     obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
 
     obs_count = len(obs_minus_fcast)
