@@ -30,6 +30,7 @@ def create_app(config=None):
     )
 
     app = Flask(__name__)
+    app.config.from_prefixed_env()
 
     from . import routes
 
