@@ -44,6 +44,15 @@ docker build -t unified-graphics/api:latest .
 docker run --rm -p 5000:80 unified-graphics/api
 ```
 
+#### Configuration
+
+The application is configured using environment variables. The environment
+variables are all prefixed with `FLASK_` so that Flask can find them and add
+them automatically to its config.
+
+- `FLASK_DIAG_DIR` - The path to the directory containing the NetCDF diagnostics
+  files
+
 ### UI Service
 
 In development, you should run the development server with `npm`.
