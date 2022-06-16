@@ -10,11 +10,13 @@ on:
       - '.nvmrc'
       - 'services/ui/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
   pull_request:
     paths:
       - '.nvmrc'
       - 'services/ui/**'
       - '.github/workflows/**'
+      - '.github/scripts/**'
     branches: [ main ]
   workflow_dispatch: # Manually
 env:
