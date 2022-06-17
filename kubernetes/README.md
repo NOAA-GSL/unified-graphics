@@ -10,20 +10,20 @@ We're using a Kustomize-style layout. `base` contains the default k8s manifests,
 
 Rancher Desktop
 ```console
-kubectl apply -k kubernetes/overlays/dev/ui 			# Apply the Kustomize template
-kubectl get -k kubernetes/overlays/dev/ui 				# Get resource info
-kubectl port-forward services/dev-ui 4000:4000 			# Make the service appear on localhost:4000
-kubectl delete -k kubernetes/overlays/dev/ui 			# Delete the resources
+kubectl apply -k kubernetes/overlays/dev/ui             # Apply the Kustomize template
+kubectl get -k kubernetes/overlays/dev/ui               # Get resource info
+kubectl port-forward services/dev-ui 4000:4000          # Make the service appear on localhost:4000
+kubectl delete -k kubernetes/overlays/dev/ui            # Delete the resources
 ```
 
 Minikube:
 ```console
 docker build -t unified-graphics/ui:dev services/ui
-minikube image load unified-graphics/ui:dev 			# Load your local image into minikube
-kubectl apply -k kubernetes/overlays/dev/ui 			# Apply the Kustomize template
-kubectl get -k kubernetes/overlays/dev/ui 				# Get resource info
-kubectl port-forward services/dev-ui 4000:4000 			# Make the service appear on localhost:4000
-kubectl delete -k kubernetes/overlays/dev/ui 			# Delete the resources
+minikube image load unified-graphics/ui:dev             # Load your local image into minikube
+kubectl apply -k kubernetes/overlays/dev/ui             # Apply the Kustomize template
+kubectl get -k kubernetes/overlays/dev/ui               # Get resource info
+kubectl port-forward services/dev-ui 4000:4000          # Make the service appear on localhost:4000
+kubectl delete -k kubernetes/overlays/dev/ui            # Delete the resources
 ```
 
 ### Security scanning
