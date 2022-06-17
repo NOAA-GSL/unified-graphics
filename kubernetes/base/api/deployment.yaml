@@ -2,10 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     labels:
-        app.kubernets.io/name: api
-        # app.kubernets.io/instance:
-        app.kubernets.io/part-of: unified-graphics
-        app.kubernets.io/component: backend
+        app.kubernetes.io/name: api
+        # app.kubernetes.io/instance:
+        app.kubernetes.io/part-of: unified-graphics
+        app.kubernetes.io/component: backend
         app: graphics-api
         tier: backend
     name: graphics-api
