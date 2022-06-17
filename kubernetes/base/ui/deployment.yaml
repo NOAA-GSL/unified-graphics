@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
     labels:
         app.kubernets.io/name: ui
-        app.kubernets.io/instance:
+        # app.kubernets.io/instance:
         app.kubernets.io/part-of: unified-graphics
         app.kubernets.io/component: frontend
         app: graphics-ui
@@ -21,10 +21,13 @@ spec:
         spec:
             containers:
                 - image: unified-graphics/ui
-                  imagePullPolicy: IfNotPresent
+                  imagePullPolicy: Always
                   name: graphics-ui
                   # FIXME - we should specify resource limits to make sure pods don't dominate the nodes they're on
                   resources: {}
                   ports:
                       - containerPort: 80
                         protocol: TCP
+                  # FIXME - we should explore dissallowing privilege escalation
+                  securityContext:
+                      allowPrivilegeEscalation: true # Default behavior
