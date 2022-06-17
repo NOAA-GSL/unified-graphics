@@ -1,9 +1,12 @@
 bases:
-- ../../base/api
+- ../../../base/api
 namePrefix: dev-
 images:
 - name: unified-graphics/api
-#   newName: my.docker.registry.com/my-project/myapp
-  newTag: latest
+  newName: ghcr.io/noaa-gsl/unified-graphics/api
+  newTag: main
 commonLabels:
   environment: dev
+namespace: dev
+resources:
+  - "namespace.yaml"
