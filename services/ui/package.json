@@ -10,8 +10,8 @@
     "check": "svelte-check --tsconfig ./jsconfig.json",
     "check:watch": "svelte-check --tsconfig ./jsconfig.json --watch",
     "test": "playwright test",
-    "lint": "prettier --ignore-path .gitignore --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && stylelint --ignore-path .gitignore **/*.{css,scss,svelte}",
-    "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. . && stylelint --ignore-path .gitignore --fix **/*.{css,scss,svelte}"
+    "lint": "prettier --ignore-path .gitignore --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && stylelint --ignore-path .gitignore src/**/*.{css,scss}",
+    "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. . && stylelint --ignore-path .gitignore --fix src/**/*.{css,scss}"
   },
   "devDependencies": {
     "@playwright/test": "^1.21.0",
