@@ -18,7 +18,7 @@ jobs:
           owner: noaa-gsl
           name: unified-graphics/api
           token: ${{ secrets.GHCR_CLEANUP_PAT }}
-          tag: ${GITHUB_HEAD_REF}
+          tag: ${{ github.head_ref }}
   purge-ecr-images:
     name: Cleanup PR images from ECR
     runs-on: ubuntu-latest
@@ -35,4 +35,4 @@ jobs:
         run: |
           aws ecr batch-delete-image \
             --repository-name rtma-vis/api \
-            --image-ids imageTag=${GITHUB_HEAD_REF}
+            --image-ids imageTag=${{ github.head_ref }}
