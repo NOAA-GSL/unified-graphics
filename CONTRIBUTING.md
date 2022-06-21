@@ -30,7 +30,7 @@ In development, you can run the Flask development server.
 
 ```
 cd services/api
-FLASK_APP=unified_graphics.wsgi:app poetry run flask run
+FLASK_ENV=development FLASK_APP=unified_graphics.wsgi:app FLASK_DIAG_DIR=... poetry run flask run
 ```
 
 This will start up the Flask development server, which will watch the Python
@@ -50,6 +50,10 @@ The application is configured using environment variables. The environment
 variables are all prefixed with `FLASK_` so that Flask can find them and add
 them automatically to its config.
 
+- `FLASK_ENV` - Either “development” or “production” (default). When
+  `FLASK_ENV=development`, the server adds a CORS header permitting connections
+  from http://localhost:3000 so that the frontend can make requests without
+  proxying
 - `FLASK_DIAG_DIR` - The path to the directory containing the NetCDF diagnostics
   files
 

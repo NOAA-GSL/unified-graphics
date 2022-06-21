@@ -6,6 +6,12 @@ from flask import Flask
 __version__ = "0.1.0"
 
 
+def cors(response):
+    """Add CORS header for frontend development"""
+    response.access_control_allow_origin = "http://localhost:3000"
+    return response
+
+
 def create_app(config=None):
     dictConfig(
         {
@@ -31,6 +37,9 @@ def create_app(config=None):
 
     app = Flask(__name__)
     app.config.from_prefixed_env()
+
+    if app.config.get("ENV", "production") == "development":
+        app.after_request(cors)
 
     from . import routes
 
