@@ -58,8 +58,8 @@ check_web() {
       git show ":$1" \
         | ./node_modules/.bin/eslint "--stdin" "--stdin-filename" "$1" > /dev/null 2>&1 \
         || err "[eslint   ]: $1 failed linting"
-      ;;&
-    css|scss|svelte)
+      ;;
+    css|scss)
       git show ":$1" \
         | ./node_modules/.bin/stylelint "--stdin" "--stdin-filename" "$1" > /dev/null 2>&1 \
         || err "[stylelint]: $1 failed linting"
