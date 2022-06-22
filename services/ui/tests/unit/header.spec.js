@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/svelte";
 import { afterEach, describe, it, expect } from "vitest";
 
-import Header from "../../src/lib/components/Header/Header.svelte";
+import Header from "$lib/components/Header";
 
 describe("Header.svelte", () => {
   afterEach(() => cleanup());
