@@ -1,7 +1,6 @@
 <script>
   import { scaleLinear, min, max, extent } from "d3";
 
-  /** @type string */
   export let title;
 
   export let data = [];
