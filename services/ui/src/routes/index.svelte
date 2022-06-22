@@ -1,20 +1,16 @@
 <script>
-  import { onMount } from "svelte";
-
   import Histogram from "$lib/Histogram";
 
-  let data;
-
-  $: if (data) {
-    console.log(data);
-  }
-
-  onMount(async () => {
-    data = await fetch("http://localhost:5000/diag/temperature").then((response) =>
-      response.json()
-    );
-  });
+  let data = fetch("http://localhost:5000/diag/temperature").then((response) =>
+    response.json()
+  );
 </script>
 
-<Histogram title="Temperature Guess" data={data?.guess?.bins} />
-<Histogram title="Temperature Analysis" data={data?.analysis?.bins} />
+{#await data}
+  <p>Loading</p>
+{:then diag}
+  <Histogram title="Temperature Guess" data={diag.guess.bins} />
+  <Histogram title="Temperature Analysis" data={diag.analysis.bins} />
+{:catch}
+  <p>Oops</p>
+{/await}
