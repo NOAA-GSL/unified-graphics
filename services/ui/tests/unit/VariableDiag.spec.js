@@ -12,6 +12,14 @@ describe("VariableDiag.svelte", () => {
   ])("displays the variable name", (props, expected) => {
     const { getByRole } = render(VariableDiag, props);
 
-    expect(getByRole("heading").innerHTML).toEqual(expected);
+    expect(getByRole("heading", { level: 2 }).innerHTML).toEqual(expected);
+  });
+
+  test("displays OMB and OMA", () => {
+    const { getAllByText, getByText } = render(VariableDiag);
+
+    expect(() => getByText("Observation - Background")).not.toThrowError();
+    expect(() => getByText("Observation - Analysis")).not.toThrowError();
+    expect(getAllByText("Observations:")).toHaveLength(2);
   });
 });
