@@ -1,6 +1,6 @@
 <script>
   import "styles";
-  import Header from "$lib/Header";
+  import Header from "$lib/components/Header";
 </script>
 
 <Header />

@@ -1,5 +1,5 @@
 <script>
-  import Histogram from "$lib/Histogram";
+  import Histogram from "$lib/components/Histogram";
 
   let data = fetch("http://localhost:5000/diag/temperature").then((response) =>
     response.json()
