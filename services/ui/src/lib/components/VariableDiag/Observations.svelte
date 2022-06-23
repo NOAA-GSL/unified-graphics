@@ -3,6 +3,7 @@
   export let observations;
   export let mean;
   export let std;
+  export let bins;
 </script>
 
 <div>

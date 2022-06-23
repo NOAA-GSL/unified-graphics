@@ -1,5 +1,5 @@
 <script>
-  import Histogram from "$lib/components/Histogram";
+  import VariableDiag from "$lib/components/VariableDiag";
 
   let data = fetch("http://localhost:5000/diag/temperature").then((response) =>
     response.json()
@@ -9,8 +9,7 @@
 {#await data}
   <p>Loading</p>
 {:then diag}
-  <Histogram title="Temperature Guess" data={diag.guess.bins} />
-  <Histogram title="Temperature Analysis" data={diag.analysis.bins} />
+  <VariableDiag title="Temperature" {...diag} />
 {:catch}
   <p>Oops</p>
 {/await}
