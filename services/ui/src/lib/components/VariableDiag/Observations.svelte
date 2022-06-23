@@ -1,4 +1,6 @@
 <script>
+  import Histogram from "./Histogram.svelte";
+
   export let title;
   export let observations;
   export let mean;
@@ -16,4 +18,11 @@
     <dt>Std. Dev.:</dt>
     <dd>{std}</dd>
   </dl>
+  <Histogram {bins} />
 </div>
+
+<style lang="scss">
+  div {
+    aspect-ratio: 1/1;
+  }
+</style>
