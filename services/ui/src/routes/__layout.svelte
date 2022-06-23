@@ -23,5 +23,8 @@
     display: grid;
 
     padding: uswds.units(2);
+
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 </style>
