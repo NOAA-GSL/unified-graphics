@@ -24,7 +24,7 @@ describe("VariableDiag.svelte", () => {
         std: 0.1,
       },
       analysis: {
-        observations: 200,
+        observations: 2000,
         mean: -1.2,
         std: 0.0004,
       },
@@ -39,12 +39,12 @@ describe("VariableDiag.svelte", () => {
 
     // Guess (OMB) statistics
     expect(() => getByText("100")).not.toThrowError();
-    expect(() => getByText("1.3")).not.toThrowError();
-    expect(() => getByText("0.1")).not.toThrowError();
+    expect(() => getByText("1.300")).not.toThrowError();
+    expect(() => getByText("0.100")).not.toThrowError();
 
     // Analysis (OMA) statistics
-    expect(() => getByText("200")).not.toThrowError();
-    expect(() => getByText("-1.2")).not.toThrowError();
-    expect(() => getByText("0.0004")).not.toThrowError();
+    expect(() => getByText("2,000")).not.toThrowError();
+    expect(() => getByText("−1.200")).not.toThrowError();
+    expect(() => getByText("0.000")).not.toThrowError();
   });
 });
