@@ -13,7 +13,7 @@
   const formatDecimal = format(",.3f");
 </script>
 
-<div>
+<div class="aspect-square">
   <h3>{title}</h3>
   <dl>
     <div>
