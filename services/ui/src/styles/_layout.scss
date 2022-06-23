@@ -7,3 +7,7 @@
 
   display: flex;
 }
+
+:where(.flow) > * + * {
+  margin-top: var(--space, uswds.units(2));
+}
