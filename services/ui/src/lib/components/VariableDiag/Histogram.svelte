@@ -23,6 +23,15 @@
 </script>
 
 <svg viewBox="0 0 {width} {height}">
+  <g class="y-axis" transform="translate({x(domain[0])}, {margin.top})">
+    {#each y.ticks() as tick}
+      <g class="tick" transform="translate(0, {y(tick)})">
+        <line x2={x(domain[1])} />
+        <text dy="-4">{formatNum(tick)}</text>
+      </g>
+    {/each}
+  </g>
+
   {#each bins as bin}
     <rect
       class="bar"
@@ -32,7 +41,8 @@
       height={y(0) - y(bin.value)}
     />
   {/each}
-  <g class="x-axis" transform="translate({x(domain[0])}, {y(range[0])})">
+
+  <g class="x-axis" transform="translate({x(domain[0])}, {y(range[0]) + 1})">
     <path class="domain" d="M 1,8 l 0,-8 {x(domain[1]) - 2},0 0,8" />
     {#each x.ticks() as tick}
       <g class="tick" transform="translate({x(tick)}, 0)">
@@ -64,9 +74,11 @@
     text {
       font-family: inherit;
       font-size: uswds.size("ui", "3xs");
-
-      dominant-baseline: hanging;
-      text-anchor: middle;
     }
+  }
+
+  .x-axis .tick text {
+    dominant-baseline: hanging;
+    text-anchor: middle;
   }
 </style>
