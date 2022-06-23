@@ -1,16 +1,19 @@
 <script>
   import { scaleLinear, min, max, extent } from "d3";
 
+  export let width = 0;
+  export let height = 0;
+
   export let bins = [];
 
   $: domain = [min(bins, (d) => d.lower), max(bins, (d) => d.upper)];
   $: range = extent(bins, (d) => d.value);
 
-  $: x = scaleLinear(domain, [0, 300]);
-  $: y = scaleLinear(range, [300, 0]);
+  $: x = scaleLinear(domain, [0, width]);
+  $: y = scaleLinear(range, [height, 0]);
 </script>
 
-<svg viewBox="0 0 300 300" width="300" height="300">
+<svg viewBox="0 0 {width} {height}">
   {#each bins as bin}
     <rect
       x={x(bin.lower)}

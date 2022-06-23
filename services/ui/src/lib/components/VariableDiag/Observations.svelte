@@ -9,11 +9,14 @@
   export let std;
   export let bins;
 
+  let width;
+  let height;
+
   const formatNum = format(",");
   const formatDecimal = format(",.3f");
 </script>
 
-<div class="aspect-square">
+<div class="container aspect-square">
   <h3>{title}</h3>
   <dl>
     <div>
@@ -29,10 +32,29 @@
       <dd>{formatDecimal(std)}</dd>
     </div>
   </dl>
-  <Histogram {bins} />
+
+  <div class="overflow-hidden" bind:offsetWidth={width} bind:offsetHeight={height}>
+    <Histogram {width} {height} {bins} />
+  </div>
 </div>
 
 <style lang="scss">
+  .container {
+    flex: 1 1 0;
+    flex-direction: column;
+
+    display: flex;
+
+    > * {
+      flex: 1 1 auto;
+    }
+
+    > h3,
+    > dl {
+      flex: 0 0 auto;
+    }
+  }
+
   dt,
   dd {
     display: inline-block;
