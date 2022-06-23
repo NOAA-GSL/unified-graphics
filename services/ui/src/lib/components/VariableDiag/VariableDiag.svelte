@@ -8,6 +8,8 @@
 
 <article>
   <h2>{title}</h2>
-  <Observations title="Observation - Background" {...guess} />
-  <Observations title="Observation - Analysis" {...analysis} />
+  <div data-layout="cluster">
+    <Observations title="Observation - Background" {...guess} />
+    <Observations title="Observation - Analysis" {...analysis} />
+  </div>
 </article>
