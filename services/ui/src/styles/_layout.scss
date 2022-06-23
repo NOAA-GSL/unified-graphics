@@ -1,0 +1,9 @@
+@use "uswds-core" as uswds;
+
+[data-layout="cluster"] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: uswds.units(2);
+
+  display: flex;
+}
