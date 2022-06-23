@@ -20,6 +20,15 @@
 
   $: x = scaleLinear(domain, [margin.left, width - margin.left - margin.right]);
   $: y = scaleLinear(range, [height - margin.top - margin.bottom, margin.bottom]);
+
+  $: bars = bins
+    .map((bin) => ({
+      x: x(bin.lower),
+      y: y(bin.value),
+      width: x(bin.upper) - x(bin.lower),
+      height: y(0) - y(bin.value),
+    }))
+    .filter((bar) => bar.height >= 1);
 </script>
 
 <svg viewBox="0 0 {width} {height}">
@@ -32,14 +41,8 @@
     {/each}
   </g>
 
-  {#each bins as bin}
-    <rect
-      class="bar"
-      x={x(bin.lower)}
-      y={y(bin.value)}
-      width={x(bin.upper) - x(bin.lower)}
-      height={y(0) - y(bin.value)}
-    />
+  {#each bars as bar}
+    <rect class="bar" x={bar.x} y={bar.y} width={bar.width} height={bar.height} />
   {/each}
 
   <g class="x-axis" transform="translate({x(domain[0])}, {y(range[0]) + 1})">
