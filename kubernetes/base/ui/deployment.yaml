@@ -23,8 +23,13 @@ spec:
                 - image: unified-graphics/ui
                   imagePullPolicy: Always
                   name: graphics-ui
-                  # FIXME - we should specify resource limits to make sure pods don't dominate the nodes they're on
-                  resources: {}
+                  resources:
+                    requests:
+                        memory: "1Gi"
+                        cpu: "0.5"
+                    limits:
+                        memory: "2Gi"
+                        cpu: "1"
                   ports:
                       - containerPort: 80
                         protocol: TCP
