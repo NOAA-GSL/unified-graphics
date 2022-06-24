@@ -78,7 +78,7 @@ main() {
   # which service they belong to, rather than the file extension. Right now,
   # some of our config files like .prettierrc and .stylelintrc aren't being
   # linted here, but they are linted with npm run lint.
-  for file in $(git diff --cached --name-only); do
+  for file in $(git diff --cached --name-only --diff-filter=d); do
     local ext="${file##*.}"
     case "${ext}" in
       py)

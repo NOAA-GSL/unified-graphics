@@ -8,6 +8,7 @@
     "lib": ["es2020", "DOM"],
     "moduleResolution": "node",
     "module": "es2020",
+    "noImplicitAny": false,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
