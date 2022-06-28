@@ -39,4 +39,18 @@ Get deployment yaml output from cluster
 kubectl get deploy deploymentname -o yaml
 ```
 
+Get logs
+```console
+kubectl logs --namespace <namespace> <pod>
+```
+
+Inspect ConfigMap Values
+```console
+kubectl describe --namespace <namespace> configmaps <map name>
+```
+
+Enter a pod
+```
+kubectl exec --namespace <namespace> --stdin --tty <pod> -- /bin/bash
+```
 

@@ -10,3 +10,11 @@ commonLabels:
 namespace: dev
 resources:
   - "namespace.yaml"
+patchesStrategicMerge:
+- patch_add_volume.yaml
+
+configMapGenerator:
+  - name: graphics-api
+    behavior: merge
+    envs:
+      - dev.api.env

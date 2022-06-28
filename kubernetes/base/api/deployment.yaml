@@ -21,18 +21,21 @@ spec:
         spec:
             containers:
                 - image: unified-graphics/api
-                  imagePullPolicy: Always
+                  imagePullPolicy: Always # Since we're tracking a long-lived tag, we'll want to always check for updated images
                   name: graphics-api
                   resources:
-                    requests:
-                        memory: "1Gi"
-                        cpu: "0.5"
-                    limits:
-                        memory: "2Gi"
-                        cpu: "1"
+                      requests:
+                          memory: "1Gi"
+                          cpu: "0.5"
+                      limits:
+                          memory: "2Gi"
+                          cpu: "1"
                   ports:
                       - containerPort: 80
                         protocol: TCP
                   # FIXME - we should explore dissallowing privilege escalation
                   securityContext:
                       allowPrivilegeEscalation: true # Default behavior
+                  envFrom:
+                      - configMapRef:
+                            name: graphics-api
