@@ -18,3 +18,7 @@ _Describe the solution to the problem._
 ## No Gos
 
 _Describe any features or behaviors that have been considered and rejected as out of scope for this project._
+
+## Rabbit Holes
+
+_Describe any solutions to problems that pose a risk to completing this project on time._
