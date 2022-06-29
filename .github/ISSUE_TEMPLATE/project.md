@@ -9,12 +9,12 @@ assignees: ''
 
 ## Problem
 
-Describe the problem that this new feature will solve
+_Describe the problem that this new feature will solve._
 
 ## Solution
 
-Describe the solution to the problem.
+_Describe the solution to the problem._
 
 ## No Gos
 
-Describe any features or behaviors that have been considered and rejected as out of scope for this project.
+_Describe any features or behaviors that have been considered and rejected as out of scope for this project._
