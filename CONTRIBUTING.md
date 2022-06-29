@@ -63,7 +63,7 @@ In development, you should run the development server with `npm`.
 
 ```
 cd services/ui
-npm run dev
+UG_DIAG_API_HOST="http://localhost:5000" npm run dev
 ```
 
 This will start up a Vite server that incrementally builds the application when
@@ -84,6 +84,12 @@ Or, better still, build the Docker container and run that:
 docker build -t unified-graphics/ui:latest .
 docker run --rm -p 3000:80 unified-graphics/ui
 ```
+
+#### Configuration
+
+- `UG_DIAG_API_HOST` - The URL for the host where the API is located. In
+  development, you can set this to `http://localhost:5000` to use the local
+  version of the API.
 
 ## Testing
 
