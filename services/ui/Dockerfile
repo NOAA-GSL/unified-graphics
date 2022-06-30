@@ -1,4 +1,4 @@
-FROM node:16.15.0 AS build
+FROM node:16.15 AS build
 
 WORKDIR /home/node/app
 
@@ -9,7 +9,7 @@ COPY . .
 RUN PORT=80 npm run build \
     && cp -rv node_modules/@uswds/uswds/dist/fonts build/client/_app/assets/
 
-FROM node:16.15.0
+FROM node:16.15
 
 ENV NODE_ENV=production
 WORKDIR /home/node/app
