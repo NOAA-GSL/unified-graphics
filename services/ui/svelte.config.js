@@ -1,6 +1,5 @@
 import adapter from "@sveltejs/adapter-static";
 import preprocess from "svelte-preprocess";
-import { replaceCodePlugin } from "vite-plugin-replace";
 
 import { fileURLToPath } from "node:url";
 
@@ -28,16 +27,6 @@ const config = {
           styles: fileURLToPath(new URL("./src/styles/_index.scss", import.meta.url)),
         },
       },
-      plugins: [
-        replaceCodePlugin({
-          replacements: [
-            {
-              from: "__DIAG_API_HOST__",
-              to: process.env.UG_DIAG_API_HOST,
-            },
-          ],
-        }),
-      ],
     },
   },
 };
