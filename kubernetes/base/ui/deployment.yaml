@@ -36,3 +36,7 @@ spec:
                   # FIXME - we should explore dissallowing privilege escalation
                   securityContext:
                       allowPrivilegeEscalation: true # Default behavior
+                  envFrom:
+                      - configMapRef:
+                            name: graphics-ui
+                            

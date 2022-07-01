@@ -1,3 +1,9 @@
 resources:
 - deployment.yaml
 - service.yaml
+- ingress.yaml
+
+configMapGenerator:
+  - name: graphics-ui
+    envs:
+      - ui.env
