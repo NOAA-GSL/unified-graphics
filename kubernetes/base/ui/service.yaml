@@ -6,9 +6,10 @@ metadata:
   name: graphics-ui
 spec:
   ports:
-  - port: 4000
+  - port: 80
     targetPort: 80 # Port to forward to in the pod
     protocol: TCP
+    name: http
   selector:
     app: graphics-ui
-  type: NodePort
+  type: ClusterIP
