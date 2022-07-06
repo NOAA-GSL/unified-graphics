@@ -11,9 +11,14 @@ export async function get() {
 
   logger("Fetching %s", endpoint);
 
-  const response = await fetch(endpoint);
+  let response;
 
-  logger("Received: %s bytes", response.headers.get("content-length"));
+  try {
+    response = await fetch(endpoint);
+    logger("Received: %s bytes", response.headers.get("content-length"));
+  } catch (error) {
+    logger(error);
+  }
 
   return response;
 }
