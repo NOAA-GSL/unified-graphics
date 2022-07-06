@@ -8,6 +8,8 @@
   export let mean;
   export let std;
   export let bins;
+  export let domain;
+  export let range;
 
   let width;
   let height;
@@ -34,7 +36,7 @@
   </dl>
 
   <div class="overflow-hidden" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <Histogram {width} {height} {bins} />
+    <Histogram {width} {height} {bins} {domain} {range} />
   </div>
 </div>
 
