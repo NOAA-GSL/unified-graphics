@@ -18,7 +18,8 @@ COPY --from=build /home/node/app/package.json /home/node/app/
 COPY --from=build /home/node/app/build /home/node/app/build
 RUN apt-get update \
     && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install --ignore-scripts
 
 ENV PORT=80
 EXPOSE 80
