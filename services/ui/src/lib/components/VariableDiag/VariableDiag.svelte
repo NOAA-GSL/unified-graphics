@@ -22,7 +22,7 @@
   <h2>{title}</h2>
   <div data-layout="cluster">
     <Observations title="Observation - Background" {...guess} {domain} {range} />
-    <Observations title="Observation - Analrangesis" {...analysis} {domain} {range} />
+    <Observations title="Observation - Analysis" {...analysis} {domain} {range} />
   </div>
 </article>
 
