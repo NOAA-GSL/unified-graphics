@@ -17,3 +17,8 @@ def diag_temperature():
     guess = diag.get_diagnostics(diag.MinimLoop.GUESS)
     analysis = diag.get_diagnostics(diag.MinimLoop.ANALYSIS)
     return jsonify(guess=guess, analysis=analysis)
+
+
+@bp.route("/diag/wind/")
+def diag_wind():
+    return ""
