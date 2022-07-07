@@ -50,15 +50,18 @@ kubectl describe --namespace <namespace> configmaps <map name>
 ```
 
 Enter a pod
-```
+```console
 kubectl exec --namespace <namespace> --stdin --tty <pod> -- /bin/bash
 ```
 ### Allow unprivileged binding to ports lower than 80 for Rancher Desktop
 
 Rancher desktop automatically starts a traefik ingress that tries to bind to `80` and `443`. On Linux, ports below 1024 are privileged so the ingress won't work.
 
-```
+```console
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80
+
+# Or to make the change permanent
+sudo sysctl -w net.ipv4.ip_unprivileged_port_start=80
 ```
 
 And restart Rancher Desktop.

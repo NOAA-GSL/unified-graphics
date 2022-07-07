@@ -4,8 +4,7 @@ namePrefix: dev-
 images:
 - name: unified-graphics/ui
   newName: ghcr.io/noaa-gsl/unified-graphics/ui
-  newTag: 42-make-the-backend-service-endpoint-configurable
-  # newTag: main
+  newTag: main
 commonLabels:
   environment: dev
 namespace: dev
