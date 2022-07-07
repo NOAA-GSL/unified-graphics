@@ -54,3 +54,8 @@ def test_temperature_diag_distribution(client):
             "mean": 1.2,
         },
     }
+
+
+def test_wind_diag(client):
+    response = client.get("/diag/wind/")
+    assert response.status_code == 200
