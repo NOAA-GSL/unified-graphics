@@ -14,7 +14,7 @@
     "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. . && stylelint --ignore-path .gitignore --fix src/**/*.{css,scss}"
   },
   "devDependencies": {
-    "@playwright/test": "^1.21.0",
+    "@playwright/test": "^1.23.0",
     "@sveltejs/adapter-node": "^1.0.0-next.78",
     "@sveltejs/kit": "next",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.49",
