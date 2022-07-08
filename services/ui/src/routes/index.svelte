@@ -1,9 +1,8 @@
 <script>
   import VariableDiag from "$lib/components/VariableDiag";
+  import api from "$lib/helpers/api.helper";
 
-  let data = fetch("http://localhost:5000/diag/temperature").then((response) =>
-    response.json()
-  );
+  let data = api.diagnostics();
 </script>
 
 {#await data}
