@@ -8,11 +8,14 @@ We're using a Kustomize-style layout. `base` contains the default k8s manifests,
 
 ### Start app via CLI
 
+Currently, you will need to update the path used by the `hostPath` volume in `kubernetes/overlays/dev/api/patch_add_volume.yaml` to match your host system.
+
 Rancher Desktop
 ```console
-kubectl apply -k kubernetes/overlays/dev/ui             # Apply the Kustomize template
+kubectl apply -k kubernetes/overlays/dev/api            # Apply the API Kustomize template
+kubectl apply -k kubernetes/overlays/dev/ui             # Apply the UI Kustomize template
+# You should be able to visit the service on localhost:80
 kubectl get -k kubernetes/overlays/dev/ui               # Get resource info
-kubectl port-forward services/dev-ui 4000:4000          # Make the service appear on localhost:4000
 kubectl delete -k kubernetes/overlays/dev/ui            # Delete the resources
 ```
 
