@@ -20,7 +20,7 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && npm install --ignore-scripts \
-    && npm clean cache --force
+    && npm cache clean --force
 
 ENV PORT=80
 EXPOSE 80
