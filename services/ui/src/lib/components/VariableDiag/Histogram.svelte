@@ -1,10 +1,12 @@
 <script>
-  import { format, scaleLinear, min, max, extent } from "d3";
+  import { format, scaleLinear } from "d3";
 
   export let width = 0;
   export let height = 0;
 
   export let bins = [];
+  export let domain;
+  export let range;
 
   let margin = {
     top: 0,
@@ -14,9 +16,6 @@
   };
 
   let formatNum = format("~s");
-
-  $: domain = [min(bins, (d) => d.lower), max(bins, (d) => d.upper)];
-  $: range = extent(bins, (d) => d.value);
 
   $: x = scaleLinear(domain, [margin.left, width - margin.left - margin.right]);
   $: y = scaleLinear(range, [height - margin.top - margin.bottom, margin.bottom]);

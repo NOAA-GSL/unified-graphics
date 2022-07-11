@@ -22,11 +22,13 @@ describe("VariableDiag.svelte", () => {
         observations: 100,
         mean: 1.3,
         std: 0.1,
+        bins: [],
       },
       analysis: {
         observations: 2000,
         mean: -1.2,
         std: 0.0004,
+        bins: [],
       },
     });
 
