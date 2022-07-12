@@ -43,5 +43,49 @@ def test_get_diagnostics(app):
 
 
 @pytest.mark.xfail
-def test_wind():
+def test_open_diagnostic():
     assert 0
+
+
+@mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
+@mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
+    test_dataset = xr.Dataset(
+        {
+            "u_Observation": xr.DataArray([0, 0]),
+            "u_Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 1]),
+            "v_Observation": xr.DataArray([10, 10]),
+            "v_Obs_Minus_Forecast_unadjusted": xr.DataArray([-5, 5]),
+        }
+    )
+    mock_open_diagnostic.return_value = test_dataset
+    expected = diag.VectorDiag(
+        observation=diag.VectorVariable(direction=[0, 135], magnitude=[1, 2]),
+        forecast=diag.VectorVariable(direction=[25, 130], magnitude=[2, 1]),
+    )
+
+    mock_VectorDiag.return_value = expected
+
+    data = diag.wind(diag.MinimLoop.GUESS)
+
+    mock_open_diagnostic.assert_called_once_with(diag.MinimLoop.GUESS)
+    calls = mock_VectorVariable.from_vectors.call_args_list
+
+    assert len(calls) == 2
+
+    # We can't use from_vectors.assert_has_calls because the default comparison
+    # of two xarray.DataArray objects via `==` results in a DataArray containing
+    # boolean values indiciating whether each pairwise element were equal or
+    # not. Instead we use the xarray.testing assertions.
+
+    # Assert that a VectorVariable was created from the observed vectors
+    xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
+    xr.testing.assert_equal(calls[0].args[1], xr.DataArray([10, 10]))
+
+    # Assert that a VectorVariable was created from forecast vectors that were
+    # calculated by subtracting Obs-Fcst from Obs: Obs - (Obs - Fcst) = Fcst
+    xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
+    xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
+
+    assert data == expected

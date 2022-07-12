@@ -18,6 +18,10 @@ class VectorVariable:
     direction: List[float]
     magnitude: List[float]
 
+    @classmethod
+    def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
+        return cls(direction=[], magnitude=[])
+
 
 @dataclass
 class VectorDiag:
@@ -54,5 +58,22 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     }
 
 
-def wind(loop: MinimLoop) -> Optional[VectorDiag]:
+def open_diagnostic(loop: MinimLoop) -> Optional[xr.Dataset]:
     return None
+
+
+def wind(loop: MinimLoop) -> Optional[VectorDiag]:
+    ds = open_diagnostic(loop)
+
+    if not ds:
+        return None
+
+    observation = VectorVariable.from_vectors(ds["u_Observation"], ds["v_Observation"])
+    forecast = VectorVariable.from_vectors(
+        ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"],
+        ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"],
+    )
+
+    data = VectorDiag(observation, forecast)
+
+    return data
