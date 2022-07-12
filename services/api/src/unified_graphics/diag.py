@@ -1,5 +1,6 @@
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict
+from typing import Dict, List
 import os
 
 from flask import current_app
@@ -10,6 +11,12 @@ import xarray as xr
 class MinimLoop(Enum):
     GUESS = "ges"
     ANALYSIS = "anl"
+
+
+@dataclass
+class VectorDiag:
+    u: List[float] = field(default_factory=lambda: [])
+    v: List[float] = field(default_factory=lambda: [])
 
 
 def get_filepath(loop) -> str:
@@ -39,3 +46,7 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
         "std": std,
         "mean": mean,
     }
+
+
+def wind() -> VectorDiag:
+    return VectorDiag()

@@ -2,6 +2,8 @@ from unittest import mock
 
 import xarray as xr
 
+from unified_graphics.diag import VectorDiag
+
 
 def test_root_endpoint(client):
     response = client.get("/")
@@ -56,6 +58,10 @@ def test_temperature_diag_distribution(client):
     }
 
 
-def test_wind_diag(client):
+@mock.patch("unified_graphics.diag.wind", autospec=True)
+def test_wind_diag(mock_diag_wind, client):
+    mock_diag_wind.return_value = VectorDiag()
+
     response = client.get("/diag/wind/")
     assert response.status_code == 200
+    assert response.json == {"u": [], "v": []}

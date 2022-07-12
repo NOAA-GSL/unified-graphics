@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from flask import Blueprint, current_app, jsonify
 
 from unified_graphics import diag
@@ -21,4 +23,5 @@ def diag_temperature():
 
 @bp.route("/diag/wind/")
 def diag_wind():
-    return ""
+    data = diag.wind()
+    return jsonify(asdict(data))

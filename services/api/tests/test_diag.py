@@ -40,3 +40,8 @@ def test_get_diagnostics(app):
         "std": 1.32664991614216,
         "mean": 1.2,
     }
+
+
+@pytest.mark.xfail
+def test_wind():
+    assert 0
