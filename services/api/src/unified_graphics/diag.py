@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 import os
 
 from flask import current_app
@@ -14,9 +14,15 @@ class MinimLoop(Enum):
 
 
 @dataclass
+class VectorVariable:
+    direction: List[float]
+    magnitude: List[float]
+
+
+@dataclass
 class VectorDiag:
-    u: List[float] = field(default_factory=lambda: [])
-    v: List[float] = field(default_factory=lambda: [])
+    observation: VectorVariable
+    forecast: VectorVariable
 
 
 def get_filepath(loop) -> str:
@@ -48,5 +54,5 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     }
 
 
-def wind(loop: MinimLoop) -> VectorDiag:
-    return VectorDiag()
+def wind(loop: MinimLoop) -> Optional[VectorDiag]:
+    return None

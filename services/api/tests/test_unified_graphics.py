@@ -2,7 +2,7 @@ from unittest import mock
 
 import xarray as xr
 
-from unified_graphics.diag import VectorDiag
+from unified_graphics.diag import VectorDiag, VectorVariable
 
 
 def test_root_endpoint(client):
@@ -60,11 +60,20 @@ def test_temperature_diag_distribution(client):
 
 @mock.patch("unified_graphics.diag.wind", autospec=True)
 def test_wind_diag(mock_diag_wind, client):
-    mock_diag_wind.return_value = VectorDiag()
+    mock_diag_wind.return_value = VectorDiag(
+        observation=VectorVariable(direction=[], magnitude=[]),
+        forecast=VectorVariable(direction=[], magnitude=[]),
+    )
 
     response = client.get("/diag/wind/")
     assert response.status_code == 200
     assert response.json == {
-        "guess": {"u": [], "v": []},
-        "analysis": {"u": [], "v": []},
+        "guess": {
+            "observation": {"direction": [], "magnitude": []},
+            "forecast": {"direction": [], "magnitude": []},
+        },
+        "analysis": {
+            "observation": {"direction": [], "magnitude": []},
+            "forecast": {"direction": [], "magnitude": []},
+        },
     }
