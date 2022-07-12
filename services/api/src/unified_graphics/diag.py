@@ -48,5 +48,5 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     }
 
 
-def wind() -> VectorDiag:
+def wind(loop: MinimLoop) -> VectorDiag:
     return VectorDiag()

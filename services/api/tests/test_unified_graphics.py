@@ -64,4 +64,7 @@ def test_wind_diag(mock_diag_wind, client):
 
     response = client.get("/diag/wind/")
     assert response.status_code == 200
-    assert response.json == {"u": [], "v": []}
+    assert response.json == {
+        "guess": {"u": [], "v": []},
+        "analysis": {"u": [], "v": []},
+    }

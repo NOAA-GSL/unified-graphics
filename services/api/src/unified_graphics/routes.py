@@ -23,5 +23,6 @@ def diag_temperature():
 
 @bp.route("/diag/wind/")
 def diag_wind():
-    data = diag.wind()
-    return jsonify(asdict(data))
+    guess = diag.wind(diag.MinimLoop.GUESS)
+    analysis = diag.wind(diag.MinimLoop.ANALYSIS)
+    return jsonify(guess=asdict(guess), analysis=asdict(analysis))
