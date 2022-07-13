@@ -3,6 +3,6 @@ resources:
 - service.yaml
 
 configMapGenerator:
-  - name: graphics-api
+  - name: unified-graphics-api
     envs:
       - api.env

@@ -6,23 +6,23 @@ metadata:
         # app.kubernetes.io/instance:
         app.kubernetes.io/part-of: unified-graphics
         app.kubernetes.io/component: frontend
-        app: graphics-ui
+        app: unified-graphics-ui
         tier: frontend
-    name: graphics-ui
+    name: unified-graphics-ui
 spec:
     replicas: 1
     selector:
         matchLabels:
-            app: graphics-ui
+            app: unified-graphics-ui
     template:
         metadata:
             labels:
-                app: graphics-ui
+                app: unified-graphics-ui
         spec:
             containers:
                 - image: unified-graphics/ui
                   imagePullPolicy: Always # Since we're tracking a long-lived tag, we'll want to always check for updated images
-                  name: graphics-ui
+                  name: unified-graphics-ui
                   resources:
                       requests:
                           memory: "1Gi"
@@ -38,5 +38,5 @@ spec:
                       allowPrivilegeEscalation: true # Default behavior
                   envFrom:
                       - configMapRef:
-                            name: graphics-ui
+                            name: unified-graphics-ui
                             

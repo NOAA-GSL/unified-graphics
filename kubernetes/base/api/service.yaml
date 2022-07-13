@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: graphics-api
-  name: graphics-api
+    app: unified-graphics-api
+  name: unified-graphics-api
 spec:
   ports:
   - port: 80
@@ -11,5 +11,5 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: graphics-api
+    app: unified-graphics-api
   type: ClusterIP

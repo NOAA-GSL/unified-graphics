@@ -2,7 +2,7 @@
 
 ## Manifests Layout
 
-We're using a Kustomize-style layout. `base` contains the default k8s manifests, while the `overlays` directory provide kustomize overrides for particular environments. You'll need Rancher Desktop (preferred and provides docker, kubectl, etc...) or docker, minikube, and kubectl isntalled locally. Trivy is recommended for security scanning.
+We're using a Kustomize-style layout. `base` contains the default k8s manifests, while the `overlays` directory provide kustomize overrides for particular environments. You'll need Rancher Desktop (preferred and provides docker, kubectl, etc...) or you can try using docker, minikube, and kubectl installed locally. Trivy is recommended for security scanning.
 
 ## Getting Started 
 
@@ -12,21 +12,10 @@ Currently, you will need to update the path used by the `hostPath` volume in `ku
 
 Rancher Desktop
 ```console
-kubectl apply -k kubernetes/overlays/dev/api            # Apply the API Kustomize template
-kubectl apply -k kubernetes/overlays/dev/ui             # Apply the UI Kustomize template
-# You should be able to visit the service on localhost:80
-kubectl get -k kubernetes/overlays/dev/ui               # Get resource info
-kubectl delete -k kubernetes/overlays/dev/ui            # Delete the resources
-```
-
-Minikube:
-```console
-docker build -t unified-graphics/ui:dev services/ui
-minikube image load unified-graphics/ui:dev             # Load your local image into minikube
-kubectl apply -k kubernetes/overlays/dev/ui             # Apply the Kustomize template
-kubectl get -k kubernetes/overlays/dev/ui               # Get resource info
-kubectl port-forward services/dev-ui 4000:4000          # Make the service appear on localhost:4000
-kubectl delete -k kubernetes/overlays/dev/ui            # Delete the resources
+kubectl apply -k kubernetes/overlays/dev                # Apply the Kustomize templates for the UI and API services
+# You should be able to visit the service on localhost:80 - if you're on Linux, see the note on allowing port 80 below
+kubectl get -k kubernetes/overlays/dev                  # Get resource info
+kubectl delete -k kubernetes/overlays/dev               # Delete the resources
 ```
 
 ### Security scanning

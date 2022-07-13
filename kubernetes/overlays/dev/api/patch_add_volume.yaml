@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: graphics-api
+  name: unified-graphics-api
 spec:
     template:
         spec:
             containers:
-                - name: graphics-api
+                - name: unified-graphics-api
                   volumeMounts:
                     - mountPath: /local-data
                       name: local-volume

@@ -8,7 +8,7 @@ patchesStrategicMerge:
 - patch_add_volume.yaml
 
 configMapGenerator:
-  - name: graphics-api
+  - name: unified-graphics-api
     behavior: merge
     envs:
       - dev.api.env
