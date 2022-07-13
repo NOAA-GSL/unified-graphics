@@ -4,9 +4,9 @@ metadata:
   name: graphics-ui
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    kubernetes.io/ingress.class: traefik
-    # traefik.ingress.kubernetes.io/rewrite-target: /
+    # kubernetes.io/ingress.class: traefik
 spec:
+  ingressClassName: traefik
   rules:
     - http:
         paths:

@@ -1,15 +1,9 @@
 bases:
 - ../../../base/ui
-namePrefix: dev-
 images:
 - name: unified-graphics/ui
   newName: ghcr.io/noaa-gsl/unified-graphics/ui
   newTag: main
-commonLabels:
-  environment: dev
-namespace: dev
-resources:
-  - "namespace.yaml"
 
 configMapGenerator:
   - name: graphics-ui
