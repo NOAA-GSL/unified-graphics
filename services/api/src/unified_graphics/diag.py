@@ -70,6 +70,12 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> Optional[xr.Dataset]
     filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
     diag_file = Path(current_app.config["DIAG_DIR"]) / filename
 
+    # xarray.open_dataset doesn't distinguish between a file it can't understand
+    # and a file that's not there. It raises a ValueError even for missing
+    # files. We raise a FileNotFoundError to make debugging easier.
+    if not diag_file.exists():
+        raise FileNotFoundError(f"No such file or directory: '{str(diag_file)}'")
+
     return xr.open_dataset(diag_file)
 
 

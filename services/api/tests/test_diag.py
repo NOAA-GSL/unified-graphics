@@ -87,9 +87,10 @@ def test_open_diagnostic(variable, loop, filename, app, make_scalar_diag):
     xr.testing.assert_equal(result, expected)
 
 
-@pytest.mark.xfail
-def test_open_diagnostic_does_not_exist():
-    assert 0
+def test_open_diagnostic_does_not_exist(app):
+    with app.app_context():
+        with pytest.raises(FileNotFoundError):
+            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
 @pytest.mark.xfail
