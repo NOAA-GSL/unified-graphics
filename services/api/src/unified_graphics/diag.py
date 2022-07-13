@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 import os
 
 from flask import current_app
@@ -66,7 +66,7 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     }
 
 
-def open_diagnostic(variable: Variable, loop: MinimLoop) -> Optional[xr.Dataset]:
+def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
     diag_file = Path(current_app.config["DIAG_DIR"]) / filename
 
@@ -79,11 +79,8 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> Optional[xr.Dataset]
     return xr.open_dataset(diag_file)
 
 
-def wind(loop: MinimLoop) -> Optional[VectorDiag]:
+def wind(loop: MinimLoop) -> VectorDiag:
     ds = open_diagnostic(Variable.WIND, loop)
-
-    if not ds:
-        return None
 
     observation = VectorVariable.from_vectors(ds["u_Observation"], ds["v_Observation"])
     forecast = VectorVariable.from_vectors(
