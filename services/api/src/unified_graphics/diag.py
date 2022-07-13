@@ -31,6 +31,12 @@ class VectorVariable:
         direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
         magnitude = np.sqrt(u**2 + v**2)
 
+        # Set the direction on any (0, 0) vectors to 0, so we don’t have to deal
+        # with this 0.0 vs -0.0 silliness from np.arctan2 and to be consistent
+        # with the NCL wind_direction function we used as a reference.
+        calm = magnitude == 0
+        direction[calm] = 0
+
         return cls(
             direction=[float(d) for d in direction],
             magnitude=[float(m) for m in magnitude],

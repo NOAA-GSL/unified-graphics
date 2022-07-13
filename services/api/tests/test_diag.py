@@ -199,13 +199,17 @@ def test_VectorVariable_from_vectors():
 
 
 def test_VectorVariable_from_vectors_calm():
-    u = xr.DataArray([0, -0, 0, -0])
-    v = xr.DataArray([0, 0, -0, -0])
+    # 0.0 != -0.0, and numpy.arctan2 will return a different angle depending on
+    # which one it encounters in which of the two vector components. We want to
+    # make sure we normalize the direction for all vectors of magnitude 0 to be
+    # 0°.
+    u = xr.DataArray([0.0, -0.0, 0.0, -0.0])
+    v = xr.DataArray([0.0, 0.0, -0.0, -0.0])
 
     result = diag.VectorVariable.from_vectors(u, v)
 
     assert result == diag.VectorVariable(
-        direction=[90.0, 90.0, 90.0, 90.0],
+        direction=[0.0, 0.0, 0.0, 0.0],
         magnitude=[0.0, 0.0, 0.0, 0.0],
     )
 
