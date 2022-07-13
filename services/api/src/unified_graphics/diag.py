@@ -74,7 +74,7 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> Optional[xr.Dataset]
     # and a file that's not there. It raises a ValueError even for missing
     # files. We raise a FileNotFoundError to make debugging easier.
     if not diag_file.exists():
-        raise FileNotFoundError(f"No such file or directory: '{str(diag_file)}'")
+        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
     return xr.open_dataset(diag_file)
 

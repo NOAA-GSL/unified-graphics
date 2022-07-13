@@ -88,8 +88,10 @@ def test_open_diagnostic(variable, loop, filename, app, make_scalar_diag):
 
 
 def test_open_diagnostic_does_not_exist(app):
+    expected = r"No such file: '.*ncdiag_conv_uv_ges.nc4.2022050514'$"
+
     with app.app_context():
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError, match=expected):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
