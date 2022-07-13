@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional
 import os
 
@@ -11,6 +12,13 @@ import xarray as xr
 class MinimLoop(Enum):
     GUESS = "ges"
     ANALYSIS = "anl"
+
+
+class Variable(Enum):
+    MOISTURE = "q"
+    PRESSURE = "p"
+    TEMPERATURE = "t"
+    WIND = "uv"
 
 
 @dataclass
@@ -58,12 +66,15 @@ def get_diagnostics(loop: MinimLoop) -> Dict:
     }
 
 
-def open_diagnostic(loop: MinimLoop) -> Optional[xr.Dataset]:
-    return None
+def open_diagnostic(variable: Variable, loop: MinimLoop) -> Optional[xr.Dataset]:
+    filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
+    diag_file = Path(current_app.config["DIAG_DIR"]) / filename
+
+    return xr.open_dataset(diag_file)
 
 
 def wind(loop: MinimLoop) -> Optional[VectorDiag]:
-    ds = open_diagnostic(loop)
+    ds = open_diagnostic(Variable.WIND, loop)
 
     if not ds:
         return None

@@ -1,9 +1,22 @@
+from pathlib import Path
 from unittest import mock
 
 import pytest
 import xarray as xr
 
 from unified_graphics import diag
+
+
+@pytest.fixture
+def make_scalar_diag():
+    def _make_scalar_diag(omf):
+        return xr.Dataset(
+            {
+                "Obs_Minus_Forecast_unadjusted": omf,
+            }
+        )
+
+    return _make_scalar_diag
 
 
 @pytest.mark.parametrize(
@@ -42,13 +55,45 @@ def test_get_diagnostics(app):
     }
 
 
-@pytest.mark.xfail
-def test_open_diagnostic():
-    assert 0
+@pytest.mark.parametrize(
+    "variable,loop,filename",
+    [
+        (
+            diag.Variable.MOISTURE,
+            diag.MinimLoop.GUESS,
+            "ncdiag_conv_q_ges.nc4.2022050514",
+        ),
+        (
+            diag.Variable.PRESSURE,
+            diag.MinimLoop.ANALYSIS,
+            "ncdiag_conv_p_anl.nc4.2022050514",
+        ),
+        (
+            diag.Variable.TEMPERATURE,
+            diag.MinimLoop.ANALYSIS,
+            "ncdiag_conv_t_anl.nc4.2022050514",
+        ),
+        (diag.Variable.WIND, diag.MinimLoop.GUESS, "ncdiag_conv_uv_ges.nc4.2022050514"),
+    ],
+)
+def test_open_diagnostic(variable, loop, filename, app, make_scalar_diag):
+    diag_dir = Path(app.config["DIAG_DIR"])
+    expected = make_scalar_diag(omf=[0, -1, 2])
+    expected.to_netcdf(diag_dir / filename)
+
+    with app.app_context():
+        result = diag.open_diagnostic(variable, loop)
+
+    xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.xfail
 def test_open_diagnostic_does_not_exist():
+    assert 0
+
+
+@pytest.mark.xfail
+def test_open_diagnostic_unknown_backend():
     assert 0
 
 
@@ -74,7 +119,9 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
 
     data = diag.wind(diag.MinimLoop.GUESS)
 
-    mock_open_diagnostic.assert_called_once_with(diag.MinimLoop.GUESS)
+    mock_open_diagnostic.assert_called_once_with(
+        diag.Variable.WIND, diag.MinimLoop.GUESS
+    )
     calls = mock_VectorVariable.from_vectors.call_args_list
 
     assert len(calls) == 2
