@@ -155,11 +155,31 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     assert data == expected
 
 
-@pytest.mark.xfail
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
 def test_wind_diag_does_not_exist(
     mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable
 ):
-    assert 0
+    mock_open_diagnostic.side_effect = FileNotFoundError()
+
+    with pytest.raises(FileNotFoundError):
+        diag.wind(diag.MinimLoop.GUESS)
+
+    mock_VectorVariable.from_vectors.assert_not_called()
+    mock_VectorDiag.assert_not_called()
+
+
+@mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
+@mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+def test_wind_diag_unknown_backend(
+    mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable
+):
+    mock_open_diagnostic.side_effect = ValueError()
+
+    with pytest.raises(ValueError):
+        diag.wind(diag.MinimLoop.GUESS)
+
+    mock_VectorVariable.from_vectors.assert_not_called()
+    mock_VectorDiag.assert_not_called()

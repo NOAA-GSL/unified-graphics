@@ -1,5 +1,6 @@
 from unittest import mock
 
+import pytest
 import xarray as xr
 
 from unified_graphics.diag import VectorDiag, VectorVariable
@@ -77,3 +78,13 @@ def test_wind_diag(mock_diag_wind, client):
             "forecast": {"direction": [], "magnitude": []},
         },
     }
+
+
+@pytest.mark.xfail
+def test_wind_diag_not_found():
+    assert 0
+
+
+@pytest.mark.xfail
+def test_wind_diag_read_error():
+    assert 0
