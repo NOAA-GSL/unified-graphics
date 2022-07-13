@@ -95,9 +95,18 @@ def test_open_diagnostic_does_not_exist(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
-@pytest.mark.xfail
-def test_open_diagnostic_unknown_backend():
-    assert 0
+def test_open_diagnostic_unknown_backend(app):
+    diag_dir = Path(app.config["DIAG_DIR"])
+    test_file = diag_dir / "ncdiag_conv_uv_ges.nc4.2022050514"
+    test_file.write_bytes(b"This is not a NetCDF4 file")
+
+    expected = (
+        r"did not find a match in any of xarray's currently installed IO backends.*"
+    )
+
+    with app.app_context():
+        with pytest.raises(ValueError, match=expected):
+            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
