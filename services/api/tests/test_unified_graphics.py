@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from unified_graphics.diag import ScalarDiag, VectorDiag, VectorVariable
+from unified_graphics.diag import Bin, ScalarDiag, VectorDiag, VectorVariable
 
 
 def test_root_endpoint(client):
@@ -14,15 +14,34 @@ def test_root_endpoint(client):
 @mock.patch("unified_graphics.diag.temperature", autospec=True)
 def test_temperature_diag(mock_diag_temperature, client):
     mock_diag_temperature.return_value = ScalarDiag(
-        bins=[], observations=5, std=1.2, mean=4
+        bins=[Bin(lower=0, upper=1, value=3), Bin(lower=1, upper=2, value=5)],
+        observations=5,
+        std=1.2,
+        mean=4,
     )
 
     response = client.get("/diag/temperature/")
 
     assert response.status_code == 200
     assert response.json == {
-        "guess": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
-        "analysis": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
+        "guess": {
+            "bins": [
+                {"lower": 0, "upper": 1, "value": 3},
+                {"lower": 1, "upper": 2, "value": 5},
+            ],
+            "observations": 5,
+            "std": 1.2,
+            "mean": 4,
+        },
+        "analysis": {
+            "bins": [
+                {"lower": 0, "upper": 1, "value": 3},
+                {"lower": 1, "upper": 2, "value": 5},
+            ],
+            "observations": 5,
+            "std": 1.2,
+            "mean": 4,
+        },
     }
 
 
