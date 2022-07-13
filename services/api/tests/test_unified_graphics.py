@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from unified_graphics.diag import ScalarDiag, VectorDiag, VectorVariable
 
 
@@ -10,7 +12,7 @@ def test_root_endpoint(client):
 
 
 @mock.patch("unified_graphics.diag.temperature", autospec=True)
-def test_temperature_diag_distribution(mock_diag_temperature, client):
+def test_temperature_diag(mock_diag_temperature, client):
     mock_diag_temperature.return_value = ScalarDiag(
         bins=[], observations=5, std=1.2, mean=4
     )
@@ -22,6 +24,16 @@ def test_temperature_diag_distribution(mock_diag_temperature, client):
         "guess": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
         "analysis": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
     }
+
+
+@pytest.mark.xfail
+def test_temperature_diag_not_found():
+    assert 0
+
+
+@pytest.mark.xfail
+def test_temperature_diag_read_error():
+    assert 0
 
 
 @mock.patch("unified_graphics.diag.wind", autospec=True)
