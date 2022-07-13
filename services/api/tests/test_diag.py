@@ -47,6 +47,11 @@ def test_open_diagnostic():
     assert 0
 
 
+@pytest.mark.xfail
+def test_open_diagnostic_does_not_exist():
+    assert 0
+
+
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
