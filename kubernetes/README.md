@@ -53,7 +53,8 @@ Rancher desktop automatically starts a traefik ingress that tries to bind to `80
 sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 
 # Or to make the change permanent
-sudo sysctl -w net.ipv4.ip_unprivileged_port_start=80
+echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee /etc/sysctl.d/99-custom-unprivileged-port.conf
+sysctl -p /etc/sysctl.d/99-custom-unprivileged-port.conf
 ```
 
 And restart Rancher Desktop.
