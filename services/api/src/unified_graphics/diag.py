@@ -28,7 +28,13 @@ class VectorVariable:
 
     @classmethod
     def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
-        return cls(direction=[], magnitude=[])
+        direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
+        magnitude = np.sqrt(u**2 + v**2)
+
+        return cls(
+            direction=[float(d) for d in direction],
+            magnitude=[float(m) for m in magnitude],
+        )
 
 
 @dataclass

@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest import mock
 
+import math
 import pytest
 import xarray as xr
 
@@ -185,6 +186,42 @@ def test_wind_diag_unknown_backend(
     mock_VectorDiag.assert_not_called()
 
 
-@pytest.mark.xfail
 def test_VectorVariable_from_vectors():
-    assert 0
+    u = xr.DataArray([0, 2, 0, -1, -1])
+    v = xr.DataArray([1, 0, -2, 0, 1])
+
+    result = diag.VectorVariable.from_vectors(u, v)
+
+    assert result == diag.VectorVariable(
+        direction=[180.0, 270.0, 0.0, 90.0, 135.0],
+        magnitude=[1.0, 2.0, 2.0, 1.0, math.sqrt(2)],
+    )
+
+
+def test_VectorVariable_from_vectors_calm():
+    u = xr.DataArray([0, -0, 0, -0])
+    v = xr.DataArray([0, 0, -0, -0])
+
+    result = diag.VectorVariable.from_vectors(u, v)
+
+    assert result == diag.VectorVariable(
+        direction=[90.0, 90.0, 90.0, 90.0],
+        magnitude=[0.0, 0.0, 0.0, 0.0],
+    )
+
+
+def test_VectorVariable_from_empty_vectors():
+    u = xr.DataArray([])
+    v = xr.DataArray([])
+
+    result = diag.VectorVariable.from_vectors(u, v)
+
+    assert result == diag.VectorVariable(direction=[], magnitude=[])
+
+
+def test_VectorVariable_from_mismatched_vectors():
+    u = xr.DataArray([0, 1])
+    v = xr.DataArray([1])
+
+    with pytest.raises(ValueError):
+        diag.VectorVariable.from_vectors(u, v)
