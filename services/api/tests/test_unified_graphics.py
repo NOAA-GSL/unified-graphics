@@ -1,8 +1,6 @@
 from unittest import mock
 
-import xarray as xr
-
-from unified_graphics.diag import VectorDiag, VectorVariable
+from unified_graphics.diag import ScalarDiag, VectorDiag, VectorVariable
 
 
 def test_root_endpoint(client):
@@ -11,50 +9,18 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-def test_temperature_diag_distribution(tmp_path, client):
-    with mock.patch("xarray.open_dataset") as mock_open_dataset:
-        mock_open_dataset.return_value = xr.Dataset(
-            {"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]}
-        )
-
-        response = client.get("/diag/temperature/")
-
-    # FIXME: I don't love asserting these calls to xarray.open_dataset to ensure
-    # that the route is looking up both the guess and the analysis diagnostics,
-    # it seems like an implementation detail. The alternative seems to be to
-    # implement a more complex mock that returns different arrays based on
-    # filenames.
-    mock_open_dataset.assert_has_calls(
-        [
-            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_ges.nc4.2022050514")),
-            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_anl.nc4.2022050514")),
-        ],
-        any_order=True,
+@mock.patch("unified_graphics.diag.temperature", autospec=True)
+def test_temperature_diag_distribution(mock_diag_temperature, client):
+    mock_diag_temperature.return_value = ScalarDiag(
+        bins=[], observations=5, std=1.2, mean=4
     )
 
+    response = client.get("/diag/temperature/")
+
+    assert response.status_code == 200
     assert response.json == {
-        "guess": {
-            "bins": [
-                {"lower": -1, "upper": 0, "value": 1},
-                {"lower": 0, "upper": 1, "value": 0},
-                {"lower": 1, "upper": 2, "value": 2},
-                {"lower": 2, "upper": 3, "value": 2},
-            ],
-            "observations": 5,
-            "std": 1.32664991614216,
-            "mean": 1.2,
-        },
-        "analysis": {
-            "bins": [
-                {"lower": -1, "upper": 0, "value": 1},
-                {"lower": 0, "upper": 1, "value": 0},
-                {"lower": 1, "upper": 2, "value": 2},
-                {"lower": 2, "upper": 3, "value": 2},
-            ],
-            "observations": 5,
-            "std": 1.32664991614216,
-            "mean": 1.2,
-        },
+        "guess": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
+        "analysis": {"bins": [], "observations": 5, "std": 1.2, "mean": 4},
     }
 
 

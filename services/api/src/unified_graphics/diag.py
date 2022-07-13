@@ -44,6 +44,21 @@ class VectorVariable:
 
 
 @dataclass
+class Bin:
+    lower: float
+    upper: float
+    value: float
+
+
+@dataclass
+class ScalarDiag:
+    bins: List[Bin]
+    observations: int
+    std: float
+    mean: float
+
+
+@dataclass
 class VectorDiag:
     observation: VectorVariable
     forecast: VectorVariable
@@ -55,7 +70,7 @@ def get_filepath(loop) -> str:
     )
 
 
-def get_diagnostics(loop: MinimLoop) -> Dict:
+def temperature(loop: MinimLoop) -> Dict:
     diag_file = get_filepath(loop)
     ds = xr.open_dataset(diag_file)
     obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values

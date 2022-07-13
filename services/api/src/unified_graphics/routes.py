@@ -16,8 +16,8 @@ def index():
 
 @bp.route("/diag/temperature/")
 def diag_temperature():
-    guess = diag.get_diagnostics(diag.MinimLoop.GUESS)
-    analysis = diag.get_diagnostics(diag.MinimLoop.ANALYSIS)
+    guess = diag.temperature(diag.MinimLoop.GUESS)
+    analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
     return jsonify(guess=guess, analysis=analysis)
 
 

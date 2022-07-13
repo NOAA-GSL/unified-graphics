@@ -41,7 +41,7 @@ def test_get_diagnostics(app):
         )
 
         with app.app_context():
-            result = diag.get_diagnostics(diag.MinimLoop.GUESS)
+            result = diag.temperature(diag.MinimLoop.GUESS)
 
     assert result == {
         "bins": [
