@@ -1,6 +1,8 @@
-from unittest.mock import call, patch
+from unittest import mock
 
 import xarray as xr
+
+from unified_graphics.diag import VectorDiag, VectorVariable
 
 
 def test_root_endpoint(client):
@@ -9,8 +11,8 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-def test_temperature_diag_distribution(client):
-    with patch("xarray.open_dataset") as mock_open_dataset:
+def test_temperature_diag_distribution(tmp_path, client):
+    with mock.patch("xarray.open_dataset") as mock_open_dataset:
         mock_open_dataset.return_value = xr.Dataset(
             {"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]}
         )
@@ -24,8 +26,8 @@ def test_temperature_diag_distribution(client):
     # filenames.
     mock_open_dataset.assert_has_calls(
         [
-            call("/test/data/ncdiag_conv_t_ges.nc4.2022050514"),
-            call("/test/data/ncdiag_conv_t_anl.nc4.2022050514"),
+            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_ges.nc4.2022050514")),
+            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_anl.nc4.2022050514")),
         ],
         any_order=True,
     )
@@ -54,3 +56,44 @@ def test_temperature_diag_distribution(client):
             "mean": 1.2,
         },
     }
+
+
+@mock.patch("unified_graphics.diag.wind", autospec=True)
+def test_wind_diag(mock_diag_wind, client):
+    mock_diag_wind.return_value = VectorDiag(
+        observation=VectorVariable(direction=[], magnitude=[]),
+        forecast=VectorVariable(direction=[], magnitude=[]),
+    )
+
+    response = client.get("/diag/wind/")
+    assert response.status_code == 200
+    assert response.json == {
+        "guess": {
+            "observation": {"direction": [], "magnitude": []},
+            "forecast": {"direction": [], "magnitude": []},
+        },
+        "analysis": {
+            "observation": {"direction": [], "magnitude": []},
+            "forecast": {"direction": [], "magnitude": []},
+        },
+    }
+
+
+@mock.patch("unified_graphics.diag.wind", autospec=True)
+def test_wind_diag_not_found(mock_diag_wind, client):
+    mock_diag_wind.side_effect = FileNotFoundError()
+
+    response = client.get("/diag/wind/")
+
+    assert response.status_code == 404
+    assert response.json == {"msg": "Diagnostic file not found"}
+
+
+@mock.patch("unified_graphics.diag.wind", autospec=True)
+def test_wind_diag_read_error(mock_diag_wind, client):
+    mock_diag_wind.side_effect = ValueError()
+
+    response = client.get("/diag/wind/")
+
+    assert response.status_code == 500
+    assert response.json == {"msg": "Unable to read diagnostic file"}
