@@ -9,15 +9,15 @@ from unified_graphics import diag
 @pytest.mark.parametrize(
     "test_input,expected",
     [
-        (diag.MinimLoop.GUESS, "/test/data/ncdiag_conv_t_ges.nc4.2022050514"),
-        (diag.MinimLoop.ANALYSIS, "/test/data/ncdiag_conv_t_anl.nc4.2022050514"),
+        (diag.MinimLoop.GUESS, "ncdiag_conv_t_ges.nc4.2022050514"),
+        (diag.MinimLoop.ANALYSIS, "ncdiag_conv_t_anl.nc4.2022050514"),
     ],
 )
-def test_get_diag_filepath(app, test_input, expected):
+def test_get_diag_filepath(tmp_path, app, test_input, expected):
     with app.app_context():
         result = diag.get_filepath(test_input)
 
-    assert result == expected
+    assert result == str(tmp_path / "data" / expected)
 
 
 def test_get_diagnostics(app):
@@ -89,3 +89,13 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
 
     assert data == expected
+
+
+@pytest.mark.xfail
+@mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
+@mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+def test_wind_diag_does_not_exist(
+    mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable
+):
+    assert 0

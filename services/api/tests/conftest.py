@@ -4,9 +4,9 @@ from unified_graphics import create_app
 
 
 @pytest.fixture
-def app():
+def app(tmp_path):
     app = create_app()
-    app.config["DIAG_DIR"] = "/test/data/"
+    app.config["DIAG_DIR"] = str(tmp_path / "data")
 
     yield app
 

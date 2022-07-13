@@ -11,7 +11,7 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-def test_temperature_diag_distribution(client):
+def test_temperature_diag_distribution(tmp_path, client):
     with mock.patch("xarray.open_dataset") as mock_open_dataset:
         mock_open_dataset.return_value = xr.Dataset(
             {"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]}
@@ -26,8 +26,8 @@ def test_temperature_diag_distribution(client):
     # filenames.
     mock_open_dataset.assert_has_calls(
         [
-            mock.call("/test/data/ncdiag_conv_t_ges.nc4.2022050514"),
-            mock.call("/test/data/ncdiag_conv_t_anl.nc4.2022050514"),
+            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_ges.nc4.2022050514")),
+            mock.call(str(tmp_path / "data" / "ncdiag_conv_t_anl.nc4.2022050514")),
         ],
         any_order=True,
     )
