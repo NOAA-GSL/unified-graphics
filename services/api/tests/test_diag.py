@@ -20,40 +20,12 @@ def make_scalar_diag():
     return _make_scalar_diag
 
 
-@pytest.mark.parametrize(
-    "test_input,expected",
-    [
-        (diag.MinimLoop.GUESS, "ncdiag_conv_t_ges.nc4.2022050514"),
-        (diag.MinimLoop.ANALYSIS, "ncdiag_conv_t_anl.nc4.2022050514"),
-    ],
-)
-def test_get_diag_filepath(tmp_path, app, test_input, expected):
-    with app.app_context():
-        result = diag.get_filepath(test_input)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+@pytest.mark.parametrize("loop", ([diag.MinimLoop.GUESS], [diag.MinimLoop.ANALYSIS]))
+def test_temperature(mock_open_diagnostic, loop):
+    diag.temperature(loop)
 
-    assert result == str(tmp_path / "data" / expected)
-
-
-def test_get_diagnostics(app):
-    with mock.patch("xarray.open_dataset") as mock_open_dataset:
-        mock_open_dataset.return_value = xr.Dataset(
-            {"Obs_Minus_Forecast_adjusted": [-1, 1, 1, 2, 3]}
-        )
-
-        with app.app_context():
-            result = diag.temperature(diag.MinimLoop.GUESS)
-
-    assert result == {
-        "bins": [
-            {"lower": -1, "upper": 0, "value": 1},
-            {"lower": 0, "upper": 1, "value": 0},
-            {"lower": 1, "upper": 2, "value": 2},
-            {"lower": 2, "upper": 3, "value": 2},
-        ],
-        "observations": 5,
-        "std": 1.32664991614216,
-        "mean": 1.2,
-    }
+    mock_open_diagnostic.assert_called_once_with(diag.Variable.TEMPERATURE, loop)
 
 
 @pytest.mark.parametrize(

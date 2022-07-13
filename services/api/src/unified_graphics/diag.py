@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List
-import os
 
 from flask import current_app
 import numpy as np
@@ -64,15 +63,8 @@ class VectorDiag:
     forecast: VectorVariable
 
 
-def get_filepath(loop) -> str:
-    return os.path.join(
-        current_app.config["DIAG_DIR"], f"ncdiag_conv_t_{loop.value}.nc4.2022050514"
-    )
-
-
 def temperature(loop: MinimLoop) -> Dict:
-    diag_file = get_filepath(loop)
-    ds = xr.open_dataset(diag_file)
+    ds = open_diagnostic(Variable.TEMPERATURE, loop)
     obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
 
     obs_count = len(obs_minus_fcast)
