@@ -183,3 +183,8 @@ def test_wind_diag_unknown_backend(
 
     mock_VectorVariable.from_vectors.assert_not_called()
     mock_VectorDiag.assert_not_called()
+
+
+@pytest.mark.xfail
+def test_VectorVariable_from_vectors():
+    assert 0
