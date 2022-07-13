@@ -28,6 +28,16 @@ def test_temperature(mock_open_diagnostic, loop):
     mock_open_diagnostic.assert_called_once_with(diag.Variable.TEMPERATURE, loop)
 
 
+@pytest.mark.xfail
+def test_temperature_diag_does_not_exist():
+    assert 0
+
+
+@pytest.mark.xfail
+def test_temperature_diag_unknown_backend():
+    assert 0
+
+
 @pytest.mark.parametrize(
     "variable,loop,filename",
     [
