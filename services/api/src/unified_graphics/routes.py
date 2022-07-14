@@ -23,7 +23,7 @@ def index():
 
 
 @bp.route("/diag/<variable>/")
-def diag_temperature(variable):
+def diagnostics(variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
