@@ -8,6 +8,16 @@ from unified_graphics import diag
 bp = Blueprint("api", __name__)
 
 
+@bp.errorhandler(FileNotFoundError)
+def handle_diag_file_not_found(e):
+    return jsonify(msg="Diagnostic file not found"), 404
+
+
+@bp.errorhandler(ValueError)
+def handle_diag_file_read_error(e):
+    return jsonify(msg="Unable to read diagnostic file"), 500
+
+
 @bp.route("/")
 def index():
     current_app.logger.info("index()")
@@ -16,32 +26,15 @@ def index():
 
 @bp.route("/diag/temperature/")
 def diag_temperature():
-    try:
-        guess = diag.temperature(diag.MinimLoop.GUESS)
-        analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
-        response = jsonify(guess=guess, analysis=analysis)
-    except FileNotFoundError:
-        response = jsonify(msg="Diagnostic file not found")
-        response.status_code = 404
-    except ValueError:
-        response = jsonify(msg="Unable to read diagnostic file")
-        response.status_code = 500
+    guess = diag.temperature(diag.MinimLoop.GUESS)
+    analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
 
-    return response
+    return jsonify(guess=guess, analysis=analysis)
 
 
 @bp.route("/diag/wind/")
 def diag_wind():
-    try:
-        guess = diag.wind(diag.MinimLoop.GUESS)
-        analysis = diag.wind(diag.MinimLoop.ANALYSIS)
+    guess = diag.wind(diag.MinimLoop.GUESS)
+    analysis = diag.wind(diag.MinimLoop.ANALYSIS)
 
-        response = jsonify(guess=asdict(guess), analysis=asdict(analysis))
-    except FileNotFoundError:
-        response = jsonify(msg="Diagnostic file not found")
-        response.status_code = 404
-    except ValueError:
-        response = jsonify(msg="Unable to read diagnostic file")
-        response.status_code = 500
-
-    return response
+    return jsonify(guess=asdict(guess), analysis=asdict(analysis))
