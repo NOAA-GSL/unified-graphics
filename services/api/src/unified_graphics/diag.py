@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List
-import os
+from typing import List
 
 from flask import current_app
 import numpy as np
@@ -44,38 +43,52 @@ class VectorVariable:
 
 
 @dataclass
+class Bin:
+    lower: float
+    upper: float
+    value: float
+
+
+@dataclass
+class ScalarDiag:
+    bins: List[Bin]
+    observations: int
+    mean: float
+    std: float
+
+    @classmethod
+    def from_array(cls, data: xr.DataArray) -> "ScalarDiag":
+        observations = len(data)
+
+        if observations == 0:
+            return cls(bins=[], observations=0, mean=0, std=0)
+
+        mean = np.mean(data) or 0
+        std = np.std(data) or 0
+
+        counts, bin_edges = np.histogram(data, bins="auto")
+
+        bins = [
+            Bin(
+                lower=float(bin_edges[i]),
+                upper=float(bin_edges[i + 1]),
+                value=float(value),
+            )
+            for i, value in enumerate(counts)
+        ]
+
+        return cls(bins, observations, float(mean), float(std))
+
+
+@dataclass
 class VectorDiag:
     observation: VectorVariable
     forecast: VectorVariable
 
 
-def get_filepath(loop) -> str:
-    return os.path.join(
-        current_app.config["DIAG_DIR"], f"ncdiag_conv_t_{loop.value}.nc4.2022050514"
-    )
-
-
-def get_diagnostics(loop: MinimLoop) -> Dict:
-    diag_file = get_filepath(loop)
-    ds = xr.open_dataset(diag_file)
-    obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
-
-    obs_count = len(obs_minus_fcast)
-    mean = float(np.mean(obs_minus_fcast))
-    std = float(np.std(obs_minus_fcast))
-    counts, bins = np.histogram(obs_minus_fcast, bins="auto")
-
-    distribution = [
-        {"lower": float(bins[idx]), "upper": float(bins[idx + 1]), "value": int(count)}
-        for idx, count in enumerate(counts)
-    ]
-
-    return {
-        "bins": distribution,
-        "observations": obs_count,
-        "std": std,
-        "mean": mean,
-    }
+def temperature(loop: MinimLoop) -> ScalarDiag:
+    ds = open_diagnostic(Variable.TEMPERATURE, loop)
+    return ScalarDiag.from_array(ds["Obs_Minus_Forecast_adjusted"])
 
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
