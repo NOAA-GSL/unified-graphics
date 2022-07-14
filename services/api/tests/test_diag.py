@@ -196,14 +196,44 @@ def test_wind_diag_unknown_backend(
     mock_VectorDiag.assert_not_called()
 
 
-@pytest.mark.xfail
 def test_ScalarDiag_from_array():
-    assert 0
+    data = xr.DataArray([10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0])
+    expected_obs = len(data)
+    expected_mean = sum(data) / expected_obs
+    expected_std = math.sqrt(
+        sum([(x - expected_mean) ** 2 for x in data]) / expected_obs
+    )
+
+    result = diag.ScalarDiag.from_array(data)
+
+    assert result == diag.ScalarDiag(
+        bins=[
+            diag.Bin(lower=4, upper=6, value=2),
+            diag.Bin(lower=6, upper=8, value=2),
+            diag.Bin(lower=8, upper=10, value=2),
+            diag.Bin(lower=10, upper=12, value=2),
+            diag.Bin(lower=12, upper=14, value=3),
+        ],
+        observations=expected_obs,
+        mean=expected_mean,
+        std=expected_std,
+    )
 
 
-@pytest.mark.xfail
+def test_ScalarDiag_from_zeros():
+    data = xr.DataArray([0, 0, 0, 0])
+
+    result = diag.ScalarDiag.from_array(data)
+
+    assert result == diag.ScalarDiag(
+        bins=[diag.Bin(lower=-0.5, upper=0.5, value=4)], observations=4, mean=0, std=0
+    )
+
+
 def test_ScalarDiag_from_empty_array():
-    assert 0
+    result = diag.ScalarDiag.from_array(xr.DataArray([]))
+
+    assert result == diag.ScalarDiag(bins=[], observations=0, mean=0, std=0)
 
 
 def test_VectorVariable_from_vectors():

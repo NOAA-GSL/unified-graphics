@@ -53,12 +53,27 @@ class Bin:
 class ScalarDiag:
     bins: List[Bin]
     observations: int
-    std: float
     mean: float
+    std: float
 
     @classmethod
     def from_array(cls, data: xr.DataArray) -> "ScalarDiag":
-        return cls(bins=[], observations=0, std=0.0, mean=0.0)
+        observations = len(data)
+
+        if observations == 0:
+            return cls(bins=[], observations=0, mean=0, std=0)
+
+        mean = np.mean(data) or 0
+        std = np.std(data) or 0
+
+        counts, bin_edges = np.histogram(data, bins="auto")
+
+        bins = [
+            Bin(lower=bin_edges[i], upper=bin_edges[i + 1], value=value)
+            for i, value in enumerate(counts)
+        ]
+
+        return cls(bins, observations, mean, std)
 
 
 @dataclass
