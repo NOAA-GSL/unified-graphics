@@ -45,14 +45,24 @@ def test_temperature_diag(mock_diag_temperature, client):
     }
 
 
-@pytest.mark.xfail
-def test_temperature_diag_not_found():
-    assert 0
+@mock.patch("unified_graphics.diag.temperature", autospec=True)
+def test_temperature_diag_not_found(mock_diag_temperature, client):
+    mock_diag_temperature.side_effect = FileNotFoundError()
+
+    response = client.get("/diag/temperature/")
+
+    assert response.status_code == 404
+    assert response.json == {"msg": "Diagnostic file not found"}
 
 
-@pytest.mark.xfail
-def test_temperature_diag_read_error():
-    assert 0
+@mock.patch("unified_graphics.diag.temperature", autospec=True)
+def test_temperature_diag_read_error(mock_diag_temperature, client):
+    mock_diag_temperature.side_effect = ValueError()
+
+    response = client.get("/diag/temperature/")
+
+    assert response.status_code == 500
+    assert response.json == {"msg": "Unable to read diagnostic file"}
 
 
 @mock.patch("unified_graphics.diag.wind", autospec=True)

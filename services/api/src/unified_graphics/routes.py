@@ -16,9 +16,18 @@ def index():
 
 @bp.route("/diag/temperature/")
 def diag_temperature():
-    guess = diag.temperature(diag.MinimLoop.GUESS)
-    analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
-    return jsonify(guess=guess, analysis=analysis)
+    try:
+        guess = diag.temperature(diag.MinimLoop.GUESS)
+        analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
+        response = jsonify(guess=guess, analysis=analysis)
+    except FileNotFoundError:
+        response = jsonify(msg="Diagnostic file not found")
+        response.status_code = 404
+    except ValueError:
+        response = jsonify(msg="Unable to read diagnostic file")
+        response.status_code = 500
+
+    return response
 
 
 @bp.route("/diag/wind/")
