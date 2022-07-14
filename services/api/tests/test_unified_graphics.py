@@ -104,3 +104,10 @@ def test_wind_diag_read_error(mock_diag_wind, client):
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
+
+
+def test_unknown_variable(client):
+    response = client.get("/diag/not_a_variable/")
+
+    assert response.status_code == 404
+    assert response.json == {"msg": "Variable not found: 'not_a_variable'"}
