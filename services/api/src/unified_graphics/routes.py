@@ -1,5 +1,3 @@
-from dataclasses import asdict
-
 from flask import Blueprint, current_app, jsonify
 
 from unified_graphics import diag
@@ -24,17 +22,11 @@ def index():
     return jsonify({"msg": "Hello, Dave"})
 
 
-@bp.route("/diag/temperature/")
-def diag_temperature():
-    guess = diag.temperature(diag.MinimLoop.GUESS)
-    analysis = diag.temperature(diag.MinimLoop.ANALYSIS)
+@bp.route("/diag/<variable>/")
+def diag_temperature(variable):
+    variable_diagnostics = getattr(diag, variable)
+
+    guess = variable_diagnostics(diag.MinimLoop.GUESS)
+    analysis = variable_diagnostics(diag.MinimLoop.ANALYSIS)
 
     return jsonify(guess=guess, analysis=analysis)
-
-
-@bp.route("/diag/wind/")
-def diag_wind():
-    guess = diag.wind(diag.MinimLoop.GUESS)
-    analysis = diag.wind(diag.MinimLoop.ANALYSIS)
-
-    return jsonify(guess=asdict(guess), analysis=asdict(analysis))
