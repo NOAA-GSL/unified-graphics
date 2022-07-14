@@ -20,22 +20,50 @@ def make_scalar_diag():
     return _make_scalar_diag
 
 
+@mock.patch("unified_graphics.diag.ScalarDiag", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
 @pytest.mark.parametrize("loop", ([diag.MinimLoop.GUESS], [diag.MinimLoop.ANALYSIS]))
-def test_temperature(mock_open_diagnostic, loop):
-    diag.temperature(loop)
+def test_temperature(mock_open_diagnostic, mock_ScalarDiag, loop):
+    expected = diag.ScalarDiag(
+        bins=[diag.Bin(lower=-1, upper=1, value=3)], observations=10, std=1.2, mean=0.3
+    )
+
+    mock_open_diagnostic.return_value = xr.Dataset(
+        {"Obs_Minus_Forecast_adjusted": xr.DataArray([1, 3, 5])}
+    )
+    mock_ScalarDiag.from_array.return_value = expected
+
+    result = diag.temperature(loop)
 
     mock_open_diagnostic.assert_called_once_with(diag.Variable.TEMPERATURE, loop)
+    mock_ScalarDiag.from_array.assert_called_once()
+    xr.testing.assert_equal(
+        mock_ScalarDiag.from_array.call_args_list[0].args[0], xr.DataArray([1, 3, 5])
+    )
+
+    assert result == expected
 
 
-@pytest.mark.xfail
-def test_temperature_diag_does_not_exist():
-    assert 0
+@mock.patch("unified_graphics.diag.ScalarDiag", autospec=True)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+def test_temperature_diag_does_not_exist(mock_open_diagnostic, mock_ScalarDiag):
+    mock_open_diagnostic.side_effect = FileNotFoundError()
+
+    with pytest.raises(FileNotFoundError):
+        diag.temperature(diag.MinimLoop.GUESS)
+
+    mock_ScalarDiag.from_array.assert_not_called()
 
 
-@pytest.mark.xfail
-def test_temperature_diag_unknown_backend():
-    assert 0
+@mock.patch("unified_graphics.diag.ScalarDiag", autospec=True)
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+def test_temperature_diag_unknown_backend(mock_open_diagnostic, mock_ScalarDiag):
+    mock_open_diagnostic.side_effect = ValueError()
+
+    with pytest.raises(ValueError):
+        diag.temperature(diag.MinimLoop.GUESS)
+
+    mock_ScalarDiag.from_array.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -166,6 +194,16 @@ def test_wind_diag_unknown_backend(
 
     mock_VectorVariable.from_vectors.assert_not_called()
     mock_VectorDiag.assert_not_called()
+
+
+@pytest.mark.xfail
+def test_ScalarDiag_from_array():
+    assert 0
+
+
+@pytest.mark.xfail
+def test_ScalarDiag_from_empty_array():
+    assert 0
 
 
 def test_VectorVariable_from_vectors():

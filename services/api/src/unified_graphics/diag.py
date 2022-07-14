@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from flask import current_app
 import numpy as np
@@ -56,6 +56,10 @@ class ScalarDiag:
     std: float
     mean: float
 
+    @classmethod
+    def from_array(cls, data: xr.DataArray) -> "ScalarDiag":
+        return cls(bins=[], observations=0, std=0.0, mean=0.0)
+
 
 @dataclass
 class VectorDiag:
@@ -63,26 +67,9 @@ class VectorDiag:
     forecast: VectorVariable
 
 
-def temperature(loop: MinimLoop) -> Dict:
+def temperature(loop: MinimLoop) -> ScalarDiag:
     ds = open_diagnostic(Variable.TEMPERATURE, loop)
-    obs_minus_fcast = ds["Obs_Minus_Forecast_adjusted"].values
-
-    obs_count = len(obs_minus_fcast)
-    mean = float(np.mean(obs_minus_fcast))
-    std = float(np.std(obs_minus_fcast))
-    counts, bins = np.histogram(obs_minus_fcast, bins="auto")
-
-    distribution = [
-        {"lower": float(bins[idx]), "upper": float(bins[idx + 1]), "value": int(count)}
-        for idx, count in enumerate(counts)
-    ]
-
-    return {
-        "bins": distribution,
-        "observations": obs_count,
-        "std": std,
-        "mean": mean,
-    }
+    return ScalarDiag.from_array(ds["Obs_Minus_Forecast_adjusted"])
 
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
