@@ -1,6 +1,6 @@
 from unittest import mock
 
-import pytest
+import pytest  # noqa: F401
 
 from unified_graphics.diag import Bin, ScalarDiag, VectorDiag, VectorVariable
 
