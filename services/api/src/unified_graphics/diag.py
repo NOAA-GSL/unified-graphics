@@ -69,11 +69,15 @@ class ScalarDiag:
         counts, bin_edges = np.histogram(data, bins="auto")
 
         bins = [
-            Bin(lower=bin_edges[i], upper=bin_edges[i + 1], value=value)
+            Bin(
+                lower=float(bin_edges[i]),
+                upper=float(bin_edges[i + 1]),
+                value=float(value),
+            )
             for i, value in enumerate(counts)
         ]
 
-        return cls(bins, observations, mean, std)
+        return cls(bins, observations, float(mean), float(std))
 
 
 @dataclass
