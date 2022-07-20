@@ -130,12 +130,28 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
             "u_Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 1]),
             "v_Observation": xr.DataArray([10, 10]),
             "v_Obs_Minus_Forecast_unadjusted": xr.DataArray([-5, 5]),
+            "Longitude": xr.DataArray([-120, -88]),
+            "Latitude": xr.DataArray([40, 30]),
         }
     )
     mock_open_diagnostic.return_value = test_dataset
     expected = diag.VectorDiag(
-        observation=diag.VectorVariable(direction=[0, 135], magnitude=[1, 2]),
-        forecast=diag.VectorVariable(direction=[25, 130], magnitude=[2, 1]),
+        observation=diag.VectorVariable(
+            direction=[0, 135],
+            magnitude=[1, 2],
+            coords=[
+                diag.Coordinate(longitude=-123.4, latitude=33.0),
+                diag.Coordinate(longitude=-112.9, latitude=45.0),
+            ],
+        ),
+        forecast=diag.VectorVariable(
+            direction=[25, 130],
+            magnitude=[2, 1],
+            coords=[
+                diag.Coordinate(longitude=-85.3, latitude=37.8),
+                diag.Coordinate(longitude=-99.9, latitude=48.1),
+            ],
+        ),
     )
 
     mock_VectorDiag.return_value = expected
@@ -157,11 +173,15 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     # Assert that a VectorVariable was created from the observed vectors
     xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
     xr.testing.assert_equal(calls[0].args[1], xr.DataArray([10, 10]))
+    xr.testing.assert_equal(calls[0].args[2], xr.DataArray([-120, -88]))
+    xr.testing.assert_equal(calls[0].args[3], xr.DataArray([40, 30]))
 
     # Assert that a VectorVariable was created from forecast vectors that were
     # calculated by subtracting Obs-Fcst from Obs: Obs - (Obs - Fcst) = Fcst
     xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
     xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
+    xr.testing.assert_equal(calls[1].args[2], xr.DataArray([-120, -88]))
+    xr.testing.assert_equal(calls[1].args[3], xr.DataArray([40, 30]))
 
     assert data == expected
 
@@ -239,12 +259,21 @@ def test_ScalarDiag_from_empty_array():
 def test_VectorVariable_from_vectors():
     u = xr.DataArray([0, 2, 0, -1, -1])
     v = xr.DataArray([1, 0, -2, 0, 1])
+    lng = xr.DataArray([0, 0, 0, 0, 0])
+    lat = xr.DataArray([0, 0, 0, 0, 0])
 
-    result = diag.VectorVariable.from_vectors(u, v)
+    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
 
     assert result == diag.VectorVariable(
         direction=[180.0, 270.0, 0.0, 90.0, 135.0],
         magnitude=[1.0, 2.0, 2.0, 1.0, math.sqrt(2)],
+        coords=[
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+        ],
     )
 
 
@@ -255,27 +284,45 @@ def test_VectorVariable_from_vectors_calm():
     # 0°.
     u = xr.DataArray([0.0, -0.0, 0.0, -0.0])
     v = xr.DataArray([0.0, 0.0, -0.0, -0.0])
+    lng = xr.DataArray([0, 0, 0, 0])
+    lat = xr.DataArray([0, 0, 0, 0])
 
-    result = diag.VectorVariable.from_vectors(u, v)
+    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
 
     assert result == diag.VectorVariable(
         direction=[0.0, 0.0, 0.0, 0.0],
         magnitude=[0.0, 0.0, 0.0, 0.0],
+        coords=[
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+            diag.Coordinate(longitude=0, latitude=0),
+        ],
     )
 
 
 def test_VectorVariable_from_empty_vectors():
     u = xr.DataArray([])
     v = xr.DataArray([])
+    lng = xr.DataArray([])
+    lat = xr.DataArray([])
 
-    result = diag.VectorVariable.from_vectors(u, v)
+    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
 
-    assert result == diag.VectorVariable(direction=[], magnitude=[])
+    assert result == diag.VectorVariable(direction=[], magnitude=[], coords=[])
 
 
-def test_VectorVariable_from_mismatched_vectors():
-    u = xr.DataArray([0, 1])
-    v = xr.DataArray([1])
-
+@pytest.mark.parametrize(
+    "u,v,lng,lat",
+    (
+        ([0, 1], [1], [1], [1]),
+        ([1], [0, 1], [1], [1]),
+        ([1], [1], [0, 1], [1]),
+        ([1], [1], [1], [0, 1]),
+    ),
+)
+def test_VectorVariable_from_mismatched_vectors(u, v, lng, lat):
     with pytest.raises(ValueError):
-        diag.VectorVariable.from_vectors(u, v)
+        diag.VectorVariable.from_vectors(
+            xr.DataArray(u), xr.DataArray(v), xr.DataArray(lng), xr.DataArray(lat)
+        )

@@ -31,7 +31,13 @@ class VectorVariable:
     coords: List[Coordinate]
 
     @classmethod
-    def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
+    def from_vectors(
+        cls, u: xr.DataArray, v: xr.DataArray, lng: xr.DataArray, lat: xr.DataArray
+    ) -> "VectorVariable":
+
+        if any(da.shape != u.shape for da in [v, lng, lat]):
+            raise ValueError("All DataArray objects must have the same shape")
+
         direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
         magnitude = np.sqrt(u**2 + v**2)
 
@@ -44,6 +50,10 @@ class VectorVariable:
         return cls(
             direction=[float(d) for d in direction],
             magnitude=[float(m) for m in magnitude],
+            coords=[
+                Coordinate(longitude=float(x), latitude=float(y))
+                for x, y in zip(lng, lat)
+            ],
         )
 
 
@@ -112,10 +122,14 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
 def wind(loop: MinimLoop) -> VectorDiag:
     ds = open_diagnostic(Variable.WIND, loop)
 
-    observation = VectorVariable.from_vectors(ds["u_Observation"], ds["v_Observation"])
+    observation = VectorVariable.from_vectors(
+        ds["u_Observation"], ds["v_Observation"], ds["Longitude"], ds["Latitude"]
+    )
     forecast = VectorVariable.from_vectors(
         ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"],
         ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"],
+        ds["Longitude"],
+        ds["Latitude"],
     )
 
     data = VectorDiag(observation, forecast)
