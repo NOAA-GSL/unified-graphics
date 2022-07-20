@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -20,10 +21,14 @@ class Variable(Enum):
     WIND = "uv"
 
 
+Coordinate = namedtuple("Coordinate", "longitude latitude")
+
+
 @dataclass
 class VectorVariable:
     direction: List[float]
     magnitude: List[float]
+    coords: List[Coordinate]
 
     @classmethod
     def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
