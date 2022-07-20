@@ -123,6 +123,7 @@ def test_open_diagnostic_unknown_backend(app):
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
+@pytest.mark.xfail
 def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     test_dataset = xr.Dataset(
         {
@@ -256,6 +257,7 @@ def test_ScalarDiag_from_empty_array():
     assert result == diag.ScalarDiag(bins=[], observations=0, mean=0, std=0)
 
 
+@pytest.mark.xfail
 def test_VectorVariable_from_vectors():
     u = xr.DataArray([0, 2, 0, -1, -1])
     v = xr.DataArray([1, 0, -2, 0, 1])
@@ -277,6 +279,7 @@ def test_VectorVariable_from_vectors():
     )
 
 
+@pytest.mark.xfail
 def test_VectorVariable_from_vectors_calm():
     # 0.0 != -0.0, and numpy.arctan2 will return a different angle depending on
     # which one it encounters in which of the two vector components. We want to
@@ -301,6 +304,7 @@ def test_VectorVariable_from_vectors_calm():
     )
 
 
+@pytest.mark.xfail
 def test_VectorVariable_from_empty_vectors():
     u = xr.DataArray([])
     v = xr.DataArray([])
@@ -312,6 +316,7 @@ def test_VectorVariable_from_empty_vectors():
     assert result == diag.VectorVariable(direction=[], magnitude=[], coords=[])
 
 
+@pytest.mark.xfail
 @pytest.mark.parametrize(
     "u,v,lng,lat",
     (

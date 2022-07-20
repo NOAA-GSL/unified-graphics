@@ -78,25 +78,23 @@ def test_wind_diag(mock_diag_wind, client):
             observation=VectorVariable(
                 direction=[0.0],
                 magnitude=[2.7],
-                coords=[Coordinate(longitude=-123.4, latitude=37.0)],
             ),
             forecast=VectorVariable(
                 direction=[129.55],
                 magnitude=[0.45],
-                coords=[Coordinate(longitude=-100.0, latitude=41.2)],
             ),
+            coords=[Coordinate(longitude=-123.4, latitude=37.0)],
         ),
         VectorDiag(
             observation=VectorVariable(
                 direction=[10.0],
                 magnitude=[27.0],
-                coords=[Coordinate(longitude=-93.4, latitude=30.0)],
             ),
             forecast=VectorVariable(
                 direction=[299.08],
                 magnitude=[3.3],
-                coords=[Coordinate(longitude=-80.0, latitude=31.2)],
             ),
+            coords=[Coordinate(longitude=-80.0, latitude=31.2)],
         ),
     ]
 
@@ -107,25 +105,23 @@ def test_wind_diag(mock_diag_wind, client):
             "observation": {
                 "direction": [0.0],
                 "magnitude": [2.7],
-                "coords": [[-123.4, 37.0]],
             },
             "forecast": {
                 "direction": [129.55],
                 "magnitude": [0.45],
-                "coords": [[-100.0, 41.2]],
             },
+            "coords": [[-123.4, 37.0]],
         },
         "analysis": {
             "observation": {
                 "direction": [10.0],
                 "magnitude": [27.0],
-                "coords": [[-93.4, 30.0]],
             },
             "forecast": {
                 "direction": [299.08],
                 "magnitude": [3.3],
-                "coords": [[-80.0, 31.2]],
             },
+            "coords": [[-80.0, 31.2]],
         },
     }
 
