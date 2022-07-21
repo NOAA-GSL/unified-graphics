@@ -1,4 +1,3 @@
-import { sveltekit } from "@sveltejs/kit/vite";
 import { fileURLToPath } from "node:url";
 
 const scss = {
@@ -9,7 +8,6 @@ const config = {
   css: {
     preprocessorOptions: { scss },
   },
-  plugins: [sveltekit()],
   resolve: {
     alias: {
       "/fonts": fileURLToPath(
