@@ -1,3 +1,4 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -20,6 +21,9 @@ class Variable(Enum):
     WIND = "uv"
 
 
+Coordinate = namedtuple("Coordinate", "longitude latitude")
+
+
 @dataclass
 class VectorVariable:
     direction: List[float]
@@ -27,6 +31,7 @@ class VectorVariable:
 
     @classmethod
     def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
+
         direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
         magnitude = np.sqrt(u**2 + v**2)
 
@@ -84,6 +89,15 @@ class ScalarDiag:
 class VectorDiag:
     observation: VectorVariable
     forecast: VectorVariable
+    coords: List[Coordinate]
+
+
+def coordinate_pairs_from_vectors(
+    lng: xr.DataArray, lat: xr.DataArray
+) -> List[Coordinate]:
+    assert lng.shape == lat.shape
+
+    return [Coordinate(longitude=float(x), latitude=float(y)) for x, y in zip(lng, lat)]
 
 
 def temperature(loop: MinimLoop) -> ScalarDiag:
@@ -112,7 +126,6 @@ def wind(loop: MinimLoop) -> VectorDiag:
         ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"],
         ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"],
     )
+    coordinates = coordinate_pairs_from_vectors(ds["Longitude"], ds["Latitude"])
 
-    data = VectorDiag(observation, forecast)
-
-    return data
+    return VectorDiag(observation, forecast, coordinates)

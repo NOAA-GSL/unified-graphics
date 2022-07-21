@@ -120,39 +120,53 @@ def test_open_diagnostic_unknown_backend(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
+@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
+@mock.patch("unified_graphics.diag.coordinate_pairs_from_vectors", autospec=True)
+def test_wind(
+    mock_coordinate_pairs_from_vectors,
+    mock_VectorDiag,
+    mock_VectorVariable,
+    mock_open_diagnostic,
+):
     test_dataset = xr.Dataset(
         {
             "u_Observation": xr.DataArray([0, 0]),
             "u_Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 1]),
             "v_Observation": xr.DataArray([10, 10]),
             "v_Obs_Minus_Forecast_unadjusted": xr.DataArray([-5, 5]),
+            "Longitude": xr.DataArray([-120, -88]),
+            "Latitude": xr.DataArray([40, 30]),
         }
     )
+
     mock_open_diagnostic.return_value = test_dataset
-    expected = diag.VectorDiag(
-        observation=diag.VectorVariable(direction=[0, 135], magnitude=[1, 2]),
-        forecast=diag.VectorVariable(direction=[25, 130], magnitude=[2, 1]),
-    )
 
-    mock_VectorDiag.return_value = expected
-
+    # Do the thing!
     data = diag.wind(diag.MinimLoop.GUESS)
 
     mock_open_diagnostic.assert_called_once_with(
         diag.Variable.WIND, diag.MinimLoop.GUESS
     )
-    calls = mock_VectorVariable.from_vectors.call_args_list
-
-    assert len(calls) == 2
 
     # We can't use from_vectors.assert_has_calls because the default comparison
     # of two xarray.DataArray objects via `==` results in a DataArray containing
     # boolean values indiciating whether each pairwise element were equal or
     # not. Instead we use the xarray.testing assertions.
+
+    # Check calls to coordinate_pairs_from_vectors()
+    calls = mock_coordinate_pairs_from_vectors.call_args_list
+
+    assert len(calls) == 1
+
+    xr.testing.assert_equal(calls[0].args[0], xr.DataArray([-120, -88]))
+    xr.testing.assert_equal(calls[0].args[1], xr.DataArray([40, 30]))
+
+    # Check calls to VectorVariable.from_vectors()
+    calls = mock_VectorVariable.from_vectors.call_args_list
+
+    assert len(calls) == 2
 
     # Assert that a VectorVariable was created from the observed vectors
     xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
@@ -163,7 +177,13 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
     xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
 
-    assert data == expected
+    mock_VectorDiag.assert_called_once_with(
+        mock_VectorVariable.from_vectors.return_value,
+        mock_VectorVariable.from_vectors.return_value,
+        mock_coordinate_pairs_from_vectors.return_value,
+    )
+
+    assert data == mock_VectorDiag.return_value
 
 
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
@@ -194,6 +214,36 @@ def test_wind_diag_unknown_backend(
 
     mock_VectorVariable.from_vectors.assert_not_called()
     mock_VectorDiag.assert_not_called()
+
+
+def test_coordinate_pairs_from_vector():
+    lng = xr.DataArray([-120, -110.08, -90])
+    lat = xr.DataArray([40.2, 35, 37])
+
+    result = diag.coordinate_pairs_from_vectors(lng, lat)
+
+    assert result == [
+        diag.Coordinate(longitude=-120.0, latitude=40.2),
+        diag.Coordinate(longitude=-110.08, latitude=35.0),
+        diag.Coordinate(longitude=-90.0, latitude=37.0),
+    ]
+
+
+def test_coordinate_pairs_from_empty_vectors():
+    result = diag.coordinate_pairs_from_vectors(xr.DataArray([]), xr.DataArray([]))
+    assert result == []
+
+
+@pytest.mark.parametrize(
+    "lng,lat",
+    [
+        ([0, 1], [1]),
+        ([1], [0, 1]),
+    ],
+)
+def test_coordinate_pairs_from_mismatched_vectors(lng, lat):
+    with pytest.raises(AssertionError):
+        diag.coordinate_pairs_from_vectors(xr.DataArray(lng), xr.DataArray(lat))
 
 
 def test_ScalarDiag_from_array():
@@ -273,9 +323,13 @@ def test_VectorVariable_from_empty_vectors():
     assert result == diag.VectorVariable(direction=[], magnitude=[])
 
 
-def test_VectorVariable_from_mismatched_vectors():
-    u = xr.DataArray([0, 1])
-    v = xr.DataArray([1])
-
+@pytest.mark.parametrize(
+    "u,v,lng,lat",
+    (
+        ([0, 1], [1], [1], [1]),
+        ([1], [0, 1], [1], [1]),
+    ),
+)
+def test_VectorVariable_from_mismatched_vectors(u, v, lng, lat):
     with pytest.raises(ValueError):
-        diag.VectorVariable.from_vectors(u, v)
+        diag.VectorVariable.from_vectors(xr.DataArray(u), xr.DataArray(v))
