@@ -120,10 +120,7 @@ def test_open_diagnostic_unknown_backend(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
-@mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
-@mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
+def test_wind():
     test_dataset = xr.Dataset(
         {
             "u_Observation": xr.DataArray([0, 0]),
@@ -134,48 +131,71 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
             "Latitude": xr.DataArray([40, 30]),
         }
     )
-    mock_open_diagnostic.return_value = test_dataset
-    expected = diag.VectorDiag(
-        observation=diag.VectorVariable(
-            direction=[0, 135],
-            magnitude=[1, 2],
-        ),
-        forecast=diag.VectorVariable(
-            direction=[25, 130],
-            magnitude=[2, 1],
-        ),
-        coords=[
-            diag.Coordinate(longitude=-123.4, latitude=33.0),
-            diag.Coordinate(longitude=-112.9, latitude=45.0),
-        ],
-    )
+    observation = diag.VectorVariable(direction=[0, 135], magnitude=[1, 2])
+    forecast = diag.VectorVariable(direction=[25, 130], magnitude=[2, 1])
+    coords = [
+        diag.Coordinate(longitude=-123.4, latitude=33.0),
+        diag.Coordinate(longitude=-112.9, latitude=45.0),
+    ]
+    expected = diag.VectorDiag(observation, forecast, coords)
 
-    mock_VectorDiag.return_value = expected
+    with (
+        mock.patch(
+            "unified_graphics.diag.open_diagnostic", autospec=True
+        ) as mock_open_diagnostic,
+        mock.patch(
+            "unified_graphics.diag.VectorVariable", autospec=True
+        ) as mock_VectorVariable,
+        mock.patch(
+            "unified_graphics.diag.VectorDiag", autospec=True
+        ) as mock_VectorDiag,
+        mock.patch(
+            "unified_graphics.diag.coordinate_pairs_from_vectors", autospec=True
+        ) as mock_coordinate_pairs_from_vectors,
+    ):
 
-    data = diag.wind(diag.MinimLoop.GUESS)
+        mock_open_diagnostic.return_value = test_dataset
+        mock_VectorVariable.from_vectors.side_effect = [observation, forecast]
+        mock_coordinate_pairs_from_vectors.return_value = coords
+        mock_VectorDiag.return_value = expected
 
-    mock_open_diagnostic.assert_called_once_with(
-        diag.Variable.WIND, diag.MinimLoop.GUESS
-    )
-    calls = mock_VectorVariable.from_vectors.call_args_list
+        # Do the thing!
+        data = diag.wind(diag.MinimLoop.GUESS)
 
-    assert len(calls) == 2
+        mock_open_diagnostic.assert_called_once_with(
+            diag.Variable.WIND, diag.MinimLoop.GUESS
+        )
 
-    # We can't use from_vectors.assert_has_calls because the default comparison
-    # of two xarray.DataArray objects via `==` results in a DataArray containing
-    # boolean values indiciating whether each pairwise element were equal or
-    # not. Instead we use the xarray.testing assertions.
+        # We can't use from_vectors.assert_has_calls because the default comparison
+        # of two xarray.DataArray objects via `==` results in a DataArray containing
+        # boolean values indiciating whether each pairwise element were equal or
+        # not. Instead we use the xarray.testing assertions.
 
-    # Assert that a VectorVariable was created from the observed vectors
-    xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
-    xr.testing.assert_equal(calls[0].args[1], xr.DataArray([10, 10]))
+        # Check calls to coordinate_pairs_from_vectors()
+        calls = mock_coordinate_pairs_from_vectors.call_args_list
 
-    # Assert that a VectorVariable was created from forecast vectors that were
-    # calculated by subtracting Obs-Fcst from Obs: Obs - (Obs - Fcst) = Fcst
-    xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
-    xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
+        assert len(calls) == 1
 
-    assert data == expected
+        xr.testing.assert_equal(calls[0].args[0], xr.DataArray([-120, -88]))
+        xr.testing.assert_equal(calls[0].args[1], xr.DataArray([40, 30]))
+
+        # Check calls to VectorVariable.from_vectors()
+        calls = mock_VectorVariable.from_vectors.call_args_list
+
+        assert len(calls) == 2
+
+        # Assert that a VectorVariable was created from the observed vectors
+        xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
+        xr.testing.assert_equal(calls[0].args[1], xr.DataArray([10, 10]))
+
+        # Assert that a VectorVariable was created from forecast vectors that were
+        # calculated by subtracting Obs-Fcst from Obs: Obs - (Obs - Fcst) = Fcst
+        xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
+        xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
+
+        mock_VectorDiag.assert_called_once_with(observation, forecast, coords)
+
+        assert data == expected
 
 
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
