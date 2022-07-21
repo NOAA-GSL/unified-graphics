@@ -1,5 +1,6 @@
 <script>
   import VariableDiag from "$lib/components/VariableDiag";
+  import WindVector from "$lib/components/WindVector";
   import api from "$lib/helpers/api.helper";
 
   let data = api.diagnostics();
@@ -12,3 +13,5 @@
 {:catch}
   <p>Oops</p>
 {/await}
+
+<WindVector />
