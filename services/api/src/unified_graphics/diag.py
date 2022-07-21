@@ -92,6 +92,14 @@ class VectorDiag:
     coords: List[Coordinate]
 
 
+def coordinate_pairs_from_vectors(
+    lng: xr.DataArray, lat: xr.DataArray
+) -> List[Coordinate]:
+    assert lng.shape == lat.shape
+
+    return [Coordinate(longitude=float(x), latitude=float(y)) for x, y in zip(lng, lat)]
+
+
 def temperature(loop: MinimLoop) -> ScalarDiag:
     ds = open_diagnostic(Variable.TEMPERATURE, loop)
     return ScalarDiag.from_array(ds["Obs_Minus_Forecast_adjusted"])

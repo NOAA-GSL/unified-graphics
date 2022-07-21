@@ -208,6 +208,36 @@ def test_wind_diag_unknown_backend(
     mock_VectorDiag.assert_not_called()
 
 
+def test_coordinate_pairs_from_vector():
+    lng = xr.DataArray([-120, -110.08, -90])
+    lat = xr.DataArray([40.2, 35, 37])
+
+    result = diag.coordinate_pairs_from_vectors(lng, lat)
+
+    assert result == [
+        diag.Coordinate(longitude=-120.0, latitude=40.2),
+        diag.Coordinate(longitude=-110.08, latitude=35.0),
+        diag.Coordinate(longitude=-90.0, latitude=37.0),
+    ]
+
+
+def test_coordinate_pairs_from_empty_vectors():
+    result = diag.coordinate_pairs_from_vectors(xr.DataArray([]), xr.DataArray([]))
+    assert result == []
+
+
+@pytest.mark.parametrize(
+    "lng,lat",
+    [
+        ([0, 1], [1]),
+        ([1], [0, 1]),
+    ],
+)
+def test_coordinate_pairs_from_mismatched_vectors(lng, lat):
+    with pytest.raises(AssertionError):
+        diag.coordinate_pairs_from_vectors(xr.DataArray(lng), xr.DataArray(lat))
+
+
 def test_ScalarDiag_from_array():
     data = xr.DataArray([10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0])
     expected_obs = len(data)
