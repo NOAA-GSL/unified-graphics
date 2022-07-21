@@ -123,7 +123,6 @@ def test_open_diagnostic_unknown_backend(app):
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.VectorDiag", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@pytest.mark.xfail
 def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     test_dataset = xr.Dataset(
         {
@@ -140,19 +139,15 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
         observation=diag.VectorVariable(
             direction=[0, 135],
             magnitude=[1, 2],
-            coords=[
-                diag.Coordinate(longitude=-123.4, latitude=33.0),
-                diag.Coordinate(longitude=-112.9, latitude=45.0),
-            ],
         ),
         forecast=diag.VectorVariable(
             direction=[25, 130],
             magnitude=[2, 1],
-            coords=[
-                diag.Coordinate(longitude=-85.3, latitude=37.8),
-                diag.Coordinate(longitude=-99.9, latitude=48.1),
-            ],
         ),
+        coords=[
+            diag.Coordinate(longitude=-123.4, latitude=33.0),
+            diag.Coordinate(longitude=-112.9, latitude=45.0),
+        ],
     )
 
     mock_VectorDiag.return_value = expected
@@ -174,15 +169,11 @@ def test_wind(mock_open_diagnostic, mock_VectorDiag, mock_VectorVariable):
     # Assert that a VectorVariable was created from the observed vectors
     xr.testing.assert_equal(calls[0].args[0], xr.DataArray([0, 0]))
     xr.testing.assert_equal(calls[0].args[1], xr.DataArray([10, 10]))
-    xr.testing.assert_equal(calls[0].args[2], xr.DataArray([-120, -88]))
-    xr.testing.assert_equal(calls[0].args[3], xr.DataArray([40, 30]))
 
     # Assert that a VectorVariable was created from forecast vectors that were
     # calculated by subtracting Obs-Fcst from Obs: Obs - (Obs - Fcst) = Fcst
     xr.testing.assert_equal(calls[1].args[0], xr.DataArray([-1, -1]))
     xr.testing.assert_equal(calls[1].args[1], xr.DataArray([15, 5]))
-    xr.testing.assert_equal(calls[1].args[2], xr.DataArray([-120, -88]))
-    xr.testing.assert_equal(calls[1].args[3], xr.DataArray([40, 30]))
 
     assert data == expected
 
@@ -257,29 +248,18 @@ def test_ScalarDiag_from_empty_array():
     assert result == diag.ScalarDiag(bins=[], observations=0, mean=0, std=0)
 
 
-@pytest.mark.xfail
 def test_VectorVariable_from_vectors():
     u = xr.DataArray([0, 2, 0, -1, -1])
     v = xr.DataArray([1, 0, -2, 0, 1])
-    lng = xr.DataArray([0, 0, 0, 0, 0])
-    lat = xr.DataArray([0, 0, 0, 0, 0])
 
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
+    result = diag.VectorVariable.from_vectors(u, v)
 
     assert result == diag.VectorVariable(
         direction=[180.0, 270.0, 0.0, 90.0, 135.0],
         magnitude=[1.0, 2.0, 2.0, 1.0, math.sqrt(2)],
-        coords=[
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-        ],
     )
 
 
-@pytest.mark.xfail
 def test_VectorVariable_from_vectors_calm():
     # 0.0 != -0.0, and numpy.arctan2 will return a different angle depending on
     # which one it encounters in which of the two vector components. We want to
@@ -287,47 +267,31 @@ def test_VectorVariable_from_vectors_calm():
     # 0°.
     u = xr.DataArray([0.0, -0.0, 0.0, -0.0])
     v = xr.DataArray([0.0, 0.0, -0.0, -0.0])
-    lng = xr.DataArray([0, 0, 0, 0])
-    lat = xr.DataArray([0, 0, 0, 0])
 
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
+    result = diag.VectorVariable.from_vectors(u, v)
 
     assert result == diag.VectorVariable(
         direction=[0.0, 0.0, 0.0, 0.0],
         magnitude=[0.0, 0.0, 0.0, 0.0],
-        coords=[
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-            diag.Coordinate(longitude=0, latitude=0),
-        ],
     )
 
 
-@pytest.mark.xfail
 def test_VectorVariable_from_empty_vectors():
     u = xr.DataArray([])
     v = xr.DataArray([])
-    lng = xr.DataArray([])
-    lat = xr.DataArray([])
 
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
+    result = diag.VectorVariable.from_vectors(u, v)
 
-    assert result == diag.VectorVariable(direction=[], magnitude=[], coords=[])
+    assert result == diag.VectorVariable(direction=[], magnitude=[])
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     "u,v,lng,lat",
     (
         ([0, 1], [1], [1], [1]),
         ([1], [0, 1], [1], [1]),
-        ([1], [1], [0, 1], [1]),
-        ([1], [1], [1], [0, 1]),
     ),
 )
 def test_VectorVariable_from_mismatched_vectors(u, v, lng, lat):
     with pytest.raises(ValueError):
-        diag.VectorVariable.from_vectors(
-            xr.DataArray(u), xr.DataArray(v), xr.DataArray(lng), xr.DataArray(lat)
-        )
+        diag.VectorVariable.from_vectors(xr.DataArray(u), xr.DataArray(v))
