@@ -128,6 +128,4 @@ def wind(loop: MinimLoop) -> VectorDiag:
     )
     coordinates = coordinate_pairs_from_vectors(ds["Longitude"], ds["Latitude"])
 
-    data = VectorDiag(observation, forecast, coordinates)
-
-    return data
+    return VectorDiag(observation, forecast, coordinates)
