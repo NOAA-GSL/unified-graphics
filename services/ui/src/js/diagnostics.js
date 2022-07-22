@@ -1,3 +1,5 @@
+import { format } from "d3";
+
 export class ScalarVariableDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
   <ug-diag-scalarloop id=guess>
@@ -73,11 +75,15 @@ export class ScalarLoopDiag extends HTMLElement {
 
     dd {
       margin: 0;
+      white-space: pre;
     }
   </style>`;
 
   constructor() {
     super();
+
+    this.formatCount = format(",");
+    this.formatStat = format(" ,.3f");
 
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = ScalarLoopDiag.#STYLE + ScalarLoopDiag.#TEMPLATE;
@@ -90,8 +96,8 @@ export class ScalarLoopDiag extends HTMLElement {
   update(data) {
     const { observations, mean, std } = data;
 
-    this.shadowRoot.querySelector("#obs").textContent = observations;
-    this.shadowRoot.querySelector("#mean").textContent = mean;
-    this.shadowRoot.querySelector("#std").textContent = std;
+    this.shadowRoot.querySelector("#obs").textContent = this.formatCount(observations);
+    this.shadowRoot.querySelector("#mean").textContent = this.formatStat(mean);
+    this.shadowRoot.querySelector("#std").textContent = this.formatStat(std);
   }
 }
