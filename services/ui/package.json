@@ -13,7 +13,7 @@
     "@uswds/uswds": "^3.0.0",
     "d3": "^7.4.4",
     "debug": "^4.3.4",
-    "eslint": "^7.32.0",
+    "eslint": "^8.20.0",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
     "sass": "^1.51.0",
