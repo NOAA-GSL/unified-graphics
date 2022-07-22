@@ -1,4 +1,7 @@
-import { format } from "d3";
+import { extent, max, min } from "d3-array";
+import { format } from "d3-format";
+import { scaleLinear } from "d3-scale";
+import * as d3 from "d3-selection";
 
 export class ScalarVariableDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
@@ -41,8 +44,19 @@ export class ScalarVariableDiag extends HTMLElement {
   }
 
   update(data) {
-    this.shadowRoot.querySelector("#guess").data = data.guess;
-    this.shadowRoot.querySelector("#analysis").data = data.analysis;
+    const bins = data.guess.bins.concat(data.analysis.bins);
+
+    const domain = [min(bins, (d) => d.lower), max(bins, (d) => d.upper)];
+    const range = extent(bins, (d) => d.value);
+
+    const guessEl = this.shadowRoot.querySelector("#guess");
+    const anlEl = this.shadowRoot.querySelector("#analysis");
+
+    guessEl.domain = anlEl.domain = domain;
+    guessEl.range = anlEl.range = range;
+
+    guessEl.data = data.guess;
+    anlEl.data = data.analysis;
   }
 }
 
@@ -55,9 +69,21 @@ export class ScalarLoopDiag extends HTMLElement {
       <dd id=mean></dd>
       <dt>Std. Dev.</dt>
       <dd id=std></dd>
-    </dl>`;
+    </dl>
+    <svg></svg>`;
 
   static #STYLE = `<style>
+    :host {
+      display: flex;
+      flex-direction: column;
+    }
+
+    * { flex: 0 0 auto }
+    svg {
+      flex: 1 1 auto;
+      align-self: stretch;
+    }
+
     dl {
       display: grid;
       grid-template-columns: repeat(2, min-content);
@@ -79,6 +105,9 @@ export class ScalarLoopDiag extends HTMLElement {
     }
   </style>`;
 
+  domain = [0, 1];
+  range = [0, 1];
+
   constructor() {
     super();
 
@@ -94,10 +123,27 @@ export class ScalarLoopDiag extends HTMLElement {
   }
 
   update(data) {
-    const { observations, mean, std } = data;
+    const { bins, observations, mean, std } = data;
 
     this.shadowRoot.querySelector("#obs").textContent = this.formatCount(observations);
     this.shadowRoot.querySelector("#mean").textContent = this.formatStat(mean);
     this.shadowRoot.querySelector("#std").textContent = this.formatStat(std);
+
+    const svg = d3.select(this.shadowRoot).select("svg");
+    const { height, width } = svg.node().getBoundingClientRect();
+
+    const x = scaleLinear().domain(this.domain).range([0, width]);
+    const y = scaleLinear().domain(this.range).range([height, 0]);
+
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+    svg
+      .selectAll("circle")
+      .data(bins)
+      .join("rect")
+      .attr("x", (d) => x(d.lower))
+      .attr("y", (d) => y(d.value))
+      .attr("width", (d) => x(d.upper) - x(d.lower))
+      .attr("height", (d) => y(0) - y(d.value));
   }
 }
