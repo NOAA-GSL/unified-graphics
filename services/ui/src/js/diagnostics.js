@@ -7,11 +7,20 @@ export class ScalarVariableDiag extends HTMLElement {
     <h3 slot=title>Observation &minus; Analysis</h3>
   </ug-diag-scalarloop>`;
 
+  static #STYLE = `<style>
+  :host {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  ::slotted([slot=title]) { grid-column: 1 / -1; }
+  </style>`;
+
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = ScalarVariableDiag.#TEMPLATE;
+    shadowRoot.innerHTML = ScalarVariableDiag.#STYLE + ScalarVariableDiag.#TEMPLATE;
   }
 
   static get observedAttributes() {
