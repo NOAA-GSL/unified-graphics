@@ -9,11 +9,32 @@ export class ScalarDiag extends HTMLElement {
     <dd id=std></dd>
   </dl>`;
 
+  static #STYLE = `<style>
+    dl {
+      display: grid;
+      grid-template-columns: repeat(2, min-content);
+      gap: 0.5rem;
+    }
+
+    dt {
+      font-weight: bold;
+      justify-self: end;
+    }
+
+    dt::after {
+      content: ":";
+    }
+
+    dd {
+      margin: 0;
+    }
+  </style>`;
+
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = ScalarDiag.#TEMPLATE;
+    shadowRoot.innerHTML = ScalarDiag.#STYLE + ScalarDiag.#TEMPLATE;
   }
 
   static get observedAttributes() {
