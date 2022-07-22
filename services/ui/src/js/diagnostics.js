@@ -1,4 +1,5 @@
 import { extent, max, min } from "d3-array";
+import { axisBottom, axisRight } from "d3-axis";
 import { format } from "d3-format";
 import { scaleLinear } from "d3-scale";
 import * as d3 from "d3-selection";
@@ -70,7 +71,11 @@ export class ScalarLoopDiag extends HTMLElement {
       <dt>Std. Dev.</dt>
       <dd id=std></dd>
     </dl>
-    <svg></svg>`;
+    <svg>
+      <g class="data"></g>
+      <g class="x-axis"></g>
+      <g class="y-axis"></g>
+    </svg>`;
 
   static #STYLE = `<style>
     :host {
@@ -132,18 +137,46 @@ export class ScalarLoopDiag extends HTMLElement {
     const svg = d3.select(this.shadowRoot).select("svg");
     const { height, width } = svg.node().getBoundingClientRect();
 
-    const x = scaleLinear().domain(this.domain).range([0, width]);
-    const y = scaleLinear().domain(this.range).range([height, 0]);
+    const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
+    const margin = fontSize;
+
+    const x = scaleLinear()
+      .domain(this.domain)
+      .range([margin, width - 2 * margin]);
+    const y = scaleLinear()
+      .domain(this.range)
+      .range([height - 2 * margin, margin]);
+
+    const xAxis = axisBottom(x).tickFormat(this.formatStat);
+    const yAxis = axisRight(y)
+      .ticks(height / fontSize / 1.5)
+      .tickFormat(this.formatCount)
+      .tickSize(width - 2 * margin);
 
     svg.attr("viewBox", `0 0 ${width} ${height}`);
 
     svg
-      .selectAll("circle")
+      .select(".data")
+      .selectAll("rect")
       .data(bins)
       .join("rect")
       .attr("x", (d) => x(d.lower))
       .attr("y", (d) => y(d.value))
       .attr("width", (d) => x(d.upper) - x(d.lower))
       .attr("height", (d) => y(0) - y(d.value));
+
+    svg
+      .select(".x-axis")
+      .attr("transform", `translate(0, ${height - 2 * margin})`)
+      .call(xAxis);
+
+    svg
+      .select(".y-axis")
+      .attr("transform", `translate(${margin}, 0)`)
+      .call(yAxis)
+      .call((g) => {
+        g.select(".domain").remove();
+        g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
+      });
   }
 }
