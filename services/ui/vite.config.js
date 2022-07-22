@@ -5,6 +5,7 @@ const scss = {
 };
 
 const config = {
+  root: "src/",
   css: {
     preprocessorOptions: { scss },
   },
