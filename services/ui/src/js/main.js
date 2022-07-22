@@ -1,4 +1,5 @@
 import styles from "../styles/_index.scss"; // eslint-disable-line
-import { ScalarDiag } from "./diagnostics";
+import * as diag from "./diagnostics";
 
-customElements.define("ug-scalardiag", ScalarDiag);
+customElements.define("ug-diag-scalarvariable", diag.ScalarVariableDiag);
+customElements.define("ug-diag-scalarloop", diag.ScalarLoopDiag);
