@@ -15,4 +15,27 @@ export class ScalarDiag extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = ScalarDiag.#TEMPLATE;
   }
+
+  static get observedAttributes() {
+    return ["src"];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "src") {
+      fetch(newValue)
+        .then((response) => response.json())
+        .then((data) => this.update(data))
+        .catch((reason) => {
+          console.error(reason);
+        });
+    }
+  }
+
+  update(data) {
+    const { observations, mean, std } = data.guess;
+
+    this.shadowRoot.querySelector("#obs").textContent = observations;
+    this.shadowRoot.querySelector("#mean").textContent = mean;
+    this.shadowRoot.querySelector("#std").textContent = std;
+  }
 }
