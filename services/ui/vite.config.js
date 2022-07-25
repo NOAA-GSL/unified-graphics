@@ -18,6 +18,11 @@ const config = {
       },
     },
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    include: ["../tests/unit/**/*.js"],
+  },
 };
 
 export default config;
