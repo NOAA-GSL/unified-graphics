@@ -29,6 +29,7 @@ export default class ScalarLoopDiag extends HTMLElement {
     svg {
       flex: 1 1 auto;
       align-self: stretch;
+      aspect-ratio: 4 / 3;
     }
 
     dl {
@@ -91,7 +92,7 @@ export default class ScalarLoopDiag extends HTMLElement {
 
     const xAxis = axisBottom(x).tickFormat(this.formatStat);
     const yAxis = axisRight(y)
-      .ticks(height / fontSize / 1.5)
+      .ticks(height / fontSize / 2)
       .tickFormat(this.formatCount)
       .tickSize(width - 2 * margin);
 
