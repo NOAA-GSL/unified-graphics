@@ -10,6 +10,8 @@ export default class ScalarVariableDiag extends HTMLElement {
   </ug-diag-scalarloop>`;
 
   static #STYLE = `<style>
+  * { margin: 0; }
+
   :host {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

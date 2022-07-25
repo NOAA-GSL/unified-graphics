@@ -25,7 +25,15 @@ export default class ScalarLoopDiag extends HTMLElement {
       flex-direction: column;
     }
 
-    * { flex: 0 0 auto }
+    :host > * + * {
+      margin-block-start: 0.5rem;
+    }
+
+    * {
+      flex: 0 0 auto;
+      margin: 0;
+    }
+
     svg {
       flex: 1 1 auto;
       align-self: stretch;
@@ -35,7 +43,7 @@ export default class ScalarLoopDiag extends HTMLElement {
     dl {
       display: grid;
       grid-template-columns: repeat(2, min-content);
-      gap: 0.5rem;
+      gap: 0 0.5rem;
     }
 
     dt {
