@@ -56,6 +56,8 @@ export default class ScalarLoopDiag extends HTMLElement {
   domain = [0, 1];
   range = [0, 1];
 
+  #data = {};
+
   constructor() {
     super();
 
@@ -66,12 +68,25 @@ export default class ScalarLoopDiag extends HTMLElement {
     shadowRoot.innerHTML = ScalarLoopDiag.#STYLE + ScalarLoopDiag.#TEMPLATE;
   }
 
-  set data(data) {
-    this.update(data);
+  connectedCallback() {
+    this.resizeObserver = new ResizeObserver(() => {
+      this.update();
+    });
+    this.resizeObserver.observe(this.shadowRoot?.querySelector("svg"));
   }
 
-  update(data) {
-    const { bins, observations, mean, std } = data;
+  disconnectedCallback() {
+    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector("svg"));
+    delete this?.resizeObserver;
+  }
+
+  set data(data) {
+    this.#data = data;
+    this.update();
+  }
+
+  update() {
+    const { bins, observations, mean, std } = this.#data;
 
     this.shadowRoot.querySelector("#obs").textContent = this.formatCount(observations);
     this.shadowRoot.querySelector("#mean").textContent = this.formatStat(mean);
