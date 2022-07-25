@@ -38,21 +38,6 @@ jobs:
       - name: Lint
         working-directory: services/ui
         run: npm run lint
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: 'services/ui/package-lock.json'
-      - name: Install dependencies
-        working-directory: services/ui
-        run: npm ci
-      - name: Check
-        working-directory: services/ui
-        run: npm run check
   test:
     runs-on: ubuntu-latest
     steps:
