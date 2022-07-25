@@ -6,11 +6,11 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npm run build \
-    && cp -rv node_modules/@uswds/uswds/dist/fonts build/_app/assets/
+RUN npm run build
 
 FROM nginx:1.21
 COPY --from=build /home/node/app/build /usr/share/nginx/html
+COPY default.conf.template /etc/nginx/templates/
 RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
