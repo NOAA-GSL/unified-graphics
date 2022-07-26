@@ -40,6 +40,9 @@ class VectorVariable:
         cls, u: xr.DataArray, v: xr.DataArray, lng: xr.DataArray, lat: xr.DataArray
     ) -> "VectorVariable":
 
+        # Ensure that all data arrays are the same length
+        assert all(u.shape == a.shape for a in [v, lng, lat])
+
         direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
         magnitude = np.sqrt(u**2 + v**2)
 
