@@ -14,6 +14,11 @@ class MinimLoop(Enum):
     ANALYSIS = "anl"
 
 
+class ValueType(Enum):
+    OBSERVATION = "observation"
+    FORECAST = "forecast"
+
+
 class Variable(Enum):
     MOISTURE = "q"
     PRESSURE = "p"
@@ -118,7 +123,7 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
-def wind(loop: MinimLoop) -> VectorDiag:
+def wind(loop: MinimLoop, value_type: ValueType) -> VectorDiag:
     ds = open_diagnostic(Variable.WIND, loop)
 
     observation = VectorVariable.from_vectors(ds["u_Observation"], ds["v_Observation"])

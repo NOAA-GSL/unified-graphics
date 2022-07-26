@@ -22,6 +22,17 @@ def index():
     return jsonify({"msg": "Hello, Dave"})
 
 
+@bp.route("/diag/wind/<loop>/<value_type>/")
+def wind(loop, value_type):
+    try:
+        loop_enum = diag.MinimLoop(loop)
+        type_enum = diag.ValueType(value_type)
+    except ValueError:
+        raise FileNotFoundError()
+
+    return jsonify(diag.wind(loop_enum, type_enum))
+
+
 @bp.route("/diag/<variable>/")
 def diagnostics(variable):
     if not hasattr(diag, variable):
