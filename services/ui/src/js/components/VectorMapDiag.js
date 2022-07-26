@@ -1,4 +1,9 @@
+import { extent } from "d3-array";
+import { scaleDiverging, scaleLinear } from "d3-scale";
+import { interpolateRdBu } from "d3-scale-chromatic";
 import { select } from "d3-selection";
+
+import { zip } from "../utils";
 
 export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
@@ -59,5 +64,39 @@ export default class VectorMapDiag extends HTMLElement {
     const { height, width } = svg.node().getBoundingClientRect();
 
     svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+    const loop = this.#data.guess;
+
+    if (!loop) return;
+
+    const data = [];
+    for (const [obs, fcst, coord] of zip(
+      loop.observation.magnitude,
+      loop.forecast.magnitude,
+      loop.coords
+    )) {
+      data.push([...coord, obs - fcst]);
+    }
+
+    const x = scaleLinear(
+      extent(data, (d) => d[0]),
+      [0, width]
+    );
+    const y = scaleLinear(
+      extent(data, (d) => d[1]),
+      [height, 0]
+    );
+
+    const [minVal, maxVal] = extent(data, (d) => d[2]);
+    const fill = scaleDiverging([minVal, 0, maxVal], interpolateRdBu);
+
+    svg
+      .selectAll("circle")
+      .data(data)
+      .join("circle")
+      .attr("r", 4)
+      .attr("cx", (d) => x(d[0]))
+      .attr("cy", (d) => y(d[1]))
+      .attr("fill", (d) => fill(d[2]));
   }
 }
