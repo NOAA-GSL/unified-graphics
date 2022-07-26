@@ -4,6 +4,7 @@ import pytest  # noqa: F401
 
 from unified_graphics.diag import (
     Bin,
+    Coordinate,
     MinimLoop,
     ScalarDiag,
     ValueType,
@@ -82,14 +83,18 @@ def test_temperature_diag_read_error(mock_diag_temperature, client):
     ],
 )
 def test_wind_diag(mock_diag_wind, loop, value_type, expected, client):
-    mock_diag_wind.return_value = VectorVariable(direction=[0.0], magnitude=[0.0])
+    mock_diag_wind.return_value = VectorVariable(
+        direction=[0.0], magnitude=[0.0], coords=[Coordinate(0.0, 0.0)]
+    )
 
     response = client.get(f"/diag/wind/{loop}/{value_type}/")
 
-    print(response)
-
     assert response.status_code == 200
-    assert response.json == {"direction": [0.0], "magnitude": [0.0]}
+    assert response.json == {
+        "direction": [0.0],
+        "magnitude": [0.0],
+        "coords": [[0.0, 0.0]],
+    }
     mock_diag_wind.assert_called_once_with(*expected)
 
 
