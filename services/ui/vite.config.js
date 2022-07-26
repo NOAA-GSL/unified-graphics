@@ -1,22 +1,27 @@
-import { sveltekit } from "@sveltejs/kit/vite";
-import { fileURLToPath } from "node:url";
-
-const scss = {
-  includePaths: ["node_modules/@uswds/uswds/packages"],
-};
-
 const config = {
-  css: {
-    preprocessorOptions: { scss },
+  root: "src/",
+  build: {
+    outDir: "../build/",
   },
-  plugins: [sveltekit()],
-  resolve: {
-    alias: {
-      "/fonts": fileURLToPath(
-        new URL("./node_modules/@uswds/uswds/dist/fonts", import.meta.url)
-      ),
-      styles: fileURLToPath(new URL("./src/styles/_index.scss", import.meta.url)),
+  css: {
+    preprocessorOptions: {
+      scss: {
+        includePaths: ["node_modules/@uswds/uswds/packages"],
+      },
     },
+  },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    include: ["../tests/unit/**/*.js"],
   },
 };
 
