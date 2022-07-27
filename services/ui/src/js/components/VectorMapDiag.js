@@ -1,4 +1,11 @@
-import { extent, interpolatePuOr, scaleDiverging, scaleLinear } from "d3";
+import {
+  extent,
+  geoPath,
+  geoTransform,
+  interpolatePuOr,
+  scaleDiverging,
+  scaleLinear,
+} from "d3";
 
 export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
@@ -78,11 +85,33 @@ export default class VectorMapDiag extends HTMLElement {
     const coords = [].concat(obs?.coords ?? [], fcst?.coords ?? []);
 
     const x = scaleLinear()
-      .domain(extent(coords, (d) => d[0]))
+      .domain(extent(coords, (d) => d[0] - 360))
       .range([0, width]);
     const y = scaleLinear()
       .domain(extent(coords, (d) => d[1]))
       .range([height, 0]);
+
+    const border = this.querySelector("#border")?.data;
+    if (border) {
+      const path = geoPath(
+        geoTransform({
+          point: function (lng, lat) {
+            this.stream.point(x(lng), y(lat));
+          },
+        }),
+        ctx
+      );
+
+      ctx.save();
+
+      ctx.beginPath();
+      path(border);
+      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = "#000";
+      ctx.stroke();
+
+      ctx.restore();
+    }
 
     if (obs && fcst) {
       const obsMinusFcst = obs.magnitude.map((magObs, idx) => [
@@ -96,7 +125,7 @@ export default class VectorMapDiag extends HTMLElement {
         const [lng, lat, delta] = omf;
 
         ctx.beginPath();
-        ctx.arc(x(lng), y(lat), 6, 0, 2 * Math.PI);
+        ctx.arc(x(lng - 360), y(lat), 6, 0, 2 * Math.PI);
 
         ctx.fillStyle = fill(delta);
         ctx.fill();
@@ -113,8 +142,8 @@ export default class VectorMapDiag extends HTMLElement {
         const dx = 12 * Math.cos(heading_r);
         const dy = 12 * Math.sin(heading_r);
 
-        ctx.moveTo(x(lng), y(lat));
-        ctx.lineTo(x(lng) + dx, y(lat) + dy);
+        ctx.moveTo(x(lng - 360), y(lat));
+        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
       });
 
       ctx.stroke();
@@ -130,8 +159,8 @@ export default class VectorMapDiag extends HTMLElement {
         const dx = 8 * Math.cos(heading_r);
         const dy = 8 * Math.sin(heading_r);
 
-        ctx.moveTo(x(lng), y(lat));
-        ctx.lineTo(x(lng) + dx, y(lat) + dy);
+        ctx.moveTo(x(lng - 360), y(lat));
+        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
       });
 
       ctx.strokeStyle = "#888888";
