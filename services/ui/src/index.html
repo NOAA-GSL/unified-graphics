@@ -18,7 +18,9 @@
           <h2 slot="title">Temperature</h2>
         </ug-diag-scalarvariable>
         <diag-vectormap>
-          <h2 slot="title">Wind</h2>
+          <h2 slot="title">Wind (Guess)</h2>
+          <data-source id="observation" src="/api/diag/wind/ges/observation/" />
+          <data-source id="forecast" src="/api/diag/wind/ges/forecast/" />
         </diag-vectormap>
       </main>
     </div>
