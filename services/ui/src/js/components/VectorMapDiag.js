@@ -10,7 +10,11 @@ import {
 
 export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
-  <canvas></canvas>`;
+  <canvas></canvas>
+  <label>
+    <input type="checkbox">
+    Show vector direction
+  </label>`;
 
   static #STYLE = `<style>
     :host {
@@ -36,10 +40,15 @@ export default class VectorMapDiag extends HTMLElement {
 
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = VectorMapDiag.#STYLE + VectorMapDiag.#TEMPLATE;
+
+    this.showVectors = shadowRoot.querySelector("[type=checkbox");
   }
 
   connectedCallback() {
     this.addEventListener("data-changed", this.update);
+    this.showVectors?.addEventListener("change", () => {
+      this.update();
+    });
     this.resizeObserver = new ResizeObserver(this.update);
 
     const canvas = this.shadowRoot?.querySelector("canvas");
@@ -114,7 +123,7 @@ export default class VectorMapDiag extends HTMLElement {
       });
     }
 
-    if (obs) {
+    if (obs && this.showVectors?.checked) {
       ctx.beginPath();
 
       obs.direction.forEach((heading, idx) => {
@@ -131,7 +140,7 @@ export default class VectorMapDiag extends HTMLElement {
       ctx.stroke();
     }
 
-    if (fcst) {
+    if (fcst && this.showVectors?.checked) {
       ctx.beginPath();
 
       fcst.direction.forEach((heading, idx) => {
