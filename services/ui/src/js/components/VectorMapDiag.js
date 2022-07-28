@@ -5,6 +5,7 @@ import {
   interpolatePuOr,
   scaleDiverging,
   scaleLinear,
+  scaleSqrt,
 } from "d3";
 
 export default class VectorMapDiag extends HTMLElement {
@@ -91,6 +92,63 @@ export default class VectorMapDiag extends HTMLElement {
       .domain(extent(coords, (d) => d[1]))
       .range([height, 0]);
 
+    if (obs && fcst) {
+      const obsMinusFcst = obs.magnitude.map((magObs, idx) => [
+        ...obs.coords[idx],
+        magObs - fcst.magnitude[idx],
+      ]);
+      const [minDiff, maxDiff] = extent(obsMinusFcst, (d) => d[2]);
+      const fill = scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff]);
+      const r = scaleSqrt()
+        .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
+        .range([0.5, 6]);
+
+      obsMinusFcst.forEach((omf) => {
+        const [lng, lat, delta] = omf;
+
+        ctx.beginPath();
+        ctx.arc(x(lng - 360), y(lat), r(Math.abs(delta)), 0, 2 * Math.PI);
+
+        ctx.fillStyle = fill(delta);
+        ctx.fill();
+      });
+    }
+
+    if (obs) {
+      ctx.beginPath();
+
+      obs.direction.forEach((heading, idx) => {
+        const [lng, lat] = obs.coords[idx];
+        const heading_r = ((heading + 90) * Math.PI) / 180;
+        // FIXME: This constant length should be configurable
+        const dx = 6 * Math.cos(heading_r);
+        const dy = 6 * Math.sin(heading_r);
+
+        ctx.moveTo(x(lng - 360), y(lat));
+        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
+      });
+
+      ctx.stroke();
+    }
+
+    if (fcst) {
+      ctx.beginPath();
+
+      fcst.direction.forEach((heading, idx) => {
+        const [lng, lat] = fcst.coords[idx];
+        const heading_r = ((heading + 90) * Math.PI) / 180;
+        // FIXME: This constant length should be configurable
+        const dx = 6 * Math.cos(heading_r);
+        const dy = 6 * Math.sin(heading_r);
+
+        ctx.moveTo(x(lng - 360), y(lat));
+        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
+      });
+
+      ctx.strokeStyle = "#888888";
+      ctx.stroke();
+    }
+
     const border = this.querySelector("#border")?.data;
     if (border) {
       const path = geoPath(
@@ -111,60 +169,6 @@ export default class VectorMapDiag extends HTMLElement {
       ctx.stroke();
 
       ctx.restore();
-    }
-
-    if (obs && fcst) {
-      const obsMinusFcst = obs.magnitude.map((magObs, idx) => [
-        ...obs.coords[idx],
-        magObs - fcst.magnitude[idx],
-      ]);
-      const [minDiff, maxDiff] = extent(obsMinusFcst, (d) => d[2]);
-      const fill = scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff]);
-
-      obsMinusFcst.forEach((omf) => {
-        const [lng, lat, delta] = omf;
-
-        ctx.beginPath();
-        ctx.arc(x(lng - 360), y(lat), 6, 0, 2 * Math.PI);
-
-        ctx.fillStyle = fill(delta);
-        ctx.fill();
-      });
-    }
-
-    if (obs) {
-      ctx.beginPath();
-
-      obs.direction.forEach((heading, idx) => {
-        const [lng, lat] = obs.coords[idx];
-        const heading_r = ((heading + 90) * Math.PI) / 180;
-        // FIXME: This constant length should be configurable
-        const dx = 12 * Math.cos(heading_r);
-        const dy = 12 * Math.sin(heading_r);
-
-        ctx.moveTo(x(lng - 360), y(lat));
-        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
-      });
-
-      ctx.stroke();
-    }
-
-    if (fcst) {
-      ctx.beginPath();
-
-      fcst.direction.forEach((heading, idx) => {
-        const [lng, lat] = fcst.coords[idx];
-        const heading_r = ((heading + 90) * Math.PI) / 180;
-        // FIXME: This constant length should be configurable
-        const dx = 8 * Math.cos(heading_r);
-        const dy = 8 * Math.sin(heading_r);
-
-        ctx.moveTo(x(lng - 360), y(lat));
-        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
-      });
-
-      ctx.strokeStyle = "#888888";
-      ctx.stroke();
     }
   }
 }
