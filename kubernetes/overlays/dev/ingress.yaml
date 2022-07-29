@@ -4,11 +4,10 @@ metadata:
   name: unified-graphics-ui
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
-    # kubernetes.io/ingress.class: traefik
 spec:
-  ingressClassName: traefik
   rules:
-    - http:
+    - host: unified-graphics.127.0.0.1.nip.io
+      http:
         paths:
           - path: /
             pathType: Prefix
@@ -17,10 +16,10 @@ spec:
                 name: unified-graphics-ui
                 port:
                   number: 80
-          # - path: /diag # TODO - this should be redirecting to the app root
+          # - path: /dev-api # TODO - this should be redirecting to the app root
           #   pathType: Prefix
           #   backend:
           #     service:
-          #       name: dev-unified-graphics-api # TODO - kustomize isn't updating this automatically
+          #       name: unified-graphics-api # TODO - kustomize isn't updating this automatically
           #       port:
           #         number: 80
