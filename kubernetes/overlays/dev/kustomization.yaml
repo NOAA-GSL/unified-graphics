@@ -6,4 +6,3 @@ resources:
 commonLabels:
   environment: dev
 namespace: dev
-namePrefix: dev-
