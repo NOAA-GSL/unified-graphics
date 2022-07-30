@@ -14,6 +14,11 @@ class MinimLoop(Enum):
     ANALYSIS = "anl"
 
 
+class ValueType(Enum):
+    OBSERVATION = "observation"
+    FORECAST = "forecast"
+
+
 class Variable(Enum):
     MOISTURE = "q"
     PRESSURE = "p"
@@ -28,9 +33,15 @@ Coordinate = namedtuple("Coordinate", "longitude latitude")
 class VectorVariable:
     direction: List[float]
     magnitude: List[float]
+    coords: List[Coordinate]
 
     @classmethod
-    def from_vectors(cls, u: xr.DataArray, v: xr.DataArray) -> "VectorVariable":
+    def from_vectors(
+        cls, u: xr.DataArray, v: xr.DataArray, lng: xr.DataArray, lat: xr.DataArray
+    ) -> "VectorVariable":
+
+        # Ensure that all data arrays are the same length
+        assert all(u.shape == a.shape for a in [v, lng, lat])
 
         direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
         magnitude = np.sqrt(u**2 + v**2)
@@ -44,6 +55,7 @@ class VectorVariable:
         return cls(
             direction=[float(d) for d in direction],
             magnitude=[float(m) for m in magnitude],
+            coords=coordinate_pairs_from_vectors(lng, lat),
         )
 
 
@@ -85,13 +97,6 @@ class ScalarDiag:
         return cls(bins, observations, float(mean), float(std))
 
 
-@dataclass
-class VectorDiag:
-    observation: VectorVariable
-    forecast: VectorVariable
-    coords: List[Coordinate]
-
-
 def coordinate_pairs_from_vectors(
     lng: xr.DataArray, lat: xr.DataArray
 ) -> List[Coordinate]:
@@ -118,14 +123,14 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
-def wind(loop: MinimLoop) -> VectorDiag:
+def wind(loop: MinimLoop, value_type: ValueType) -> VectorVariable:
     ds = open_diagnostic(Variable.WIND, loop)
 
-    observation = VectorVariable.from_vectors(ds["u_Observation"], ds["v_Observation"])
-    forecast = VectorVariable.from_vectors(
-        ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"],
-        ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"],
-    )
-    coordinates = coordinate_pairs_from_vectors(ds["Longitude"], ds["Latitude"])
+    if value_type is ValueType.FORECAST:
+        u = ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"]
+        v = ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"]
+    else:
+        u = ds["u_Observation"]
+        v = ds["v_Observation"]
 
-    return VectorDiag(observation, forecast, coordinates)
+    return VectorVariable.from_vectors(u, v, ds["Longitude"], ds["Latitude"])
