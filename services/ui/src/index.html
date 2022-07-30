@@ -14,15 +14,20 @@
         <strong><span>Unified Graphics</span></strong>
       </header>
       <main>
-        <ug-diag-scalarvariable src="/api/diag/temperature/">
-          <h2 slot="title">Temperature</h2>
-        </ug-diag-scalarvariable>
-        <diag-vectormap>
+        <diag-scalar src="/api/diag/temperature/ges/">
+          <h2 slot="title">Temperature (Guess)</h2>
+        </diag-scalar>
+
+        <diag-scalar src="/api/diag/temperature/anl/">
+          <h2 slot="title">Temperature (Analysis)</h2>
+        </diag-scalar>
+
+        <!-- <diag-vectormap>
           <h2 slot="title">Wind (Guess)</h2>
           <data-source id="border" src="/geo/borders.json" />
           <data-source id="observation" src="/api/diag/wind/ges/observation/" />
           <data-source id="forecast" src="/api/diag/wind/ges/forecast/" />
-        </diag-vectormap>
+        </diag-vectormap> -->
       </main>
     </div>
   </body>
