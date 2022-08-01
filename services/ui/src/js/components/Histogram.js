@@ -329,6 +329,15 @@ class Histogram extends HTMLElement {
           .text(`mean = ${fmt(this.#mean)}`);
       });
 
+    annotation
+      .selectAll(".count")
+      .data([null])
+      .join((enter) => enter.append("text").attr("class", "count"))
+      .attr("text-anchor", "end")
+      .attr("dominant-baseline", "top")
+      .attr("x", width - margin.left - margin.right)
+      .text(`Observations: ${yAxis.tickFormat()(this.#data.length)}`);
+
     svg
       .select(".x-axis")
       .attr("transform", `translate(${margin.left}, ${height - margin.bottom})`)
