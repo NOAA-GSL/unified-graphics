@@ -11,6 +11,8 @@ class DiagScalar extends HTMLElement {
     this.guess = new Histogram();
     this.analysis = new Histogram();
 
+    this.guess.titleX = this.analysis.titleX = "Observation − Forecast";
+    this.guess.titleY = this.analysis.titleY = "Observation Count";
     this.guess.formatX = this.analysis.formatX = " ,.3f";
 
     container.appendChild(this.guess);

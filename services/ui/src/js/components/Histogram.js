@@ -11,14 +11,41 @@ import {
 } from "d3";
 
 class Histogram extends HTMLElement {
-  static #TEMPLATE = `<svg>
+  static #TEMPLATE = `<span id="title-y"></span>
+  <svg>
     <g class="x-axis"></g>
     <g class="y-axis"></g>
     <g class="data"></g>
-  </svg>`;
+  </svg>
+  <span id="title-x"></span>`;
+
   static #STYLE = `<style>
   :host {
-    display: block;
+    display: grid;
+    gap: 0.5em;
+    grid-template-columns: min-content 1fr;
+    grid-template-rows: 1fr min-content;
+    place-items: center;
+  }
+
+  #title-x,
+  svg {
+    grid-column: 2 / 3;
+  }
+
+  #title-y,
+  svg {
+    grid-row: 1 / 2;
+  }
+
+  #title-y {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+  }
+
+  svg {
+    place-self: stretch;
+    aspect-ratio: 4 / 3;
   }
 
   line,
@@ -39,7 +66,7 @@ class Histogram extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["src"];
+    return ["format-x", "format-y", "src", "title-x", "title-y"];
   }
 
   connectedCallback() {
@@ -70,6 +97,10 @@ class Histogram extends HTMLElement {
       case "format-x":
       case "format-y":
         this.render();
+        break;
+      case "title-x":
+      case "title-y":
+        this.#updateLabel(name, newValue);
         break;
       default:
         break;
@@ -148,6 +179,30 @@ class Histogram extends HTMLElement {
     this.render();
   }
 
+  get titleX() {
+    return this.getAttribute("title-x");
+  }
+
+  set titleX(value) {
+    if (!value) {
+      this.removeAttribute("title-x");
+    } else {
+      this.setAttribute("title-x", value);
+    }
+  }
+
+  get titleY() {
+    return this.getAttribute("title-y");
+  }
+
+  set titleY(value) {
+    if (!value) {
+      this.removeAttribute("title-y");
+    } else {
+      this.setAttribute("title-y", value);
+    }
+  }
+
   render() {
     const svg = select(this.shadowRoot).select("svg");
     const { height, width } = svg.node().getBoundingClientRect();
@@ -202,6 +257,12 @@ class Histogram extends HTMLElement {
         g.select(".domain").remove();
         g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
       });
+  }
+
+  #updateLabel(id, value) {
+    const span = this.shadowRoot?.getElementById(id);
+    if (!span) return;
+    span.textContent = value;
   }
 }
 
