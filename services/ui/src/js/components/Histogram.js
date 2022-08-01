@@ -62,6 +62,7 @@ class Histogram extends HTMLElement {
   }
 
   line,
+  path,
   rect {
     shape-rendering: crispEdges;
   }
