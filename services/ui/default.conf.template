@@ -6,6 +6,10 @@ server {
 
     location /api/ {
         proxy_pass ${UG_DIAG_API_HOST};
+        # Make the client IP available to the API server for better tracing/debugging
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # The API service can take a long time to return for vector data
+        proxy_read_timeout 600s;
     }
 
     location / {
