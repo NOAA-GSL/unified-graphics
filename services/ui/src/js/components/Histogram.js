@@ -2,9 +2,11 @@ import {
   axisBottom,
   axisRight,
   bin,
+  deviation,
   extent,
   format,
   max,
+  mean,
   min,
   scaleLinear,
   select,
@@ -16,6 +18,7 @@ class Histogram extends HTMLElement {
     <g class="x-axis"></g>
     <g class="y-axis"></g>
     <g class="data"></g>
+    <g class="annotation"></g>
   </svg>
   <span id="title-x"></span>`;
 
@@ -62,11 +65,18 @@ class Histogram extends HTMLElement {
   rect {
     shape-rendering: crispEdges;
   }
+
+  .deviation {
+    fill: #adcfdc;
+    mix-blend-mode: color-burn;
+  }
   </style>`;
 
   #data = [];
   #thresholds = null;
   #range = null;
+  #mean = 0;
+  #deviation = 0;
 
   constructor() {
     super();
@@ -131,6 +141,9 @@ class Histogram extends HTMLElement {
 
   set data(value) {
     this.#data = value;
+    this.#mean = mean(value);
+    this.#deviation = deviation(value);
+
     this.render();
   }
 
@@ -220,6 +233,10 @@ class Histogram extends HTMLElement {
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };
 
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+    if (!this.#data?.length) return;
+
     const data = this.bins;
 
     const xScale = scaleLinear()
@@ -240,8 +257,6 @@ class Histogram extends HTMLElement {
       .tickFormat(format(this.formatY))
       .tickSize(width);
 
-    svg.attr("viewBox", `0 0 ${width} ${height}`);
-
     svg
       .select(".data")
       .attr("transform", `translate(${margin.left}, ${margin.top})`)
@@ -253,6 +268,18 @@ class Histogram extends HTMLElement {
       .attr("y", (d) => yScale(d.length))
       .attr("width", (d) => xScale(d.x1) - xScale(d.x0))
       .attr("height", (d) => yScale(0) - yScale(d.length));
+
+    const annotation = svg
+      .select(".annotation")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    annotation
+      .selectAll(".deviation")
+      .data([[this.#mean - this.#deviation, this.#mean + this.#deviation]])
+      .join((enter) => enter.append("rect").attr("class", "deviation"))
+      .attr("x", (d) => xScale(d[0]))
+      .attr("width", (d) => xScale(d[1]) - xScale(d[0]))
+      .attr("height", height - margin.top - margin.bottom);
 
     svg
       .select(".x-axis")
