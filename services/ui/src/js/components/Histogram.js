@@ -71,7 +71,7 @@ class Histogram extends HTMLElement {
     mix-blend-mode: color-burn;
   }
 
-  .deviation line {
+  .annotation line {
     stroke: currentColor;
   }
   </style>`;
@@ -306,6 +306,27 @@ class Histogram extends HTMLElement {
           .attr("text-anchor", "end")
           .attr("dominant-baseline", "middle")
           .text(`σ = ${fmt(this.#deviation)}`);
+      });
+
+    annotation
+      .selectAll(".mean")
+      .data([null])
+      .join((enter) => enter.append("g").attr("class", "mean"))
+      .attr("transform", `translate(${xScale(this.#mean)},0)`)
+      .call((g) => {
+        const fmt = xAxis.tickFormat();
+
+        g.selectAll("line")
+          .data([null])
+          .join("line")
+          .attr("y2", height - margin.top - margin.bottom);
+
+        g.selectAll("text")
+          .data([null])
+          .join("text")
+          .attr("dominant-baseline", "middle")
+          .attr("x", fontSize * 0.25)
+          .text(`mean = ${fmt(this.#mean)}`);
       });
 
     svg
