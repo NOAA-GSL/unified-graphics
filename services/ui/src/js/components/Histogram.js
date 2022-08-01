@@ -43,6 +43,16 @@ class Histogram extends HTMLElement {
     transform: rotate(180deg);
   }
 
+  #title-x,
+  .x-axis {
+    color: #3d4551;
+  }
+
+  #title-y,
+  .y-axis {
+    color: #71767a;
+  }
+
   svg {
     place-self: stretch;
     aspect-ratio: 4 / 3;
