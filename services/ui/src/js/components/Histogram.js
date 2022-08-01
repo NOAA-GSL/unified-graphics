@@ -66,9 +66,13 @@ class Histogram extends HTMLElement {
     shape-rendering: crispEdges;
   }
 
-  .deviation {
-    fill: #adcfdc;
+  .deviation rect {
+    fill: #dfe1e2;
     mix-blend-mode: color-burn;
+  }
+
+  .deviation line {
+    stroke: currentColor;
   }
   </style>`;
 
@@ -275,11 +279,34 @@ class Histogram extends HTMLElement {
 
     annotation
       .selectAll(".deviation")
-      .data([[this.#mean - this.#deviation, this.#mean + this.#deviation]])
-      .join((enter) => enter.append("rect").attr("class", "deviation"))
-      .attr("x", (d) => xScale(d[0]))
-      .attr("width", (d) => xScale(d[1]) - xScale(d[0]))
-      .attr("height", height - margin.top - margin.bottom);
+      .data([null])
+      .join((enter) => enter.append("g").attr("class", "deviation"))
+      .attr("transform", `translate(${xScale(this.#mean - this.#deviation)},1)`)
+      .call((g) => {
+        const fmt = xAxis.tickFormat();
+
+        g.selectAll("rect")
+          .data([null])
+          .join("rect")
+          .attr(
+            "width",
+            xScale(this.#mean + this.#deviation) - xScale(this.#mean - this.#deviation)
+          )
+          .attr("height", height - margin.top - margin.bottom);
+
+        g.selectAll("line")
+          .data([null])
+          .join("line")
+          .attr("x2", -0.75 * fontSize);
+
+        g.selectAll("text")
+          .data([null])
+          .join("text")
+          .attr("x", -fontSize)
+          .attr("text-anchor", "end")
+          .attr("dominant-baseline", "middle")
+          .text(`σ = ${fmt(this.#deviation)}`);
+      });
 
     svg
       .select(".x-axis")
