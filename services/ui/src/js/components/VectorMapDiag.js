@@ -53,7 +53,7 @@ export default class VectorMapDiag extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = VectorMapDiag.#STYLE + VectorMapDiag.#TEMPLATE;
 
-    this.showVectors = shadowRoot.querySelector("[type=checkbox");
+    this.showVectors = shadowRoot.querySelector("[type=checkbox]");
   }
 
   connectedCallback() {
