@@ -38,7 +38,7 @@ export default class VectorMapDiag extends HTMLElement {
     .grid{
       flex: 1 1 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(640px, 100%), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(640px, 100%), 1fr));
       grid-template-rows: min-content 1fr min-content;
       place-items: stretch;
       gap: 1em;
