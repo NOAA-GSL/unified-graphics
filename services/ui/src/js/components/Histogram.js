@@ -135,7 +135,12 @@ class Histogram extends HTMLElement {
   get bins() {
     const binner = bin();
 
-    if (this.thresholds) binner.thresholds(this.thresholds);
+    if (this.thresholds) {
+      binner.thresholds(this.thresholds);
+    } else {
+      const scale = scaleLinear().domain(extent(this.data)).nice(160);
+      binner.thresholds(scale.ticks(160));
+    }
 
     return binner(this.data);
   }
