@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: unified-graphics-ui
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: unified-graphics.127.0.0.1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: unified-graphics-ui
+                port:
+                  number: 80
+          # - path: /dev-api # TODO - this should be redirecting to the app root
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: unified-graphics-api # TODO - kustomize isn't updating this automatically
+          #       port:
+          #         number: 80

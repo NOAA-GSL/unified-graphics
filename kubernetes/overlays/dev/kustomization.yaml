@@ -1,0 +1,8 @@
+resources:
+  - api
+  - ui
+  - "namespace.yaml"
+  - "ingress.yaml"
+commonLabels:
+  environment: dev
+namespace: dev

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: unified-graphics-ui
+  name: unified-graphics-ui
+spec:
+  ports:
+  - port: 80
+    targetPort: 80 # Port to forward to in the pod
+    protocol: TCP
+    name: http
+  selector:
+    app: unified-graphics-ui
+  type: ClusterIP
