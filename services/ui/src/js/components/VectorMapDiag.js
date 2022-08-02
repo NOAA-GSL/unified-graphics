@@ -33,6 +33,7 @@ export default class VectorMapDiag extends HTMLElement {
 
     canvas {
       aspect-ratio: 4 / 3;
+      cursor: crosshair;
     }
 
     .grid{
@@ -46,6 +47,9 @@ export default class VectorMapDiag extends HTMLElement {
   </style>`;
 
   #data = {};
+  #selection = null;
+  #mousedownWrapper = null;
+  #pendingUpdate = null;
 
   constructor() {
     super();
@@ -66,7 +70,12 @@ export default class VectorMapDiag extends HTMLElement {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
+      this.#mousedownWrapper = (event) => {
+        this.mapMousedownCallback(event);
+      };
+
       this.resizeObserver.observe(canvas);
+      canvas.addEventListener("mousedown", this.#mousedownWrapper);
     }
 
     this.update();
@@ -79,9 +88,21 @@ export default class VectorMapDiag extends HTMLElement {
 
     if (canvas) {
       this.resizeObserver?.unobserve(canvas);
+      canvas.removeEventListener("mousedown", this.#mousedownWrapper);
+      this.#mousedownWrapper = null;
     }
 
     delete this.resizeObserver;
+  }
+
+  requestUpdate() {
+    if (this.#pendingUpdate) {
+      window.cancelAnimationFrame(this.#pendingUpdate);
+    }
+
+    this.#pendingUpdate = window.requestAnimationFrame(() => {
+      this.update();
+    });
   }
 
   update() {
@@ -196,5 +217,34 @@ export default class VectorMapDiag extends HTMLElement {
 
       ctx.restore();
     }
+
+    if (this.#selection) {
+      const [[left, top], [right, bottom]] = this.#selection;
+
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = "black";
+      ctx.fillRect(left, top, right, bottom);
+    }
+  }
+
+  mapMousedownCallback({ target, offsetX, offsetY }) {
+    this.#selection = [
+      [offsetX, offsetY],
+      [offsetX, offsetY],
+    ];
+
+    const mouseupCallback = () => {
+      window.removeEventListener("mouseup", mouseupCallback);
+      target.removeEventListener("mousemove", mousemoveCallback);
+      console.log(this.#selection);
+    };
+
+    const mousemoveCallback = ({ clientX, offsetY }) => {
+      this.#selection[1] = [clientX, offsetY];
+      this.requestUpdate();
+    };
+
+    target.addEventListener("mousemove", mousemoveCallback);
+    window.addEventListener("mouseup", mouseupCallback);
   }
 }
