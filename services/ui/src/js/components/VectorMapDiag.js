@@ -10,7 +10,10 @@ import {
 
 export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
-  <canvas></canvas>
+  <div class="grid">
+    <canvas></canvas>
+    <chart-histogram title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+  </div>
   <label>
     <input type="checkbox">
     Show vector direction
@@ -20,6 +23,7 @@ export default class VectorMapDiag extends HTMLElement {
     :host {
       display: flex;
       flex-direction: column;
+      gap: 1em;
     }
 
     * {
@@ -28,8 +32,16 @@ export default class VectorMapDiag extends HTMLElement {
     }
 
     canvas {
-      flex: 1 1 auto;
       aspect-ratio: 4 / 3;
+    }
+
+    .grid{
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(640px, 100%), 1fr));
+      grid-template-rows: min-content 1fr min-content;
+      place-items: stretch;
+      gap: 1em;
     }
   </style>`;
 
@@ -121,6 +133,11 @@ export default class VectorMapDiag extends HTMLElement {
         ctx.fillStyle = fill(delta);
         ctx.fill();
       });
+
+      const hist = this.shadowRoot?.querySelector("chart-histogram");
+      if (hist) {
+        hist.data = obsMinusFcst.map((d) => d[2]);
+      }
     }
 
     if (obs && this.showVectors?.checked) {
