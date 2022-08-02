@@ -59,44 +59,6 @@ class VectorVariable:
         )
 
 
-@dataclass
-class Bin:
-    lower: float
-    upper: float
-    value: float
-
-
-@dataclass
-class ScalarDiag:
-    bins: List[Bin]
-    observations: int
-    mean: float
-    std: float
-
-    @classmethod
-    def from_array(cls, data: xr.DataArray) -> "ScalarDiag":
-        observations = len(data)
-
-        if observations == 0:
-            return cls(bins=[], observations=0, mean=0, std=0)
-
-        mean = np.mean(data) or 0
-        std = np.std(data) or 0
-
-        counts, bin_edges = np.histogram(data, bins="auto")
-
-        bins = [
-            Bin(
-                lower=float(bin_edges[i]),
-                upper=float(bin_edges[i + 1]),
-                value=float(value),
-            )
-            for i, value in enumerate(counts)
-        ]
-
-        return cls(bins, observations, float(mean), float(std))
-
-
 def coordinate_pairs_from_vectors(
     lng: xr.DataArray, lat: xr.DataArray
 ) -> List[Coordinate]:
@@ -105,9 +67,9 @@ def coordinate_pairs_from_vectors(
     return [Coordinate(longitude=float(x), latitude=float(y)) for x, y in zip(lng, lat)]
 
 
-def temperature(loop: MinimLoop) -> ScalarDiag:
+def temperature(loop: MinimLoop) -> List[float]:
     ds = open_diagnostic(Variable.TEMPERATURE, loop)
-    return ScalarDiag.from_array(ds["Obs_Minus_Forecast_adjusted"])
+    return [float(v) for v in ds["Obs_Minus_Forecast_unadjusted"]]
 
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:

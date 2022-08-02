@@ -8,6 +8,14 @@
   display: flex;
 }
 
+[data-layout="grid"] {
+  gap: var(--gutter, #{uswds.units(2)});
+
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(min(30rem, 100%), 1fr));
+}
+
 :where(.flow) > * + * {
   margin-top: var(--space, uswds.units(2));
 }

@@ -33,14 +33,11 @@ def wind(loop, value_type):
     return jsonify(diag.wind(loop_enum, type_enum))
 
 
-@bp.route("/diag/<variable>/")
-def diagnostics(variable):
+@bp.route("/diag/<variable>/<loop>/")
+def diagnostics(variable, loop):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
 
-    guess = variable_diagnostics(diag.MinimLoop.GUESS)
-    analysis = variable_diagnostics(diag.MinimLoop.ANALYSIS)
-
-    return jsonify(guess=guess, analysis=analysis)
+    return jsonify(variable_diagnostics(diag.MinimLoop(loop)))

@@ -7,3 +7,7 @@ export function* zip(...args) {
     yield args.map((arr) => arr[i]);
   }
 }
+
+export function subtract(a, b) {
+  return a - b;
+}
