@@ -157,7 +157,25 @@ export default class VectorMapDiag extends HTMLElement {
 
       const hist = this.shadowRoot?.querySelector("chart-histogram");
       if (hist) {
-        hist.data = obsMinusFcst.map((d) => d[2]);
+        if (this.#selection) {
+          const [x0, x1] = this.#selection.map((d) => x.invert(d[0]));
+          const [y0, y1] = this.#selection.map((d) => y.invert(d[1]));
+
+          const left = Math.min(x0, x1);
+          const right = Math.max(x0, x1);
+          const bottom = Math.min(y0, y1);
+          const top = Math.max(y0, y1);
+
+          hist.data = obsMinusFcst
+            .filter((d) => {
+              const lng = d[0] - 360;
+              const lat = d[1];
+              return lng >= left && lng <= right && lat >= bottom && lat <= top;
+            })
+            .map((d) => d[2]);
+        } else {
+          hist.data = obsMinusFcst.map((d) => d[2]);
+        }
       }
     }
 
@@ -236,11 +254,9 @@ export default class VectorMapDiag extends HTMLElement {
     const mouseupCallback = () => {
       window.removeEventListener("mouseup", mouseupCallback);
       target.removeEventListener("mousemove", mousemoveCallback);
-      console.log(this.#selection);
     };
 
     const mousemoveCallback = ({ offsetX, offsetY }) => {
-      console.log([offsetX, offsetY]);
       this.#selection[1] = [offsetX, offsetY];
       this.requestUpdate();
     };
