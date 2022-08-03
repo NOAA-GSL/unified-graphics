@@ -4,11 +4,11 @@
 
 We're using a Kustomize-style layout. `base` contains the default k8s manifests, while the `overlays` directory provide kustomize overrides for particular environments. You'll need Rancher Desktop (preferred and provides docker, kubectl, etc...) or you can try using docker, minikube, and kubectl installed locally. Trivy is recommended for security scanning.
 
-## Getting Started 
+## Getting Started
 
 ### Start app via CLI
 
-Currently, you will need to update the path used by the `hostPath` volume in `kubernetes/overlays/dev/api/patch_add_volume.yaml` to match your host system.
+Currently, you will need to update the path used by the `hostPath` volume in `kubernetes/overlays/dev/api/patch_add_volume.yaml` to match where you've put data on your host system. (If you don't want to use `/tmp`)
 
 Rancher Desktop
 ```console

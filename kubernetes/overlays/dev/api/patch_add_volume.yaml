@@ -13,5 +13,5 @@ spec:
             volumes:
               - name: local-volume
                 hostPath:
-                  path: "/home/ian.mcginnis/git/verification/unified-graphics/tmp/data"
+                  path: "/tmp/ug-data"
                   type: Directory
