@@ -223,7 +223,7 @@ export default class VectorMapDiag extends HTMLElement {
 
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = "black";
-      ctx.fillRect(left, top, right, bottom);
+      ctx.fillRect(left, top, right - left, bottom - top);
     }
   }
 
@@ -239,8 +239,9 @@ export default class VectorMapDiag extends HTMLElement {
       console.log(this.#selection);
     };
 
-    const mousemoveCallback = ({ clientX, offsetY }) => {
-      this.#selection[1] = [clientX, offsetY];
+    const mousemoveCallback = ({ offsetX, offsetY }) => {
+      console.log([offsetX, offsetY]);
+      this.#selection[1] = [offsetX, offsetY];
       this.requestUpdate();
     };
 
