@@ -1,0 +1,12 @@
+bases:
+  - ../../../base/ui
+images:
+  - name: unified-graphics/ui
+    newName: ghcr.io/noaa-gsl/unified-graphics/ui
+    newTag: main
+
+configMapGenerator:
+  - name: unified-graphics-ui
+    behavior: merge
+    envs:
+      - dev.ui.env

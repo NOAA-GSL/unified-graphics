@@ -1,0 +1,8 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: unified-graphics-api
+    envs:
+      - api.env
