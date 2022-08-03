@@ -3,15 +3,15 @@ kind: Deployment
 metadata:
   name: unified-graphics-api
 spec:
-    template:
-        spec:
-            containers:
-                - name: unified-graphics-api
-                  volumeMounts:
-                    - mountPath: /local-data
-                      name: local-volume
-            volumes:
-              - name: local-volume
-                hostPath:
-                  path: "/tmp/ug-data"
-                  type: Directory
+  template:
+    spec:
+      containers:
+        - name: unified-graphics-api
+          volumeMounts:
+            - mountPath: /local-data
+              name: local-volume
+      volumes:
+        - name: local-volume
+          hostPath:
+            path: "/tmp/ug-data"
+            type: Directory

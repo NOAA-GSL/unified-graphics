@@ -1,6 +1,6 @@
 resources:
-- deployment.yaml
-- service.yaml
+  - deployment.yaml
+  - service.yaml
 
 configMapGenerator:
   - name: unified-graphics-ui

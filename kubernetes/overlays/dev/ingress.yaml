@@ -16,10 +16,3 @@ spec:
                 name: unified-graphics-ui
                 port:
                   number: 80
-          # - path: /dev-api # TODO - this should be redirecting to the app root
-          #   pathType: Prefix
-          #   backend:
-          #     service:
-          #       name: unified-graphics-api # TODO - kustomize isn't updating this automatically
-          #       port:
-          #         number: 80

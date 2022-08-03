@@ -1,9 +1,9 @@
 bases:
-- ../../../base/ui
+  - ../../../base/ui
 images:
-- name: unified-graphics/ui
-  newName: ghcr.io/noaa-gsl/unified-graphics/ui
-  newTag: main
+  - name: unified-graphics/ui
+    newName: ghcr.io/noaa-gsl/unified-graphics/ui
+    newTag: main
 
 configMapGenerator:
   - name: unified-graphics-ui

@@ -1,11 +1,11 @@
 bases:
-- ../../../base/api
+  - ../../../base/api
 images:
-- name: unified-graphics/api
-  newName: ghcr.io/noaa-gsl/unified-graphics/api
-  newTag: main
+  - name: unified-graphics/api
+    newName: ghcr.io/noaa-gsl/unified-graphics/api
+    newTag: main
 patchesStrategicMerge:
-- patch_add_volume.yaml
+  - patch_add_volume.yaml
 
 configMapGenerator:
   - name: unified-graphics-api
