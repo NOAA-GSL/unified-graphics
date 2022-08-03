@@ -12,7 +12,10 @@ export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
   <div class="grid">
     <canvas></canvas>
-    <chart-histogram title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+    <div>
+      <chart-histogram id="wind-speed" title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+      <chart-histogram id="wind-direction" title-x="Wind Direction (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+    </div>
   </div>
   <label>
     <input type="checkbox">
@@ -34,6 +37,10 @@ export default class VectorMapDiag extends HTMLElement {
     canvas {
       aspect-ratio: 4 / 3;
       cursor: crosshair;
+    }
+
+    chart-histogram + chart-histogram {
+      margin-block-start: 1em;
     }
 
     .grid{
@@ -155,8 +162,15 @@ export default class VectorMapDiag extends HTMLElement {
         ctx.fill();
       });
 
-      const hist = this.shadowRoot?.querySelector("chart-histogram");
-      if (hist) {
+      const speedHist = this.shadowRoot?.querySelector("#wind-speed");
+      const dirHist = this.shadowRoot?.querySelector("#wind-direction");
+      if (speedHist || dirHist) {
+        let speed = obsMinusFcst;
+        let dir = obs.direction.map((dirObs, idx) => [
+          ...obs.coords[idx],
+          dirObs - fcst.direction[idx],
+        ]);
+
         if (this.#selection) {
           const [x0, x1] = this.#selection.map((d) => x.invert(d[0]));
           const [y0, y1] = this.#selection.map((d) => y.invert(d[1]));
@@ -166,16 +180,18 @@ export default class VectorMapDiag extends HTMLElement {
           const bottom = Math.min(y0, y1);
           const top = Math.max(y0, y1);
 
-          hist.data = obsMinusFcst
-            .filter((d) => {
-              const lng = d[0] - 360;
-              const lat = d[1];
-              return lng >= left && lng <= right && lat >= bottom && lat <= top;
-            })
-            .map((d) => d[2]);
-        } else {
-          hist.data = obsMinusFcst.map((d) => d[2]);
+          const inSelection = (d) => {
+            const lng = d[0] - 360;
+            const lat = d[1];
+            return lng >= left && lng <= right && lat >= bottom && lat <= top;
+          };
+
+          speed = speed.filter(inSelection);
+          dir = dir.filter(inSelection);
         }
+
+        if (speedHist) speedHist.data = speed.map((d) => d[2]);
+        if (dirHist) dirHist.data = dir.map((d) => d[2]);
       }
     }
 
@@ -254,6 +270,13 @@ export default class VectorMapDiag extends HTMLElement {
     const mouseupCallback = () => {
       window.removeEventListener("mouseup", mouseupCallback);
       target.removeEventListener("mousemove", mousemoveCallback);
+      if (
+        this.#selection[0][0] === this.#selection[1][0] &&
+        this.#selection[0][1] === this.#selection[1][1]
+      ) {
+        this.#selection = null;
+        this.requestUpdate();
+      }
     };
 
     const mousemoveCallback = ({ offsetX, offsetY }) => {
