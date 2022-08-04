@@ -10,7 +10,13 @@ import {
 
 export default class VectorMapDiag extends HTMLElement {
   static #TEMPLATE = `<slot name=title></slot>
-  <canvas></canvas>
+  <div class="grid">
+    <canvas></canvas>
+    <div>
+      <chart-histogram id="wind-speed" title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+      <chart-histogram id="wind-direction" title-x="Wind Direction (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
+    </div>
+  </div>
   <label>
     <input type="checkbox">
     Show vector direction
@@ -20,6 +26,7 @@ export default class VectorMapDiag extends HTMLElement {
     :host {
       display: flex;
       flex-direction: column;
+      gap: 1em;
     }
 
     * {
@@ -28,12 +35,28 @@ export default class VectorMapDiag extends HTMLElement {
     }
 
     canvas {
-      flex: 1 1 auto;
       aspect-ratio: 4 / 3;
+      cursor: crosshair;
+    }
+
+    chart-histogram + chart-histogram {
+      margin-block-start: 1em;
+    }
+
+    .grid{
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(640px, 100%), 1fr));
+      grid-template-rows: min-content 1fr min-content;
+      place-items: stretch;
+      gap: 1em;
     }
   </style>`;
 
   #data = {};
+  #selection = null;
+  #mousedownWrapper = null;
+  #pendingUpdate = null;
 
   constructor() {
     super();
@@ -41,7 +64,7 @@ export default class VectorMapDiag extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = VectorMapDiag.#STYLE + VectorMapDiag.#TEMPLATE;
 
-    this.showVectors = shadowRoot.querySelector("[type=checkbox");
+    this.showVectors = shadowRoot.querySelector("[type=checkbox]");
   }
 
   connectedCallback() {
@@ -54,7 +77,12 @@ export default class VectorMapDiag extends HTMLElement {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
+      this.#mousedownWrapper = (event) => {
+        this.mapMousedownCallback(event);
+      };
+
       this.resizeObserver.observe(canvas);
+      canvas.addEventListener("mousedown", this.#mousedownWrapper);
     }
 
     this.update();
@@ -67,9 +95,21 @@ export default class VectorMapDiag extends HTMLElement {
 
     if (canvas) {
       this.resizeObserver?.unobserve(canvas);
+      canvas.removeEventListener("mousedown", this.#mousedownWrapper);
+      this.#mousedownWrapper = null;
     }
 
     delete this.resizeObserver;
+  }
+
+  requestUpdate() {
+    if (this.#pendingUpdate) {
+      window.cancelAnimationFrame(this.#pendingUpdate);
+    }
+
+    this.#pendingUpdate = window.requestAnimationFrame(() => {
+      this.update();
+    });
   }
 
   update() {
@@ -121,6 +161,38 @@ export default class VectorMapDiag extends HTMLElement {
         ctx.fillStyle = fill(delta);
         ctx.fill();
       });
+
+      const speedHist = this.shadowRoot?.querySelector("#wind-speed");
+      const dirHist = this.shadowRoot?.querySelector("#wind-direction");
+      if (speedHist || dirHist) {
+        let speed = obsMinusFcst;
+        let dir = obs.direction.map((dirObs, idx) => [
+          ...obs.coords[idx],
+          dirObs - fcst.direction[idx],
+        ]);
+
+        if (this.#selection) {
+          const [x0, x1] = this.#selection.map((d) => x.invert(d[0]));
+          const [y0, y1] = this.#selection.map((d) => y.invert(d[1]));
+
+          const left = Math.min(x0, x1);
+          const right = Math.max(x0, x1);
+          const bottom = Math.min(y0, y1);
+          const top = Math.max(y0, y1);
+
+          const inSelection = (d) => {
+            const lng = d[0] - 360;
+            const lat = d[1];
+            return lng >= left && lng <= right && lat >= bottom && lat <= top;
+          };
+
+          speed = speed.filter(inSelection);
+          dir = dir.filter(inSelection);
+        }
+
+        if (speedHist) speedHist.data = speed.map((d) => d[2]);
+        if (dirHist) dirHist.data = dir.map((d) => d[2]);
+      }
     }
 
     if (obs && this.showVectors?.checked) {
@@ -179,5 +251,40 @@ export default class VectorMapDiag extends HTMLElement {
 
       ctx.restore();
     }
+
+    if (this.#selection) {
+      const [[left, top], [right, bottom]] = this.#selection;
+
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = "black";
+      ctx.fillRect(left, top, right - left, bottom - top);
+    }
+  }
+
+  mapMousedownCallback({ target, offsetX, offsetY }) {
+    this.#selection = [
+      [offsetX, offsetY],
+      [offsetX, offsetY],
+    ];
+
+    const mouseupCallback = () => {
+      window.removeEventListener("mouseup", mouseupCallback);
+      target.removeEventListener("mousemove", mousemoveCallback);
+      if (
+        this.#selection[0][0] === this.#selection[1][0] &&
+        this.#selection[0][1] === this.#selection[1][1]
+      ) {
+        this.#selection = null;
+        this.requestUpdate();
+      }
+    };
+
+    const mousemoveCallback = ({ offsetX, offsetY }) => {
+      this.#selection[1] = [offsetX, offsetY];
+      this.requestUpdate();
+    };
+
+    target.addEventListener("mousemove", mousemoveCallback);
+    window.addEventListener("mouseup", mouseupCallback);
   }
 }
