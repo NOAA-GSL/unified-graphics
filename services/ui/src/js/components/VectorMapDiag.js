@@ -147,7 +147,7 @@ export default class VectorMapDiag extends HTMLElement {
         magObs - fcst.magnitude[idx],
       ]);
       const [minDiff, maxDiff] = extent(obsMinusFcst, (d) => d[2]);
-      const fill = scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff]);
+      const fill = scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff]).nice();
       const r = scaleSqrt()
         .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
         .range([0.5, 6]);
@@ -193,6 +193,28 @@ export default class VectorMapDiag extends HTMLElement {
         if (speedHist) speedHist.data = speed.map((d) => d[2]);
         if (dirHist) dirHist.data = dir.map((d) => d[2]);
       }
+
+      const start = fill.domain()[0],
+        stop = fill.domain()[2];
+
+      const legendX = scaleLinear()
+        .domain([start, stop])
+        .range([16, width / 2]);
+      const step = (stop - start) / (width / 2 - 16);
+
+      for (let diff = start; diff <= stop; diff += step) {
+        ctx.fillStyle = fill(diff);
+        ctx.fillRect(legendX(diff), height - 32, 1, 32);
+      }
+
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      fill.ticks().forEach((tick) => {
+        ctx.fillRect(legendX(tick), height - 40, 1, 8);
+        ctx.fillText(tick.toString(), legendX(tick), height - 48);
+      });
+
+      ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
     }
 
     if (obs && this.showVectors?.checked) {
