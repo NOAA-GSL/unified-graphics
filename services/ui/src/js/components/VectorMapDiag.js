@@ -214,6 +214,7 @@ export default class VectorMapDiag extends HTMLElement {
         ctx.fillText(tick.toString(), legendX(tick), height - 48);
       });
 
+      ctx.textAlign = "left";
       ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
     }
 
