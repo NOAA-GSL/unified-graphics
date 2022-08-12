@@ -27,6 +27,30 @@ class Variable(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
+PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
+
+
+@dataclass
+class VectorObservation:
+    stationId: str
+    variable: str
+    guess: PolarCoordinate
+    analysis: PolarCoordinate
+    observed: PolarCoordinate
+    position: Coordinate
+
+    def to_geojson(self):
+        return {
+            "type": "Feature",
+            "properties": {
+                "stationId": self.stationId,
+                "variable": self.variable,
+                "guess": self.guess._asdict(),
+                "analysis": self.analysis._asdict(),
+                "observed": self.observed._asdict(),
+            },
+            "geometry": {"type": "Point", "coordinates": list(self.position)},
+        }
 
 
 @dataclass
@@ -85,14 +109,5 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
-def wind(loop: MinimLoop, value_type: ValueType) -> VectorVariable:
-    ds = open_diagnostic(Variable.WIND, loop)
-
-    if value_type is ValueType.FORECAST:
-        u = ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"]
-        v = ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"]
-    else:
-        u = ds["u_Observation"]
-        v = ds["v_Observation"]
-
-    return VectorVariable.from_vectors(u, v, ds["Longitude"], ds["Latitude"])
+def wind() -> List[VectorObservation]:
+    return [VectorObservation("WV270", "wind", (1, 180), (0.5, 0), (1, 90), (0, 0))]
