@@ -104,24 +104,16 @@ def test_open_diagnostic_unknown_backend(app):
 
 
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
-@pytest.mark.parametrize(
-    "value_type,expected_u,expected_v",
-    [
-        (diag.ValueType.OBSERVATION, xr.DataArray([0, 0]), xr.DataArray([10, 10])),
-        (diag.ValueType.FORECAST, xr.DataArray([-1, -1]), xr.DataArray([15, 5])),
-    ],
-)
-@pytest.mark.xfail
-def test_wind(
-    mock_VectorVariable, mock_open_diagnostic, value_type, expected_u, expected_v
-):
+def test_wind(mock_open_diagnostic):
+    # Arrange
+
     test_dataset = xr.Dataset(
         {
+            "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
             "u_Observation": xr.DataArray([0, 0]),
-            "u_Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 1]),
+            "u_Obs_Minus_Forecast_adjusted": xr.DataArray([3, 1]),
             "v_Observation": xr.DataArray([10, 10]),
-            "v_Obs_Minus_Forecast_unadjusted": xr.DataArray([-5, 5]),
+            "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-4, 0]),
             "Longitude": xr.DataArray([-120, -88]),
             "Latitude": xr.DataArray([40, 30]),
         }
@@ -129,52 +121,55 @@ def test_wind(
 
     mock_open_diagnostic.return_value = test_dataset
 
-    # Do the thing!
-    data = diag.wind(diag.MinimLoop.GUESS, value_type)
+    # Act
 
-    mock_open_diagnostic.assert_called_once_with(
-        diag.Variable.WIND, diag.MinimLoop.GUESS
-    )
+    data = diag.wind()
 
-    # We can't use from_vectors.assert_has_calls because the default comparison
-    # of two xarray.DataArray objects via `==` results in a DataArray containing
-    # boolean values indiciating whether each pairwise element were equal or
-    # not. Instead we use the xarray.testing assertions.
+    # Assert
 
-    # Check calls to VectorVariable.from_vectors
-    mock_VectorVariable.from_vectors.assert_called_once()
-    VectorVariable_calls = mock_VectorVariable.from_vectors.call_args_list[0].args
+    assert mock_open_diagnostic.mock_calls == [
+        mock.call(diag.Variable.WIND, diag.MinimLoop.GUESS),
+        mock.call(diag.Variable.WIND, diag.MinimLoop.ANALYSIS),
+    ]
 
-    # Assert that a VectorVariable was created from the observed vectors with
-    # coordinates
-    xr.testing.assert_equal(VectorVariable_calls[0], expected_u)
-    xr.testing.assert_equal(VectorVariable_calls[1], expected_v)
-    xr.testing.assert_equal(VectorVariable_calls[2], xr.DataArray([-120, -88]))
-    xr.testing.assert_equal(VectorVariable_calls[3], xr.DataArray([40, 30]))
-
-    assert data == mock_VectorVariable.from_vectors.return_value
+    assert data == [
+        diag.VectorObservation(
+            stationId="WV270",
+            variable="wind",
+            guess=diag.PolarCoordinate(5.0, 323.13010235415595),
+            analysis=diag.PolarCoordinate(5.0, 323.13010235415595),
+            observed=diag.PolarCoordinate(10.0, 180.0),
+            position=diag.Coordinate(-120.0, 40.0),
+        ),
+        diag.VectorObservation(
+            stationId="E4294",
+            variable="wind",
+            guess=diag.PolarCoordinate(1.0, 270.0),
+            analysis=diag.PolarCoordinate(1.0, 270.0),
+            observed=diag.PolarCoordinate(10.0, 180.0),
+            position=diag.Coordinate(-88.0, 30.0),
+        ),
+    ]
 
 
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@pytest.mark.xfail
 def test_wind_diag_does_not_exist(mock_open_diagnostic, mock_VectorVariable):
     mock_open_diagnostic.side_effect = FileNotFoundError()
 
     with pytest.raises(FileNotFoundError):
-        diag.wind(diag.MinimLoop.GUESS, diag.ValueType.OBSERVATION)
+        diag.wind()
 
     mock_VectorVariable.from_vectors.assert_not_called()
 
 
 @mock.patch("unified_graphics.diag.VectorVariable", autospec=True)
 @mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@pytest.mark.xfail
 def test_wind_diag_unknown_backend(mock_open_diagnostic, mock_VectorVariable):
     mock_open_diagnostic.side_effect = ValueError()
 
     with pytest.raises(ValueError):
-        diag.wind(diag.MinimLoop.GUESS, diag.ValueType.OBSERVATION)
+        diag.wind()
 
     mock_VectorVariable.from_vectors.assert_not_called()
 

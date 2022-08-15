@@ -110,4 +110,62 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
 
 
 def wind() -> List[VectorObservation]:
-    return [VectorObservation("WV270", "wind", (1, 180), (0.5, 0), (1, 90), (0, 0))]
+    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
+
+    # FIXME: This seems like this should be refactored into helper methods or
+    # something. Although, ideally, I think all of these values should be
+    # pre-calculated and stored on-disk as part of a pipeline that processes new
+    # data.
+    ges_mag = np.sqrt(
+        ges["u_Obs_Minus_Forecast_adjusted"] ** 2
+        + ges["v_Obs_Minus_Forecast_adjusted"] ** 2
+    )
+    ges_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -ges["v_Obs_Minus_Forecast_adjusted"],
+                -ges["u_Obs_Minus_Forecast_adjusted"],
+            )
+        )
+    ) % 360
+
+    anl_mag = np.sqrt(
+        anl["u_Obs_Minus_Forecast_adjusted"] ** 2
+        + anl["v_Obs_Minus_Forecast_adjusted"] ** 2
+    )
+    anl_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -anl["v_Obs_Minus_Forecast_adjusted"],
+                -anl["u_Obs_Minus_Forecast_adjusted"],
+            )
+        )
+    ) % 360
+
+    obs_mag = np.sqrt(ges["u_Observation"] ** 2 + ges["v_Observation"] ** 2)
+    obs_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -ges["v_Observation"],
+                -ges["u_Observation"],
+            )
+        )
+    ) % 360
+
+    return [
+        VectorObservation(
+            stationId.decode("utf-8").strip(),
+            "wind",
+            guess=PolarCoordinate(ges_mag.values[idx], ges_dir.values[idx]),
+            analysis=PolarCoordinate(anl_mag.values[idx], anl_dir.values[idx]),
+            observed=PolarCoordinate(obs_mag.values[idx], obs_dir.values[idx]),
+            position=Coordinate(
+                float(ges["Longitude"].values[idx]), float(ges["Latitude"].values[idx])
+            ),
+        )
+        for idx, stationId in enumerate(ges["Station_ID"].values)
+    ]
