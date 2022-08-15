@@ -160,9 +160,15 @@ def wind() -> List[VectorObservation]:
         VectorObservation(
             stationId.decode("utf-8").strip(),
             "wind",
-            guess=PolarCoordinate(ges_mag.values[idx], ges_dir.values[idx]),
-            analysis=PolarCoordinate(anl_mag.values[idx], anl_dir.values[idx]),
-            observed=PolarCoordinate(obs_mag.values[idx], obs_dir.values[idx]),
+            guess=PolarCoordinate(
+                float(ges_mag.values[idx]), float(ges_dir.values[idx])
+            ),
+            analysis=PolarCoordinate(
+                float(anl_mag.values[idx]), float(anl_dir.values[idx])
+            ),
+            observed=PolarCoordinate(
+                float(obs_mag.values[idx]), float(obs_dir.values[idx])
+            ),
             position=Coordinate(
                 float(ges["Longitude"].values[idx]), float(ges["Latitude"].values[idx])
             ),
