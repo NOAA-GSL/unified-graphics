@@ -1,7 +1,6 @@
 from pathlib import Path
 from unittest import mock
 
-import math
 import pytest
 import xarray as xr
 
@@ -172,98 +171,6 @@ def test_wind_diag_unknown_backend(mock_open_diagnostic, mock_VectorVariable):
         diag.wind()
 
     mock_VectorVariable.from_vectors.assert_not_called()
-
-
-def test_coordinate_pairs_from_vector():
-    lng = xr.DataArray([-120, -110.08, -90])
-    lat = xr.DataArray([40.2, 35, 37])
-
-    result = diag.coordinate_pairs_from_vectors(lng, lat)
-
-    assert result == [
-        diag.Coordinate(longitude=-120.0, latitude=40.2),
-        diag.Coordinate(longitude=-110.08, latitude=35.0),
-        diag.Coordinate(longitude=-90.0, latitude=37.0),
-    ]
-
-
-def test_coordinate_pairs_from_empty_vectors():
-    result = diag.coordinate_pairs_from_vectors(xr.DataArray([]), xr.DataArray([]))
-    assert result == []
-
-
-@pytest.mark.parametrize(
-    "lng,lat",
-    [
-        ([0, 1], [1]),
-        ([1], [0, 1]),
-    ],
-)
-def test_coordinate_pairs_from_mismatched_vectors(lng, lat):
-    with pytest.raises(AssertionError):
-        diag.coordinate_pairs_from_vectors(xr.DataArray(lng), xr.DataArray(lat))
-
-
-def test_VectorVariable_from_vectors():
-    u = xr.DataArray([0, 2, 0, -1, -1])
-    v = xr.DataArray([1, 0, -2, 0, 1])
-    lng = xr.DataArray([0] * 5)
-    lat = xr.DataArray([1] * 5)
-
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
-
-    assert result == diag.VectorVariable(
-        direction=[180.0, 270.0, 0.0, 90.0, 135.0],
-        magnitude=[1.0, 2.0, 2.0, 1.0, math.sqrt(2)],
-        coords=[diag.Coordinate(0, 1)] * 5,
-    )
-
-
-def test_VectorVariable_from_vectors_calm():
-    # 0.0 != -0.0, and numpy.arctan2 will return a different angle depending on
-    # which one it encounters in which of the two vector components. We want to
-    # make sure we normalize the direction for all vectors of magnitude 0 to be
-    # 0°.
-    u = xr.DataArray([0.0, -0.0, 0.0, -0.0])
-    v = xr.DataArray([0.0, 0.0, -0.0, -0.0])
-    lng = xr.DataArray([0] * 4)
-    lat = xr.DataArray([1] * 4)
-
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
-
-    assert result == diag.VectorVariable(
-        direction=[0.0, 0.0, 0.0, 0.0],
-        magnitude=[0.0, 0.0, 0.0, 0.0],
-        coords=[diag.Coordinate(0, 1)] * 4,
-    )
-
-
-def test_VectorVariable_from_empty_vectors():
-    u = xr.DataArray([])
-    v = xr.DataArray([])
-    lng = xr.DataArray([])
-    lat = xr.DataArray([])
-
-    result = diag.VectorVariable.from_vectors(u, v, lng, lat)
-
-    assert result == diag.VectorVariable(direction=[], magnitude=[], coords=[])
-
-
-@pytest.mark.parametrize(
-    "u,v,lng,lat",
-    (
-        ([0, 1], [1], [1], [1]),
-        ([1], [0, 1], [1], [1]),
-        ([1], [1], [0, 1], [1]),
-        ([1], [1], [1], [0, 1]),
-        ([1], [1], [0, 1], [0, 1]),
-    ),
-)
-def test_VectorVariable_from_mismatched_vectors(u, v, lng, lat):
-    with pytest.raises(AssertionError):
-        diag.VectorVariable.from_vectors(
-            xr.DataArray(u), xr.DataArray(v), xr.DataArray(lng), xr.DataArray(lat)
-        )
 
 
 def test_VectorObservation_to_geojson():
