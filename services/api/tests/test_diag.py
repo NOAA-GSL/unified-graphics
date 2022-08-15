@@ -113,7 +113,7 @@ def test_wind(mock_open_diagnostic):
             "u_Obs_Minus_Forecast_adjusted": xr.DataArray([3, 1]),
             "v_Observation": xr.DataArray([10, 10]),
             "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-4, 0]),
-            "Longitude": xr.DataArray([-120, -88]),
+            "Longitude": xr.DataArray([240, 272]),
             "Latitude": xr.DataArray([40, 30]),
         }
     )
