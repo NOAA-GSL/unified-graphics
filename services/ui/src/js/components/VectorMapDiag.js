@@ -1,10 +1,12 @@
 import {
   extent,
+  geoAlbers,
   geoPath,
-  geoTransform,
   interpolatePuOr,
+  interpolatePurples,
   scaleDiverging,
   scaleLinear,
+  scaleSequential,
   scaleSqrt,
 } from "d3";
 
@@ -16,11 +18,7 @@ export default class VectorMapDiag extends HTMLElement {
       <chart-histogram id="wind-speed" title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
       <chart-histogram id="wind-direction" title-x="Wind Direction (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
     </div>
-  </div>
-  <label>
-    <input type="checkbox">
-    Show vector direction
-  </label>`;
+  </div>`;
 
   static #STYLE = `<style>
     :host {
@@ -53,7 +51,6 @@ export default class VectorMapDiag extends HTMLElement {
     }
   </style>`;
 
-  #data = {};
   #selection = null;
   #mousedownWrapper = null;
   #pendingUpdate = null;
@@ -122,166 +119,92 @@ export default class VectorMapDiag extends HTMLElement {
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());
 
+    const borders = this.querySelector("#borders")?.data;
+    const observations = this.querySelector("#observations")?.data;
+
+    if (!(borders || observations)) return;
+
+    const projection = geoAlbers().fitSize([width, height], observations ?? borders);
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, width, height);
 
-    const obs = this.querySelector("#observation")?.data;
-    const fcst = this.querySelector("#forecast")?.data;
-
-    if (!obs && !fcst) return;
-
-    const coords = [].concat(obs?.coords ?? [], fcst?.coords ?? []);
-
-    const x = scaleLinear()
-      .domain(extent(coords, (d) => d[0] - 360))
-      .range([0, width]);
-    const y = scaleLinear()
-      .domain(extent(coords, (d) => d[1]))
-      .range([height, 0]);
-
-    if (obs && fcst) {
-      const obsMinusFcst = obs.magnitude.map((magObs, idx) => [
-        ...obs.coords[idx],
-        magObs - fcst.magnitude[idx],
-      ]);
-      const [minDiff, maxDiff] = extent(obsMinusFcst, (d) => d[2]);
-      const fill = scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff]).nice();
-      const r = scaleSqrt()
-        .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
-        .range([0.5, 6]);
-
-      obsMinusFcst.forEach((omf) => {
-        const [lng, lat, delta] = omf;
-
-        ctx.beginPath();
-        ctx.arc(x(lng - 360), y(lat), r(Math.abs(delta)), 0, 2 * Math.PI);
-
-        ctx.fillStyle = fill(delta);
-        ctx.fill();
-      });
-
-      const speedHist = this.shadowRoot?.querySelector("#wind-speed");
-      const dirHist = this.shadowRoot?.querySelector("#wind-direction");
-      if (speedHist || dirHist) {
-        let speed = obsMinusFcst;
-        let dir = obs.direction.map((dirObs, idx) => [
-          ...obs.coords[idx],
-          dirObs - fcst.direction[idx],
-        ]);
-
-        if (this.#selection) {
-          const [x0, x1] = this.#selection.map((d) => x.invert(d[0]));
-          const [y0, y1] = this.#selection.map((d) => y.invert(d[1]));
-
-          const left = Math.min(x0, x1);
-          const right = Math.max(x0, x1);
-          const bottom = Math.min(y0, y1);
-          const top = Math.max(y0, y1);
-
-          const inSelection = (d) => {
-            const lng = d[0] - 360;
-            const lat = d[1];
-            return lng >= left && lng <= right && lat >= bottom && lat <= top;
-          };
-
-          speed = speed.filter(inSelection);
-          dir = dir.filter(inSelection);
-        }
-
-        if (speedHist) speedHist.data = speed.map((d) => d[2]);
-        if (dirHist) dirHist.data = dir.map((d) => d[2]);
-      }
-
-      const start = fill.domain()[0],
-        stop = fill.domain()[2];
-
-      const legendX = scaleLinear()
-        .domain([start, stop])
-        .range([16, width / 2]);
-      const step = (stop - start) / (width / 2 - 16);
-
-      for (let diff = start; diff <= stop; diff += step) {
-        ctx.fillStyle = fill(diff);
-        ctx.fillRect(legendX(diff), height - 32, 1, 32);
-      }
-
-      ctx.fillStyle = "black";
-      ctx.textAlign = "center";
-      fill.ticks().forEach((tick) => {
-        ctx.fillRect(legendX(tick), height - 40, 1, 8);
-        ctx.fillText(tick.toString(), legendX(tick), height - 48);
-      });
-
-      ctx.textAlign = "left";
-      ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
-    }
-
-    if (obs && this.showVectors?.checked) {
-      ctx.beginPath();
-
-      obs.direction.forEach((heading, idx) => {
-        const [lng, lat] = obs.coords[idx];
-        const heading_r = ((heading + 90) * Math.PI) / 180;
-        // FIXME: This constant length should be configurable
-        const dx = 6 * Math.cos(heading_r);
-        const dy = 6 * Math.sin(heading_r);
-
-        ctx.moveTo(x(lng - 360), y(lat));
-        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
-      });
-
-      ctx.stroke();
-    }
-
-    if (fcst && this.showVectors?.checked) {
-      ctx.beginPath();
-
-      fcst.direction.forEach((heading, idx) => {
-        const [lng, lat] = fcst.coords[idx];
-        const heading_r = ((heading + 90) * Math.PI) / 180;
-        // FIXME: This constant length should be configurable
-        const dx = 6 * Math.cos(heading_r);
-        const dy = 6 * Math.sin(heading_r);
-
-        ctx.moveTo(x(lng - 360), y(lat));
-        ctx.lineTo(x(lng - 360) + dx, y(lat) + dy);
-      });
-
-      ctx.strokeStyle = "#888888";
-      ctx.stroke();
-    }
-
-    const border = this.querySelector("#border")?.data;
-    if (border) {
-      const path = geoPath(
-        geoTransform({
-          point: function (lng, lat) {
-            this.stream.point(x(lng), y(lat));
-          },
-        }),
-        ctx
-      );
+    if (borders) {
+      const path = geoPath(projection, ctx);
 
       ctx.save();
-
-      ctx.beginPath();
-      path(border);
       ctx.lineWidth = 0.5;
       ctx.strokeStyle = "#000";
+
+      ctx.beginPath();
+      path(borders);
       ctx.stroke();
 
       ctx.restore();
     }
 
-    if (this.#selection) {
-      const [[left, top], [right, bottom]] = this.#selection;
+    if (!observations) return;
 
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = "black";
-      ctx.fillRect(left, top, right - left, bottom - top);
+    const [minDiff, maxDiff] = extent(
+      observations.features,
+      (feature) => feature.properties.guess.magnitude
+    );
+
+    const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);
+
+    const fill = isDiverging
+      ? scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff])
+      : scaleSequential([minDiff, maxDiff], interpolatePurples);
+
+    const r = scaleSqrt()
+      .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
+      .range([0.5, 6]);
+
+    console.log(fill.domain());
+
+    observations.features.forEach((feature) => {
+      const radius = r(Math.abs(feature.properties.guess.magnitude));
+      const [x, y] = projection(feature.geometry.coordinates);
+
+      ctx.save();
+      ctx.fillStyle = fill(feature.properties.guess.magnitude);
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.restore();
+    });
+
+    // Legend
+    const start = fill.domain()[0],
+      stop = fill.domain()[fill.domain().length - 1],
+      step = (stop - start) / (width / 2 - 16);
+
+    const legendX = scaleLinear()
+      .domain([start, stop])
+      .range([16, width / 2]);
+
+    ctx.save();
+
+    for (let diff = start; diff <= stop; diff += step) {
+      ctx.fillStyle = fill(diff);
+      ctx.fillRect(legendX(diff), height - 32, 1, 32);
     }
+
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    fill.ticks().forEach((tick) => {
+      ctx.fillRect(legendX(tick), height - 40, 1, 8);
+      ctx.fillText(tick.toString(), legendX(tick), height - 48);
+    });
+
+    ctx.textAlign = "left";
+    ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
+
+    ctx.restore();
   }
 
   mapMousedownCallback({ target, offsetX, offsetY }) {

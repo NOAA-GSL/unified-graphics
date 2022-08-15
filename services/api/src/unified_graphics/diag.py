@@ -132,7 +132,8 @@ def wind() -> List[VectorObservation]:
                 float(obs_mag.values[idx]), float(obs_dir.values[idx])
             ),
             position=Coordinate(
-                float(ges["Longitude"].values[idx]), float(ges["Latitude"].values[idx])
+                float(ges["Longitude"].values[idx] - 360),
+                float(ges["Latitude"].values[idx]),
             ),
         )
         for idx, stationId in enumerate(ges["Station_ID"].values)
