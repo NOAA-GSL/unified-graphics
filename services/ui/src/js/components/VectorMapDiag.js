@@ -205,6 +205,21 @@ export default class VectorMapDiag extends HTMLElement {
     ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
 
     ctx.restore();
+
+    const speedHist = this.shadowRoot?.querySelector("#wind-speed");
+    const dirHist = this.shadowRoot?.querySelector("#wind-direction");
+
+    if (speedHist) {
+      speedHist.data = observations.features.map(
+        (feature) => feature.properties.guess.magnitude
+      );
+    }
+
+    if (dirHist) {
+      dirHist.data = observations.features.map(
+        (feature) => feature.properties.guess.direction
+      );
+    }
   }
 
   mapMousedownCallback({ target, offsetX, offsetY }) {
