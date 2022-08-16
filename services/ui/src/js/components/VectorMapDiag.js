@@ -176,6 +176,8 @@ export default class VectorMapDiag extends HTMLElement {
       ctx.restore();
     });
 
+    let selectedObs = observations.features;
+
     if (this.#selection) {
       const [upperLeft, lowerRight] = this.#selection;
       const [left, top] = projection.invert(upperLeft);
@@ -205,6 +207,11 @@ export default class VectorMapDiag extends HTMLElement {
       ctx.fill();
 
       ctx.restore();
+
+      selectedObs = observations.features.filter((feature) => {
+        const [lng, lat] = feature.geometry.coordinates;
+        return lng >= left && lng <= right && lat >= bottom && lat <= top;
+      });
     }
 
     // Legend
@@ -239,15 +246,11 @@ export default class VectorMapDiag extends HTMLElement {
     const dirHist = this.shadowRoot?.querySelector("#wind-direction");
 
     if (speedHist) {
-      speedHist.data = observations.features.map(
-        (feature) => feature.properties.guess.magnitude
-      );
+      speedHist.data = selectedObs.map((feature) => feature.properties.guess.magnitude);
     }
 
     if (dirHist) {
-      dirHist.data = observations.features.map(
-        (feature) => feature.properties.guess.direction
-      );
+      dirHist.data = selectedObs.map((feature) => feature.properties.guess.direction);
     }
   }
 
