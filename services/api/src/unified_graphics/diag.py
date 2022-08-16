@@ -80,40 +80,42 @@ def wind() -> List[VectorObservation]:
     # pre-calculated and stored on-disk as part of a pipeline that processes new
     # data.
     ges_mag = np.sqrt(
-        ges["u_Obs_Minus_Forecast_adjusted"] ** 2
-        + ges["v_Obs_Minus_Forecast_adjusted"] ** 2
+        ges["u_Obs_Minus_Forecast_adjusted"].values ** 2
+        + ges["v_Obs_Minus_Forecast_adjusted"].values ** 2
     )
     ges_dir = (
         90
         - np.degrees(
             np.arctan2(
-                -ges["v_Obs_Minus_Forecast_adjusted"],
-                -ges["u_Obs_Minus_Forecast_adjusted"],
+                -ges["v_Obs_Minus_Forecast_adjusted"].values,
+                -ges["u_Obs_Minus_Forecast_adjusted"].values,
             )
         )
     ) % 360
 
     anl_mag = np.sqrt(
-        anl["u_Obs_Minus_Forecast_adjusted"] ** 2
-        + anl["v_Obs_Minus_Forecast_adjusted"] ** 2
+        anl["u_Obs_Minus_Forecast_adjusted"].values ** 2
+        + anl["v_Obs_Minus_Forecast_adjusted"].values ** 2
     )
     anl_dir = (
         90
         - np.degrees(
             np.arctan2(
-                -anl["v_Obs_Minus_Forecast_adjusted"],
-                -anl["u_Obs_Minus_Forecast_adjusted"],
+                -anl["v_Obs_Minus_Forecast_adjusted"].values,
+                -anl["u_Obs_Minus_Forecast_adjusted"].values,
             )
         )
     ) % 360
 
-    obs_mag = np.sqrt(ges["u_Observation"] ** 2 + ges["v_Observation"] ** 2)
+    obs_mag = np.sqrt(
+        ges["u_Observation"].values ** 2 + ges["v_Observation"].values ** 2
+    )
     obs_dir = (
         90
         - np.degrees(
             np.arctan2(
-                -ges["v_Observation"],
-                -ges["u_Observation"],
+                -ges["v_Observation"].values,
+                -ges["u_Observation"].values,
             )
         )
     ) % 360
@@ -122,15 +124,9 @@ def wind() -> List[VectorObservation]:
         VectorObservation(
             stationId.decode("utf-8").strip(),
             "wind",
-            guess=PolarCoordinate(
-                float(ges_mag.values[idx]), float(ges_dir.values[idx])
-            ),
-            analysis=PolarCoordinate(
-                float(anl_mag.values[idx]), float(anl_dir.values[idx])
-            ),
-            observed=PolarCoordinate(
-                float(obs_mag.values[idx]), float(obs_dir.values[idx])
-            ),
+            guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
+            analysis=PolarCoordinate(float(anl_mag[idx]), float(anl_dir[idx])),
+            observed=PolarCoordinate(float(obs_mag[idx]), float(obs_dir[idx])),
             position=Coordinate(
                 float(ges["Longitude"].values[idx] - 360),
                 float(ges["Latitude"].values[idx]),
