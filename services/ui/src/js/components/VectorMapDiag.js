@@ -131,9 +131,9 @@ export default class VectorMapDiag extends HTMLElement {
 
     ctx.clearRect(0, 0, width, height);
 
-    if (borders) {
-      const path = geoPath(projection, ctx);
+    const path = geoPath(projection, ctx);
 
+    if (borders) {
       ctx.save();
       ctx.lineWidth = 0.5;
       ctx.strokeStyle = "#000";
@@ -162,8 +162,6 @@ export default class VectorMapDiag extends HTMLElement {
       .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
       .range([0.5, 6]);
 
-    console.log(fill.domain());
-
     observations.features.forEach((feature) => {
       const radius = r(Math.abs(feature.properties.guess.magnitude));
       const [x, y] = projection(feature.geometry.coordinates);
@@ -177,6 +175,37 @@ export default class VectorMapDiag extends HTMLElement {
 
       ctx.restore();
     });
+
+    if (this.#selection) {
+      const [upperLeft, lowerRight] = this.#selection;
+      const [left, top] = projection.invert(upperLeft);
+      const [right, bottom] = projection.invert(lowerRight);
+      const polygon = {
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [left, top],
+              [right, top],
+              [right, bottom],
+              [left, bottom],
+              [left, top],
+            ],
+          ],
+        },
+      };
+
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = "#aaa";
+
+      ctx.beginPath();
+      path(polygon);
+      ctx.fill();
+
+      ctx.restore();
+    }
 
     // Legend
     const start = fill.domain()[0],
