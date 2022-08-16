@@ -27,44 +27,30 @@ class Variable(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
+PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
 
 @dataclass
-class VectorVariable:
-    direction: List[float]
-    magnitude: List[float]
-    coords: List[Coordinate]
+class VectorObservation:
+    stationId: str
+    variable: str
+    guess: PolarCoordinate
+    analysis: PolarCoordinate
+    observed: PolarCoordinate
+    position: Coordinate
 
-    @classmethod
-    def from_vectors(
-        cls, u: xr.DataArray, v: xr.DataArray, lng: xr.DataArray, lat: xr.DataArray
-    ) -> "VectorVariable":
-
-        # Ensure that all data arrays are the same length
-        assert all(u.shape == a.shape for a in [v, lng, lat])
-
-        direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
-        magnitude = np.sqrt(u**2 + v**2)
-
-        # Set the direction on any (0, 0) vectors to 0, so we don’t have to deal
-        # with this 0.0 vs -0.0 silliness from np.arctan2 and to be consistent
-        # with the NCL wind_direction function we used as a reference.
-        calm = magnitude == 0
-        direction[calm] = 0
-
-        return cls(
-            direction=[float(d) for d in direction],
-            magnitude=[float(m) for m in magnitude],
-            coords=coordinate_pairs_from_vectors(lng, lat),
-        )
-
-
-def coordinate_pairs_from_vectors(
-    lng: xr.DataArray, lat: xr.DataArray
-) -> List[Coordinate]:
-    assert lng.shape == lat.shape
-
-    return [Coordinate(longitude=float(x), latitude=float(y)) for x, y in zip(lng, lat)]
+    def to_geojson(self):
+        return {
+            "type": "Feature",
+            "properties": {
+                "stationId": self.stationId,
+                "variable": self.variable,
+                "guess": self.guess._asdict(),
+                "analysis": self.analysis._asdict(),
+                "observed": self.observed._asdict(),
+            },
+            "geometry": {"type": "Point", "coordinates": list(self.position)},
+        }
 
 
 def temperature(loop: MinimLoop) -> List[float]:
@@ -85,14 +71,66 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
-def wind(loop: MinimLoop, value_type: ValueType) -> VectorVariable:
-    ds = open_diagnostic(Variable.WIND, loop)
+def wind() -> List[VectorObservation]:
+    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
 
-    if value_type is ValueType.FORECAST:
-        u = ds["u_Observation"] - ds["u_Obs_Minus_Forecast_unadjusted"]
-        v = ds["v_Observation"] - ds["v_Obs_Minus_Forecast_unadjusted"]
-    else:
-        u = ds["u_Observation"]
-        v = ds["v_Observation"]
+    # FIXME: This seems like this should be refactored into helper methods or
+    # something. Although, ideally, I think all of these values should be
+    # pre-calculated and stored on-disk as part of a pipeline that processes new
+    # data.
+    ges_mag = np.sqrt(
+        ges["u_Obs_Minus_Forecast_adjusted"].values ** 2
+        + ges["v_Obs_Minus_Forecast_adjusted"].values ** 2
+    )
+    ges_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -ges["v_Obs_Minus_Forecast_adjusted"].values,
+                -ges["u_Obs_Minus_Forecast_adjusted"].values,
+            )
+        )
+    ) % 360
 
-    return VectorVariable.from_vectors(u, v, ds["Longitude"], ds["Latitude"])
+    anl_mag = np.sqrt(
+        anl["u_Obs_Minus_Forecast_adjusted"].values ** 2
+        + anl["v_Obs_Minus_Forecast_adjusted"].values ** 2
+    )
+    anl_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -anl["v_Obs_Minus_Forecast_adjusted"].values,
+                -anl["u_Obs_Minus_Forecast_adjusted"].values,
+            )
+        )
+    ) % 360
+
+    obs_mag = np.sqrt(
+        ges["u_Observation"].values ** 2 + ges["v_Observation"].values ** 2
+    )
+    obs_dir = (
+        90
+        - np.degrees(
+            np.arctan2(
+                -ges["v_Observation"].values,
+                -ges["u_Observation"].values,
+            )
+        )
+    ) % 360
+
+    return [
+        VectorObservation(
+            stationId.decode("utf-8").strip(),
+            "wind",
+            guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
+            analysis=PolarCoordinate(float(anl_mag[idx]), float(anl_dir[idx])),
+            observed=PolarCoordinate(float(obs_mag[idx]), float(obs_dir[idx])),
+            position=Coordinate(
+                float(ges["Longitude"].values[idx] - 360),
+                float(ges["Latitude"].values[idx]),
+            ),
+        )
+        for idx, stationId in enumerate(ges["Station_ID"].values)
+    ]

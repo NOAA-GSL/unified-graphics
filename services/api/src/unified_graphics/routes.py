@@ -22,15 +22,13 @@ def index():
     return jsonify({"msg": "Hello, Dave"})
 
 
-@bp.route("/diag/wind/<loop>/<value_type>/")
-def wind(loop, value_type):
-    try:
-        loop_enum = diag.MinimLoop(loop)
-        type_enum = diag.ValueType(value_type)
-    except ValueError:
-        raise FileNotFoundError()
+@bp.route("/diag/wind/")
+def wind():
+    data = diag.wind()
 
-    return jsonify(diag.wind(loop_enum, type_enum))
+    return jsonify(
+        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
+    )
 
 
 @bp.route("/diag/<variable>/<loop>/")
