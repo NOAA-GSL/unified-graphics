@@ -17,9 +17,9 @@ export default class VariableDiagnostic extends Component {
     const analysis = features.map((feature) => feature.properties.analysis.magnitude);
 
     return html`<div class="flow">
-      <strong>Wind</strong>
+      <h2>Wind</h2>
 
-      <strong>Guess</strong>
+      <h3>Guess</h3>
       <div data-layout="cluster">
         <chart-map
           class="flex-1"
@@ -35,7 +35,7 @@ export default class VariableDiagnostic extends Component {
         ></chart-histogram>
       </div>
 
-      <strong>Analysis</strong>
+      <h3>Analysis</h3>
       <div data-layout="cluster">
         <chart-map
           class="flex-1"
