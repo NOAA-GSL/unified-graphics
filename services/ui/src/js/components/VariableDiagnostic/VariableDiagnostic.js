@@ -18,16 +18,38 @@ export default class VariableDiagnostic extends Component {
 
     return html`<div class="flow">
       <strong>Wind</strong>
-      <chart-histogram
-        data=${guess}
-        title-x="Observation − Forecast"
-        title-y="Observation Count"
-      ></chart-histogram>
-      <chart-histogram
-        data=${analysis}
-        title-x="Observation − Forecast"
-        title-y="Observation Count"
-      ></chart-histogram>
+
+      <strong>Guess</strong>
+      <div data-layout="cluster">
+        <chart-map
+          class="flex-1"
+          data=${this.state.data}
+          loop="guess"
+          valueProperty="magnitude"
+        ></chart-map>
+        <chart-histogram
+          class="flex-1"
+          data=${guess}
+          title-x="Observation − Forecast"
+          title-y="Observation Count"
+        ></chart-histogram>
+      </div>
+
+      <strong>Analysis</strong>
+      <div data-layout="cluster">
+        <chart-map
+          class="flex-1"
+          data=${this.state.data}
+          loop="analysis"
+          valueProperty="magnitude"
+        ></chart-map>
+        <chart-histogram
+          class="flex-1"
+          data=${analysis}
+          title-x="Observation − Forecast"
+          title-y="Observation Count"
+        ></chart-histogram>
+      </div>
     </div>`;
   }
 }

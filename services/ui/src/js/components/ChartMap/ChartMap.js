@@ -11,64 +11,46 @@ import {
 } from "d3";
 
 export default class VectorMapDiag extends HTMLElement {
-  static #TEMPLATE = `<slot name=title></slot>
-  <div class="grid">
-    <canvas></canvas>
-    <div>
-      <chart-histogram id="wind-speed" title-x="Wind Speed (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
-      <chart-histogram id="wind-direction" title-x="Wind Direction (Observation − Forecast)" title-y="Observation Count" format-x=" ,.3f"></chart-histogram>
-    </div>
-  </div>`;
+  static #TEMPLATE = `<canvas></canvas>`;
 
   static #STYLE = `<style>
     :host {
-      display: flex;
-      flex-direction: column;
-      gap: 1em;
-    }
-
-    * {
-      flex: 0 0 auto;
-      margin: 0;
+      display: block;
     }
 
     canvas {
       aspect-ratio: 4 / 3;
       cursor: crosshair;
-    }
-
-    chart-histogram + chart-histogram {
-      margin-block-start: 1em;
-    }
-
-    .grid{
-      flex: 1 1 auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(640px, 100%), 1fr));
-      grid-template-rows: min-content 1fr min-content;
-      place-items: stretch;
-      gap: 1em;
+      width: 100%;
+      height: 100%;
     }
   </style>`;
 
   #selection = null;
   #mousedownWrapper = null;
   #pendingUpdate = null;
+  #borders = null;
+  #data = null;
+
+  static getObservedAttributes() {
+    return ["loop", "value-property"];
+  }
 
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
     shadowRoot.innerHTML = VectorMapDiag.#STYLE + VectorMapDiag.#TEMPLATE;
-
-    this.showVectors = shadowRoot.querySelector("[type=checkbox]");
   }
 
   connectedCallback() {
-    this.addEventListener("data-changed", this.update);
-    this.showVectors?.addEventListener("change", () => {
-      this.update();
-    });
+    fetch("/geo/borders.json")
+      .then((response) => response.json())
+      .then((json) => {
+        this.#borders = json;
+        this.requestUpdate();
+      });
+
     this.resizeObserver = new ResizeObserver(this.update);
 
     const canvas = this.shadowRoot?.querySelector("canvas");
@@ -86,8 +68,6 @@ export default class VectorMapDiag extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener("data-changed", this.update);
-
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
@@ -97,6 +77,35 @@ export default class VectorMapDiag extends HTMLElement {
     }
 
     delete this.resizeObserver;
+  }
+
+  attributeChangedCallback() {
+    this.requestUpdate();
+  }
+
+  get data() {
+    return this.#data;
+  }
+
+  set data(value) {
+    this.#data = value;
+    this.requestUpdate();
+  }
+
+  get loop() {
+    return this.getAttribute("loop");
+  }
+
+  set loop(value) {
+    this.setAttribute("loop", value);
+  }
+
+  get valueProperty() {
+    return this.getAttribute("value-property");
+  }
+
+  set valueProperty(value) {
+    this.setAttribute("value-property", value);
   }
 
   requestUpdate() {
@@ -119,8 +128,8 @@ export default class VectorMapDiag extends HTMLElement {
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());
 
-    const borders = this.querySelector("#borders")?.data;
-    const observations = this.querySelector("#observations")?.data;
+    const borders = this.#borders;
+    const observations = this.#data;
 
     if (!(borders || observations)) return;
 
@@ -149,7 +158,7 @@ export default class VectorMapDiag extends HTMLElement {
 
     const [minDiff, maxDiff] = extent(
       observations.features,
-      (feature) => feature.properties.guess.magnitude
+      (feature) => feature.properties[this.loop][this.valueProperty]
     );
 
     const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);
@@ -163,11 +172,11 @@ export default class VectorMapDiag extends HTMLElement {
       .range([0.5, 6]);
 
     observations.features.forEach((feature) => {
-      const radius = r(Math.abs(feature.properties.guess.magnitude));
+      const radius = r(Math.abs(feature.properties[this.loop][this.valueProperty]));
       const [x, y] = projection(feature.geometry.coordinates);
 
       ctx.save();
-      ctx.fillStyle = fill(feature.properties.guess.magnitude);
+      ctx.fillStyle = fill(feature.properties[this.loop][this.valueProperty]);
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, 2 * Math.PI);
@@ -175,8 +184,6 @@ export default class VectorMapDiag extends HTMLElement {
 
       ctx.restore();
     });
-
-    let selectedObs = observations.features;
 
     if (this.#selection) {
       const [upperLeft, lowerRight] = this.#selection;
@@ -207,11 +214,6 @@ export default class VectorMapDiag extends HTMLElement {
       ctx.fill();
 
       ctx.restore();
-
-      selectedObs = observations.features.filter((feature) => {
-        const [lng, lat] = feature.geometry.coordinates;
-        return lng >= left && lng <= right && lat >= bottom && lat <= top;
-      });
     }
 
     // Legend
@@ -241,17 +243,6 @@ export default class VectorMapDiag extends HTMLElement {
     ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
 
     ctx.restore();
-
-    const speedHist = this.shadowRoot?.querySelector("#wind-speed");
-    const dirHist = this.shadowRoot?.querySelector("#wind-direction");
-
-    if (speedHist) {
-      speedHist.data = selectedObs.map((feature) => feature.properties.guess.magnitude);
-    }
-
-    if (dirHist) {
-      dirHist.data = selectedObs.map((feature) => feature.properties.guess.direction);
-    }
   }
 
   mapMousedownCallback({ target, offsetX, offsetY }) {
