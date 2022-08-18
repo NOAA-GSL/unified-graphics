@@ -1,3 +1,5 @@
+@use "uswds-core" as uswds;
+
 [class*="aspect-"] {
   overflow: hidden;
 }
@@ -8,4 +10,8 @@
 
 .overflow-hidden {
   overflow: hidden;
+}
+
+.gap-2 {
+  gap: uswds.units(2);
 }
