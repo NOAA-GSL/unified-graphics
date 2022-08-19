@@ -21,34 +21,34 @@ export default class VariableDiagnostic extends Component {
 
       <h3>Guess</h3>
       <div data-layout="cluster">
-        <chart-map
-          class="flex-1"
-          data=${this.state.data}
-          loop="guess"
-          valueProperty="magnitude"
-        ></chart-map>
         <chart-histogram
           class="flex-1"
           data=${guess}
           title-x="Observation − Forecast"
           title-y="Observation Count"
         ></chart-histogram>
+        <chart-map
+          class="flex-1"
+          data=${this.state.data}
+          loop="guess"
+          valueProperty="magnitude"
+        ></chart-map>
       </div>
 
       <h3>Analysis</h3>
       <div data-layout="cluster">
-        <chart-map
-          class="flex-1"
-          data=${this.state.data}
-          loop="analysis"
-          valueProperty="magnitude"
-        ></chart-map>
         <chart-histogram
           class="flex-1"
           data=${analysis}
           title-x="Observation − Forecast"
           title-y="Observation Count"
         ></chart-histogram>
+        <chart-map
+          class="flex-1"
+          data=${this.state.data}
+          loop="analysis"
+          valueProperty="magnitude"
+        ></chart-map>
       </div>
     </div>`;
   }
