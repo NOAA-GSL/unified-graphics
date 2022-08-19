@@ -10,7 +10,7 @@ import {
   scaleSqrt,
 } from "d3";
 
-export default class VectorMapDiag extends HTMLElement {
+export default class ChartMap extends HTMLElement {
   static #TEMPLATE = `<canvas></canvas>`;
 
   static #STYLE = `<style>
@@ -40,7 +40,7 @@ export default class VectorMapDiag extends HTMLElement {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = VectorMapDiag.#STYLE + VectorMapDiag.#TEMPLATE;
+    shadowRoot.innerHTML = ChartMap.#STYLE + ChartMap.#TEMPLATE;
   }
 
   connectedCallback() {
