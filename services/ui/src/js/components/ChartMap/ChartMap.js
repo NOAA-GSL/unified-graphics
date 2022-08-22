@@ -26,6 +26,7 @@ export default class ChartMap extends HTMLElement {
     }
   </style>`;
 
+  #projection = geoAlbers();
   #selection = null;
   #mousedownWrapper = null;
   #pendingUpdate = null;
@@ -133,14 +134,14 @@ export default class ChartMap extends HTMLElement {
 
     if (!(borders || observations)) return;
 
-    const projection = geoAlbers().fitSize([width, height], observations ?? borders);
+    this.#projection.fitSize([width, height], observations ?? borders);
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, width, height);
 
-    const path = geoPath(projection, ctx);
+    const path = geoPath(this.#projection, ctx);
 
     if (borders) {
       ctx.save();
@@ -173,7 +174,7 @@ export default class ChartMap extends HTMLElement {
 
     observations.features.forEach((feature) => {
       const radius = r(Math.abs(feature.properties[this.loop][this.valueProperty]));
-      const [x, y] = projection(feature.geometry.coordinates);
+      const [x, y] = this.#projection(feature.geometry.coordinates);
 
       ctx.save();
       ctx.fillStyle = fill(feature.properties[this.loop][this.valueProperty]);
@@ -186,9 +187,7 @@ export default class ChartMap extends HTMLElement {
     });
 
     if (this.#selection) {
-      const [upperLeft, lowerRight] = this.#selection;
-      const [left, top] = projection.invert(upperLeft);
-      const [right, bottom] = projection.invert(lowerRight);
+      const [[left, top], [right, bottom]] = this.#selection;
       const polygon = {
         type: "Feature",
         geometry: {
@@ -246,9 +245,11 @@ export default class ChartMap extends HTMLElement {
   }
 
   mapMousedownCallback({ target, offsetX, offsetY }) {
+    const [lng, lat] = this.#projection.invert([offsetX, offsetY]);
+
     this.#selection = [
-      [offsetX, offsetY],
-      [offsetX, offsetY],
+      [lng, lat],
+      [lng, lat],
     ];
 
     const mouseupCallback = () => {
@@ -261,10 +262,16 @@ export default class ChartMap extends HTMLElement {
         this.#selection = null;
         this.requestUpdate();
       }
+
+      const brush = new CustomEvent("chart-brush", {
+        bubbles: true,
+        detail: this.#selection,
+      });
+      this.dispatchEvent(brush);
     };
 
     const mousemoveCallback = ({ offsetX, offsetY }) => {
-      this.#selection[1] = [offsetX, offsetY];
+      this.#selection[1] = this.#projection.invert([offsetX, offsetY]);
       this.requestUpdate();
     };
 

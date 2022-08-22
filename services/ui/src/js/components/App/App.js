@@ -5,7 +5,7 @@ import Header from "../Header";
 
 const App = html`<${Header} />
   <main>
-    <${VariableDiagnostic} />
+    <${VariableDiagnostic} variable="wind" />
   </main>`;
 
 export default App;

@@ -1,55 +1,69 @@
-import { Component, html } from "htm/preact";
+import { html } from "htm/preact";
+import { useEffect, useState } from "preact/hooks";
 
-export default class VariableDiagnostic extends Component {
-  constructor() {
-    super();
+import useBrushedScalar from "./useBrushedScalar";
 
-    this.state = { data: {} };
+export default function VariableDiagnostic(props) {
+  const [featureCollection, setFeatureCollection] = useState({ features: [] });
+  const [guess, setGuessBrush] = useBrushedScalar({
+    features: featureCollection.features,
+    loop: "guess",
+    variable: "magnitude",
+  });
+  const [analysis, setAnalysisBrush] = useBrushedScalar({
+    features: featureCollection.features,
+    loop: "analysis",
+    variable: "magnitude",
+  });
 
-    fetch("/api/diag/wind/")
-      .then((response) => response.json())
-      .then((json) => this.setState({ data: json }));
-  }
+  useEffect(
+    () =>
+      fetch(`/api/diag/${props.variable}/`)
+        .then((response) => response.json())
+        .then((json) => setFeatureCollection(json)),
+    [props.variable]
+  );
 
-  render() {
-    const features = this.state.data?.features ?? [];
-    const guess = features.map((feature) => feature.properties.guess.magnitude);
-    const analysis = features.map((feature) => feature.properties.analysis.magnitude);
+  const brushCallback = (event) => {
+    setGuessBrush(event.detail);
+    setAnalysisBrush(event.detail);
+  };
 
-    return html`<div class="flow">
-      <h2>Wind</h2>
+  return html`<div class="flow">
+    <h2>Wind</h2>
 
-      <h3>Guess</h3>
-      <div data-layout="cluster">
-        <chart-histogram
-          class="flex-1"
-          data=${guess}
-          title-x="Observation − Forecast"
-          title-y="Observation Count"
-        ></chart-histogram>
-        <chart-map
-          class="flex-1"
-          data=${this.state.data}
-          loop="guess"
-          valueProperty="magnitude"
-        ></chart-map>
-      </div>
+    <h3>Guess</h3>
+    <div data-layout="cluster">
+      <chart-histogram
+        class="flex-1"
+        data=${guess}
+        title-x="Observation − Forecast"
+        title-y="Observation Count"
+      ></chart-histogram>
+      <chart-map
+        class="flex-1"
+        data=${featureCollection}
+        loop="guess"
+        valueProperty="magnitude"
+        onchart-brush=${brushCallback}
+      ></chart-map>
+    </div>
 
-      <h3>Analysis</h3>
-      <div data-layout="cluster">
-        <chart-histogram
-          class="flex-1"
-          data=${analysis}
-          title-x="Observation − Forecast"
-          title-y="Observation Count"
-        ></chart-histogram>
-        <chart-map
-          class="flex-1"
-          data=${this.state.data}
-          loop="analysis"
-          valueProperty="magnitude"
-        ></chart-map>
-      </div>
-    </div>`;
-  }
+    <h3>Analysis</h3>
+    <div data-layout="cluster">
+      <chart-histogram
+        class="flex-1"
+        data=${analysis}
+        title-x="Observation − Forecast"
+        title-y="Observation Count"
+      ></chart-histogram>
+      <chart-map
+        class="flex-1"
+        data=${featureCollection}
+        loop="analysis"
+        valueProperty="magnitude"
+        onchart-brush=${brushCallback}
+      ></chart-map>
+    </div>
+  </div>`;
 }
