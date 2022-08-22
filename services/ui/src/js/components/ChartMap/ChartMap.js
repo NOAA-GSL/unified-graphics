@@ -101,6 +101,15 @@ export default class ChartMap extends HTMLElement {
     this.setAttribute("loop", value);
   }
 
+  get selection() {
+    return this.#selection;
+  }
+
+  set selection(value) {
+    this.#selection = value;
+    this.requestUpdate();
+  }
+
   get valueProperty() {
     return this.getAttribute("value-property");
   }

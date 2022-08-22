@@ -4,6 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 import useBrushedScalar from "./useBrushedScalar";
 
 export default function VariableDiagnostic(props) {
+  const [selection, setSelection] = useState(null);
   const [featureCollection, setFeatureCollection] = useState({ features: [] });
   const [guess, setGuessBrush] = useBrushedScalar({
     features: featureCollection.features,
@@ -25,6 +26,7 @@ export default function VariableDiagnostic(props) {
   );
 
   const brushCallback = (event) => {
+    setSelection(event.detail);
     setGuessBrush(event.detail);
     setAnalysisBrush(event.detail);
   };
@@ -44,6 +46,7 @@ export default function VariableDiagnostic(props) {
         class="flex-1"
         data=${featureCollection}
         loop="guess"
+        selection=${selection}
         valueProperty="magnitude"
         onchart-brush=${brushCallback}
       ></chart-map>
@@ -61,6 +64,7 @@ export default function VariableDiagnostic(props) {
         class="flex-1"
         data=${featureCollection}
         loop="analysis"
+        selection=${selection}
         valueProperty="magnitude"
         onchart-brush=${brushCallback}
       ></chart-map>
