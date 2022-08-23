@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import mock
 
 import pytest  # noqa: F401
@@ -74,19 +75,16 @@ def test_temperature_diag(tmp_path, diag_file, client):
     }
 
 
-@mock.patch("unified_graphics.diag.temperature", autospec=True)
-def test_temperature_diag_not_found(mock_diag_temperature, client):
-    mock_diag_temperature.side_effect = FileNotFoundError()
-
+def test_temperature_diag_not_found(client):
     response = client.get("/diag/temperature/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
 
 
-@mock.patch("unified_graphics.diag.temperature", autospec=True)
-def test_temperature_diag_read_error(mock_diag_temperature, client):
-    mock_diag_temperature.side_effect = ValueError()
+def test_temperature_diag_read_error(app, client):
+    empty = Path(app.config["DIAG_DIR"]) / "ncdiag_conv_t_ges.nc4.2022050514"
+    empty.touch()
 
     response = client.get("/diag/temperature/")
 
