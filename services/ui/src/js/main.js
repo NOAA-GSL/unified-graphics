@@ -1,11 +1,16 @@
+import { render } from "preact";
+
 import styles from "../styles/_index.scss"; // eslint-disable-line
 
+import App from "./components/App";
 import DataSource from "./components/DataSource";
 import DiagScalar from "./components/DiagScalar";
 import Histogram from "./components/Histogram";
-import VectorMapDiag from "./components/VectorMapDiag";
+import ChartMap from "./components/ChartMap";
 
 customElements.define("chart-histogram", Histogram);
+customElements.define("chart-map", ChartMap);
 customElements.define("data-source", DataSource);
 customElements.define("diag-scalar", DiagScalar);
-customElements.define("diag-vectormap", VectorMapDiag);
+
+render(App, document.body);

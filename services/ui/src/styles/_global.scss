@@ -9,11 +9,7 @@ body {
   height: 100%;
 }
 
-svg {
-  display: block;
-}
-
-#root {
+body {
   isolation: isolate;
   flex-direction: column;
 
@@ -27,4 +23,8 @@ main {
 
   overflow-y: auto;
   scrollbar-gutter: stable;
+}
+
+svg {
+  display: block;
 }
