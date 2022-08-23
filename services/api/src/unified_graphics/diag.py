@@ -2,7 +2,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from flask import current_app
 import numpy as np
@@ -53,9 +53,55 @@ class VectorObservation:
         }
 
 
-def temperature(loop: MinimLoop) -> List[float]:
-    ds = open_diagnostic(Variable.TEMPERATURE, loop)
-    return [float(v) for v in ds["Obs_Minus_Forecast_unadjusted"]]
+@dataclass
+class Observation:
+    stationId: str
+    variable: str
+    guess: Union[float, PolarCoordinate]
+    analysis: Union[float, PolarCoordinate]
+    observed: Union[float, PolarCoordinate]
+    position: Coordinate
+
+    def to_geojson(self):
+        properties = {
+            "stationId": self.stationId,
+            "variable": self.variable,
+        }
+
+        if isinstance(self.guess, PolarCoordinate):
+            properties["guess"] = self.guess._as_dict()
+            properties["analysis"] = self.analysis._as_dict()
+            properties["observed"] = self.observed._as_dict()
+        else:
+            properties["guess"] = self.guess
+            properties["analysis"] = self.analysis
+            properties["observed"] = self.observed
+
+        return {
+            "type": "Feature",
+            "properties": properties,
+            "geometry": {"type": "Point", "coordinates": list(self.position)},
+        }
+
+
+def temperature() -> List[Observation]:
+    ges = open_diagnostic(Variable.TEMPERATURE, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.TEMPERATURE, MinimLoop.ANALYSIS)
+
+    return [
+        Observation(
+            stationId.decode("utf-8").strip(),
+            "temperature",
+            guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
+            analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
+            observed=float(ges["Observation"].values[idx]),
+            position=Coordinate(
+                float(ges["Longitude"].values[idx] - 360),
+                float(ges["Latitude"].values[idx]),
+            ),
+        )
+        for idx, stationId in enumerate(ges["Station_ID"].values)
+    ]
 
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:

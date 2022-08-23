@@ -31,11 +31,14 @@ def wind():
     )
 
 
-@bp.route("/diag/<variable>/<loop>/")
-def diagnostics(variable, loop):
+@bp.route("/diag/<variable>/")
+def diagnostics(variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
+    data = variable_diagnostics()
 
-    return jsonify(variable_diagnostics(diag.MinimLoop(loop)))
+    return jsonify(
+        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
+    )

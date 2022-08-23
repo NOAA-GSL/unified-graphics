@@ -1,10 +1,10 @@
 from unittest import mock
 
 import pytest  # noqa: F401
+import xarray as xr
 
 from unified_graphics.diag import (
     Coordinate,
-    MinimLoop,
     PolarCoordinate,
     VectorObservation,
 )
@@ -16,25 +16,69 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-@mock.patch("unified_graphics.diag.temperature", autospec=True)
-@pytest.mark.parametrize(
-    "loop,expected", [("ges", [MinimLoop.GUESS]), ("anl", [MinimLoop.ANALYSIS])]
-)
-def test_temperature_diag(mock_diag_temperature, loop, expected, client):
-    mock_diag_temperature.return_value = [1.0, 0.0, -1.0]
+def test_temperature_diag(tmp_path, diag_file, client):
+    diag_file(
+        "ncdiag_conv_t_ges.nc4.2022050514",
+        xr.Dataset(
+            {
+                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
+                "Observation": xr.DataArray([0, 0]),
+                "Obs_Minus_Forecast_adjusted": xr.DataArray([0, 0]),
+                "Longitude": xr.DataArray([240, 272]),
+                "Latitude": xr.DataArray([40, 30]),
+            }
+        ),
+    )
+    diag_file(
+        "ncdiag_conv_t_anl.nc4.2022050514",
+        xr.Dataset(
+            {
+                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
+                "Observation": xr.DataArray([0, 0]),
+                "Obs_Minus_Forecast_adjusted": xr.DataArray([10, 10]),
+                "Longitude": xr.DataArray([240, 272]),
+                "Latitude": xr.DataArray([40, 30]),
+            }
+        ),
+    )
 
-    response = client.get(f"/diag/temperature/{loop}/")
+    response = client.get("/diag/temperature/")
 
     assert response.status_code == 200
-    assert response.json == [1.0, 0.0, -1.0]
-    mock_diag_temperature.assert_called_once_with(*expected)
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "stationId": "WV270",
+                    "variable": "temperature",
+                    "guess": 0,
+                    "analysis": 10,
+                    "observed": 0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-120, 40]},
+            },
+            {
+                "type": "Feature",
+                "properties": {
+                    "stationId": "E4294",
+                    "variable": "temperature",
+                    "guess": 0,
+                    "analysis": 10,
+                    "observed": 0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-88, 30]},
+            },
+        ],
+    }
 
 
 @mock.patch("unified_graphics.diag.temperature", autospec=True)
 def test_temperature_diag_not_found(mock_diag_temperature, client):
     mock_diag_temperature.side_effect = FileNotFoundError()
 
-    response = client.get("/diag/temperature/ges/")
+    response = client.get("/diag/temperature/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
@@ -44,7 +88,7 @@ def test_temperature_diag_not_found(mock_diag_temperature, client):
 def test_temperature_diag_read_error(mock_diag_temperature, client):
     mock_diag_temperature.side_effect = ValueError()
 
-    response = client.get("/diag/temperature/ges/")
+    response = client.get("/diag/temperature/")
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
@@ -96,7 +140,7 @@ def test_wind_diag_read_error(mock_diag_wind, client):
 
 
 def test_unknown_variable(client):
-    response = client.get("/diag/not_a_variable/ges/")
+    response = client.get("/diag/not_a_variable/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Variable not found: 'not_a_variable'"}

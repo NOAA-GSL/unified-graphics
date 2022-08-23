@@ -19,35 +19,6 @@ def make_scalar_diag():
     return _make_scalar_diag
 
 
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@pytest.mark.parametrize("loop", ([diag.MinimLoop.GUESS], [diag.MinimLoop.ANALYSIS]))
-def test_temperature(mock_open_diagnostic, loop):
-    mock_open_diagnostic.return_value = xr.Dataset(
-        {"Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 3, 5])}
-    )
-
-    result = diag.temperature(loop)
-
-    mock_open_diagnostic.assert_called_once_with(diag.Variable.TEMPERATURE, loop)
-    assert result == [1.0, 3.0, 5.0]
-
-
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_temperature_diag_does_not_exist(mock_open_diagnostic):
-    mock_open_diagnostic.side_effect = FileNotFoundError()
-
-    with pytest.raises(FileNotFoundError):
-        diag.temperature(diag.MinimLoop.GUESS)
-
-
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_temperature_diag_unknown_backend(mock_open_diagnostic):
-    mock_open_diagnostic.side_effect = ValueError()
-
-    with pytest.raises(ValueError):
-        diag.temperature(diag.MinimLoop.GUESS)
-
-
 @pytest.mark.parametrize(
     "variable,loop,filename",
     [
