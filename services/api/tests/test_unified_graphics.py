@@ -10,6 +10,18 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
+def test_list_variables(client):
+    response = client.get("/diag/")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "moisture": "/diag/moisture/",
+        "pressure": "/diag/pressure/",
+        "temperature": "/diag/temperature/",
+        "wind": "/diag/wind/",
+    }
+
+
 @pytest.mark.parametrize(
     "variable_name,variable_code",
     [("temperature", "t"), ("moisture", "q"), ("pressure", "p")],
