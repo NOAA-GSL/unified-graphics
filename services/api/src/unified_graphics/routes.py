@@ -30,6 +30,8 @@ def diagnostics(variable):
     variable_diagnostics = getattr(diag, variable)
     data = variable_diagnostics()
 
-    return jsonify(
+    response = jsonify(
         {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
     )
+
+    return response

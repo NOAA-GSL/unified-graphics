@@ -31,29 +31,6 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
 
 @dataclass
-class VectorObservation:
-    stationId: str
-    variable: str
-    guess: PolarCoordinate
-    analysis: PolarCoordinate
-    observed: PolarCoordinate
-    position: Coordinate
-
-    def to_geojson(self):
-        return {
-            "type": "Feature",
-            "properties": {
-                "stationId": self.stationId,
-                "variable": self.variable,
-                "guess": self.guess._asdict(),
-                "analysis": self.analysis._asdict(),
-                "observed": self.observed._asdict(),
-            },
-            "geometry": {"type": "Point", "coordinates": list(self.position)},
-        }
-
-
-@dataclass
 class Observation:
     stationId: str
     variable: str
@@ -68,14 +45,14 @@ class Observation:
             "variable": self.variable,
         }
 
-        if isinstance(self.guess, PolarCoordinate):
-            properties["guess"] = self.guess._as_dict()
-            properties["analysis"] = self.analysis._as_dict()
-            properties["observed"] = self.observed._as_dict()
-        else:
+        if isinstance(self.guess, float):
             properties["guess"] = self.guess
             properties["analysis"] = self.analysis
             properties["observed"] = self.observed
+        else:
+            properties["guess"] = self.guess._asdict()
+            properties["analysis"] = self.analysis._asdict()
+            properties["observed"] = self.observed._asdict()
 
         return {
             "type": "Feature",
@@ -129,7 +106,7 @@ def pressure() -> List[Observation]:
     return scalar(Variable.PRESSURE)
 
 
-def wind() -> List[VectorObservation]:
+def wind() -> List[Observation]:
     ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
     anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
 
@@ -179,7 +156,7 @@ def wind() -> List[VectorObservation]:
     ) % 360
 
     return [
-        VectorObservation(
+        Observation(
             stationId.decode("utf-8").strip(),
             "wind",
             guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
