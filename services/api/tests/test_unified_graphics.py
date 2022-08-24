@@ -62,6 +62,7 @@ def test_scalar_diag(variable_name, variable_code, diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "WV270",
+                    "type": "scalar",
                     "variable": variable_name,
                     "guess": 0,
                     "analysis": 10,
@@ -73,6 +74,7 @@ def test_scalar_diag(variable_name, variable_code, diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "E4294",
+                    "type": "scalar",
                     "variable": variable_name,
                     "guess": 0,
                     "analysis": 10,
@@ -124,6 +126,7 @@ def test_wind_diag(diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "WV270",
+                    "type": "vector",
                     "variable": "wind",
                     "guess": {"magnitude": 0.5, "direction": 270.0},
                     "analysis": {"magnitude": 0.1, "direction": 270.0},
@@ -135,6 +138,7 @@ def test_wind_diag(diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "E4294",
+                    "type": "vector",
                     "variable": "wind",
                     "guess": {"magnitude": 0.5, "direction": 180.0},
                     "analysis": {"magnitude": 0.1, "direction": 180.0},

@@ -26,6 +26,11 @@ class Variable(Enum):
     WIND = "uv"
 
 
+class VariableType(Enum):
+    SCALAR = "scalar"
+    VECTOR = "vector"
+
+
 Coordinate = namedtuple("Coordinate", "longitude latitude")
 PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
@@ -34,6 +39,7 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 class Observation:
     stationId: str
     variable: str
+    variable_type: VariableType
     guess: Union[float, PolarCoordinate]
     analysis: Union[float, PolarCoordinate]
     observed: Union[float, PolarCoordinate]
@@ -42,6 +48,7 @@ class Observation:
     def to_geojson(self):
         properties = {
             "stationId": self.stationId,
+            "type": self.variable_type.value,
             "variable": self.variable,
         }
 
@@ -82,6 +89,7 @@ def scalar(variable: Variable) -> List[Observation]:
         Observation(
             stationId.decode("utf-8").strip(),
             variable.name.lower(),
+            VariableType.SCALAR,
             guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
             analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
             observed=float(ges["Observation"].values[idx]),
@@ -159,6 +167,7 @@ def wind() -> List[Observation]:
         Observation(
             stationId.decode("utf-8").strip(),
             "wind",
+            VariableType.VECTOR,
             guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
             analysis=PolarCoordinate(float(anl_mag[idx]), float(anl_dir[idx])),
             observed=PolarCoordinate(float(obs_mag[idx]), float(obs_dir[idx])),
