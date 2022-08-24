@@ -2,6 +2,7 @@ import { html } from "htm/preact";
 import { useEffect, useState } from "preact/hooks";
 
 import useBrushedScalar from "./useBrushedScalar";
+import VariableDisplay from "./VariableDisplay";
 
 export default function VariableDiagnostic(props) {
   const [variables, setVariables] = useState({});
@@ -47,40 +48,22 @@ export default function VariableDiagnostic(props) {
       ${options}
     </select>
 
-    <h3>Guess</h3>
-    <div data-layout="cluster">
-      <chart-histogram
-        class="flex-1"
-        data=${guess}
-        title-x="Observation − Forecast"
-        title-y="Observation Count"
-      ></chart-histogram>
-      <chart-map
-        class="flex-1"
-        data=${featureCollection}
-        loop="guess"
-        selection=${selection}
-        valueProperty="magnitude"
-        onchart-brush=${brushCallback}
-      ></chart-map>
-    </div>
+    <h2>Guess</h2>
+    <${VariableDisplay}
+      loop="guess"
+      distribution=${guess}
+      observations=${featureCollection}
+      selection=${selection}
+      brushCallback=${brushCallback}
+    />
 
-    <h3>Analysis</h3>
-    <div data-layout="cluster">
-      <chart-histogram
-        class="flex-1"
-        data=${analysis}
-        title-x="Observation − Forecast"
-        title-y="Observation Count"
-      ></chart-histogram>
-      <chart-map
-        class="flex-1"
-        data=${featureCollection}
-        loop="analysis"
-        selection=${selection}
-        valueProperty="magnitude"
-        onchart-brush=${brushCallback}
-      ></chart-map>
-    </div>
+    <h2>Analysis</h2>
+    <${VariableDisplay}
+      loop="analysis"
+      distribution=${analysis}
+      observations=${featureCollection}
+      selection=${selection}
+      brushCallback=${brushCallback}
+    />
   </div>`;
 }
