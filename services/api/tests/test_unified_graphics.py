@@ -7,7 +7,7 @@ import xarray as xr
 def test_root_endpoint(client):
     response = client.get("/")
 
-    assert response.json == {"msg": "Hello, Dave"}
+    assert response.json == {"diagnostics": "/diag/"}
 
 
 def test_list_variables(client):
