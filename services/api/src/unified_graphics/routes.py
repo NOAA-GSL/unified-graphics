@@ -22,15 +22,6 @@ def index():
     return jsonify({"msg": "Hello, Dave"})
 
 
-@bp.route("/diag/wind/")
-def wind():
-    data = diag.wind()
-
-    return jsonify(
-        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
-    )
-
-
 @bp.route("/diag/<variable>/")
 def diagnostics(variable):
     if not hasattr(diag, variable):
