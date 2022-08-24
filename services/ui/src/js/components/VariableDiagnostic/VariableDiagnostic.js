@@ -1,10 +1,11 @@
 import { html } from "htm/preact";
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 
 import useBrushedScalar from "./useBrushedScalar";
 import VariableDisplay from "./VariableDisplay";
 
-export default function VariableDiagnostic(props) {
+export default function VariableDiagnostic() {
+  const [display, setDisplay] = useState(null);
   const [variables, setVariables] = useState({});
   const [selection, setSelection] = useState(null);
   const [featureCollection, setFeatureCollection] = useState({ features: [] });
@@ -19,18 +20,19 @@ export default function VariableDiagnostic(props) {
     variable: "magnitude",
   });
 
+  useEffect(() => {
+    if (!display) return;
+    fetch(`/api${display}/`)
+      .then((response) => response.json())
+      .then((json) => setFeatureCollection(json));
+  }, [display]);
+
   useEffect(
     () =>
-      fetch(`/api/diag/${props.variable}/`)
+      fetch("/api/diag/")
         .then((response) => response.json())
-        .then((json) => setFeatureCollection(json)),
-    [props.variable]
-  );
-
-  useEffect(() =>
-    fetch("/api/diag/")
-      .then((response) => response.json())
-      .then((json) => setVariables(json))
+        .then((json) => setVariables(json)),
+    []
   );
 
   const brushCallback = (event) => {
@@ -39,12 +41,16 @@ export default function VariableDiagnostic(props) {
     setAnalysisBrush(event.detail);
   };
 
+  const onVariableSelect = useCallback((event) => {
+    setDisplay(event.target.value);
+  });
+
   const options = Object.entries(variables).map(
     ([name, url]) => html`<option value=${url}>${name}</option>`
   );
 
   return html`<div class="flow">
-    <select>
+    <select onChange=${onVariableSelect}>
       ${options}
     </select>
 
