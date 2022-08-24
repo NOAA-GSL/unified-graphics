@@ -84,14 +84,27 @@ class Observation:
         }
 
 
-def temperature() -> List[Observation]:
-    ges = open_diagnostic(Variable.TEMPERATURE, MinimLoop.GUESS)
-    anl = open_diagnostic(Variable.TEMPERATURE, MinimLoop.ANALYSIS)
+def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
+    filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
+    diag_file = Path(current_app.config["DIAG_DIR"]) / filename
+
+    # xarray.open_dataset doesn't distinguish between a file it can't understand
+    # and a file that's not there. It raises a ValueError even for missing
+    # files. We raise a FileNotFoundError to make debugging easier.
+    if not diag_file.exists():
+        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
+
+    return xr.open_dataset(diag_file)
+
+
+def scalar(variable: Variable) -> List[Observation]:
+    ges = open_diagnostic(variable, MinimLoop.GUESS)
+    anl = open_diagnostic(variable, MinimLoop.ANALYSIS)
 
     return [
         Observation(
             stationId.decode("utf-8").strip(),
-            "temperature",
+            variable.name.lower(),
             guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
             analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
             observed=float(ges["Observation"].values[idx]),
@@ -104,17 +117,16 @@ def temperature() -> List[Observation]:
     ]
 
 
-def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
-    filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
-    diag_file = Path(current_app.config["DIAG_DIR"]) / filename
+def temperature() -> List[Observation]:
+    return scalar(Variable.TEMPERATURE)
 
-    # xarray.open_dataset doesn't distinguish between a file it can't understand
-    # and a file that's not there. It raises a ValueError even for missing
-    # files. We raise a FileNotFoundError to make debugging easier.
-    if not diag_file.exists():
-        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
-    return xr.open_dataset(diag_file)
+def moisture() -> List[Observation]:
+    return scalar(Variable.MOISTURE)
+
+
+def pressure() -> List[Observation]:
+    return scalar(Variable.PRESSURE)
 
 
 def wind() -> List[VectorObservation]:

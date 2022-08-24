@@ -17,9 +17,13 @@ def test_root_endpoint(client):
     assert response.json == {"msg": "Hello, Dave"}
 
 
-def test_temperature_diag(tmp_path, diag_file, client):
+@pytest.mark.parametrize(
+    "variable_name,variable_code",
+    [("temperature", "t"), ("moisture", "q"), ("pressure", "p")],
+)
+def test_scalar_diag(variable_name, variable_code, diag_file, client):
     diag_file(
-        "ncdiag_conv_t_ges.nc4.2022050514",
+        f"ncdiag_conv_{variable_code}_ges.nc4.2022050514",
         xr.Dataset(
             {
                 "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
@@ -31,7 +35,7 @@ def test_temperature_diag(tmp_path, diag_file, client):
         ),
     )
     diag_file(
-        "ncdiag_conv_t_anl.nc4.2022050514",
+        f"ncdiag_conv_{variable_code}_anl.nc4.2022050514",
         xr.Dataset(
             {
                 "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
@@ -43,7 +47,7 @@ def test_temperature_diag(tmp_path, diag_file, client):
         ),
     )
 
-    response = client.get("/diag/temperature/")
+    response = client.get(f"/diag/{variable_name}/")
 
     assert response.status_code == 200
     assert response.json == {
@@ -53,7 +57,7 @@ def test_temperature_diag(tmp_path, diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "WV270",
-                    "variable": "temperature",
+                    "variable": variable_name,
                     "guess": 0,
                     "analysis": 10,
                     "observed": 0,
@@ -64,7 +68,7 @@ def test_temperature_diag(tmp_path, diag_file, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "E4294",
-                    "variable": "temperature",
+                    "variable": variable_name,
                     "guess": 0,
                     "analysis": 10,
                     "observed": 0,
@@ -75,18 +79,25 @@ def test_temperature_diag(tmp_path, diag_file, client):
     }
 
 
-def test_temperature_diag_not_found(client):
-    response = client.get("/diag/temperature/")
+@pytest.mark.parametrize("variable_name", ["temperature", "moisture", "pressure"])
+def test_scalar_diag_not_found(variable_name, client):
+    response = client.get(f"/diag/{variable_name}/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
 
 
-def test_temperature_diag_read_error(app, client):
-    empty = Path(app.config["DIAG_DIR"]) / "ncdiag_conv_t_ges.nc4.2022050514"
+@pytest.mark.parametrize(
+    "variable_name,variable_code",
+    [("temperature", "t"), ("moisture", "q"), ("pressure", "p")],
+)
+def test_scalar_diag_read_error(variable_name, variable_code, app, client):
+    empty = (
+        Path(app.config["DIAG_DIR"]) / f"ncdiag_conv_{variable_code}_ges.nc4.2022050514"
+    )
     empty.touch()
 
-    response = client.get("/diag/temperature/")
+    response = client.get(f"/diag/{variable_name}/")
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
