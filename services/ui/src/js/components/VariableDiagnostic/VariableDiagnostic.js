@@ -4,6 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 import useBrushedScalar from "./useBrushedScalar";
 
 export default function VariableDiagnostic(props) {
+  const [variables, setVariables] = useState({});
   const [selection, setSelection] = useState(null);
   const [featureCollection, setFeatureCollection] = useState({ features: [] });
   const [guess, setGuessBrush] = useBrushedScalar({
@@ -25,14 +26,26 @@ export default function VariableDiagnostic(props) {
     [props.variable]
   );
 
+  useEffect(() =>
+    fetch("/api/diag/")
+      .then((response) => response.json())
+      .then((json) => setVariables(json))
+  );
+
   const brushCallback = (event) => {
     setSelection(event.detail);
     setGuessBrush(event.detail);
     setAnalysisBrush(event.detail);
   };
 
+  const options = Object.entries(variables).map(
+    ([name, url]) => html`<option value=${url}>${name}</option>`
+  );
+
   return html`<div class="flow">
-    <h2>Wind</h2>
+    <select>
+      ${options}
+    </select>
 
     <h3>Guess</h3>
     <div data-layout="cluster">
