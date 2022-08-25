@@ -24,7 +24,7 @@ def test_list_variables(client):
 
 @pytest.mark.parametrize(
     "variable_name,variable_code",
-    [("temperature", "t"), ("moisture", "q"), ("pressure", "p")],
+    [("temperature", "t"), ("moisture", "q"), ("pressure", "ps")],
 )
 def test_scalar_diag(variable_name, variable_code, diag_file, client):
     diag_file(
@@ -162,7 +162,7 @@ def test_diag_not_found(variable_name, client):
 
 @pytest.mark.parametrize(
     "variable_name,variable_code",
-    [("temperature", "t"), ("moisture", "q"), ("pressure", "p"), ("wind", "uv")],
+    [("temperature", "t"), ("moisture", "q"), ("pressure", "ps"), ("wind", "uv")],
 )
 def test_diag_read_error(variable_name, variable_code, app, client):
     empty = (

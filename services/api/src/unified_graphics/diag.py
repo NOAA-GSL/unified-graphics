@@ -21,7 +21,7 @@ class ValueType(Enum):
 
 class Variable(Enum):
     MOISTURE = "q"
-    PRESSURE = "p"
+    PRESSURE = "ps"
     TEMPERATURE = "t"
     WIND = "uv"
 

@@ -29,7 +29,7 @@ def make_scalar_diag():
         (
             diag.Variable.PRESSURE,
             diag.MinimLoop.ANALYSIS,
-            "ncdiag_conv_p_anl.nc4.2022050514",
+            "ncdiag_conv_ps_anl.nc4.2022050514",
         ),
         (
             diag.Variable.TEMPERATURE,
