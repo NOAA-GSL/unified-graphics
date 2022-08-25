@@ -1,6 +1,6 @@
 import { html } from "htm/preact";
 
-import VariableDiagnostic from "../VariableDiagnostic";
+import VariableDiagnostic from "../DiagnosticView";
 import Header from "../Header";
 
 const App = html`<${Header} />

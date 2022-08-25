@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import useBrushedScalar from "./useBrushedScalar";
 import VariableDisplay from "./VariableDisplay";
 
-export default function VariableDiagnostic() {
+export default function DiagnosticView() {
   const [display, setDisplay] = useState(null);
   const [variables, setVariables] = useState({});
   const [selection, setSelection] = useState(null);
