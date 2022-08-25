@@ -1,6 +1,6 @@
 import { useCallback, useState } from "preact/hooks";
 
-export default function useBrushedScalar({ features = [], loop = "", variable = "" }) {
+export default function useBrushedScalar({ features = [], loop = "" }) {
   const [selection, setSelection] = useState(null);
 
   const setBrush = useCallback((selection) => setSelection(selection), []);
@@ -14,7 +14,7 @@ export default function useBrushedScalar({ features = [], loop = "", variable = 
 
       return lng >= left && lng <= right && lat >= bottom && lat <= top;
     })
-    .map((feature) => feature.properties[loop][variable]);
+    .map((feature) => feature.properties[loop]);
 
   return [brushedScalar, setBrush];
 }
