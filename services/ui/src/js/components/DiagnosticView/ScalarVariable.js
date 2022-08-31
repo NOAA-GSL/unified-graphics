@@ -15,7 +15,7 @@ export default function ScalarVariable(props) {
   const analysis = data.map((feature) => feature.properties.analysis);
 
   return html`<h2>Guess</h2>
-    <div data-layout="cluster">
+    <div data-layout="grid">
       <chart-histogram
         class="flex-1"
         data=${guess}
@@ -32,7 +32,7 @@ export default function ScalarVariable(props) {
     </div>
 
     <h2>Analysis</h2>
-    <div data-layout="cluster">
+    <div data-layout="grid">
       <chart-histogram
         class="flex-1"
         data=${analysis}
