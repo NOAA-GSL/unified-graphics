@@ -44,8 +44,6 @@ export default function DiagnosticView() {
       ${options}
     </select>
 
-    <div data-layout="grid">
-      <${VariableComponent} featureCollection=${featureCollection} />
-    </div>
+    <${VariableComponent} featureCollection=${featureCollection} />
   </div>`;
 }
