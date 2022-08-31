@@ -139,7 +139,7 @@ def wind() -> List[Observation]:
     anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
 
     obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
-    obs_dir = vector_direction(ges["v_Observation"].values, ges["u_Observation"].values)
+    obs_dir = vector_direction(ges["u_Observation"].values, ges["v_Observation"].values)
 
     ges_mag = obs_mag - ges_forecast_mag
     ges_dir = obs_dir - ges_forecast_dir
