@@ -114,66 +114,56 @@ def pressure() -> List[Observation]:
     return scalar(Variable.PRESSURE)
 
 
+def vector_direction(u, v):
+    return (90 - np.degrees(np.arctan2(-v, -u))) % 360
+
+
+def vector_magnitude(u, v):
+    return np.sqrt(u**2 + v**2)
+
+
 def wind() -> List[Observation]:
     ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
     anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
 
-    # FIXME: This seems like this should be refactored into helper methods or
-    # something. Although, ideally, I think all of these values should be
-    # pre-calculated and stored on-disk as part of a pipeline that processes new
-    # data.
-    ges_mag = np.sqrt(
-        ges["u_Obs_Minus_Forecast_adjusted"].values ** 2
-        + ges["v_Obs_Minus_Forecast_adjusted"].values ** 2
-    )
-    ges_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -ges["v_Obs_Minus_Forecast_adjusted"].values,
-                -ges["u_Obs_Minus_Forecast_adjusted"].values,
-            )
-        )
-    ) % 360
+    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
+    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
 
-    anl_mag = np.sqrt(
-        anl["u_Obs_Minus_Forecast_adjusted"].values ** 2
-        + anl["v_Obs_Minus_Forecast_adjusted"].values ** 2
-    )
-    anl_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -anl["v_Obs_Minus_Forecast_adjusted"].values,
-                -anl["u_Obs_Minus_Forecast_adjusted"].values,
-            )
-        )
-    ) % 360
+    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
+    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
 
-    obs_mag = np.sqrt(
-        ges["u_Observation"].values ** 2 + ges["v_Observation"].values ** 2
-    )
-    obs_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -ges["v_Observation"].values,
-                -ges["u_Observation"].values,
-            )
-        )
-    ) % 360
+    ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
+    ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
+
+    anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
+    anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
+
+    obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_dir = vector_direction(ges["v_Observation"].values, ges["u_Observation"].values)
+
+    ges_mag = obs_mag - ges_forecast_mag
+    ges_dir = obs_dir - ges_forecast_dir
+
+    anl_mag = obs_mag - anl_forecast_mag
+    anl_dir = obs_dir - anl_forecast_dir
 
     return [
         Observation(
             stationId.decode("utf-8").strip(),
             "wind",
             VariableType.VECTOR,
-            guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
-            analysis=PolarCoordinate(float(anl_mag[idx]), float(anl_dir[idx])),
-            observed=PolarCoordinate(float(obs_mag[idx]), float(obs_dir[idx])),
+            guess=PolarCoordinate(
+                round(float(ges_mag[idx]), 5), round(float(ges_dir[idx]), 5)
+            ),
+            analysis=PolarCoordinate(
+                round(float(anl_mag[idx]), 5), round(float(anl_dir[idx]), 5)
+            ),
+            observed=PolarCoordinate(
+                round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
+            ),
             position=Coordinate(
-                float(ges["Longitude"].values[idx] - 360),
-                float(ges["Latitude"].values[idx]),
+                round(float(ges["Longitude"].values[idx] - 360), 5),
+                round(float(ges["Latitude"].values[idx]), 5),
             ),
         )
         for idx, stationId in enumerate(ges["Station_ID"].values)

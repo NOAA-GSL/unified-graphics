@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import numpy as np
 import xarray as xr
 
 from unified_graphics import diag
@@ -70,3 +71,27 @@ def test_open_diagnostic_unknown_backend(app):
     with app.app_context():
         with pytest.raises(ValueError, match=expected):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
+
+
+def test_vector_direction():
+    # Test cases taken from the examples at
+    # http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
+    u = np.array([10, 0, 0, -10, 10, 10, -10, -10])
+    v = np.array([0, 10, -10, 0, 10, -10, 10, -10])
+
+    result = diag.vector_direction(u, v)
+
+    np.testing.assert_array_almost_equal(
+        result, np.array([270, 180, 0, 90, 225, 315, 135, 45]), decimal=5
+    )
+
+
+def test_vector_magnitude():
+    u = np.array([1, 0, 1, 0])
+    v = np.array([0, 1, 1, 0])
+
+    result = diag.vector_magnitude(u, v)
+
+    np.testing.assert_array_almost_equal(
+        result, np.array([1, 1, 1.41421, 0]), decimal=5
+    )
