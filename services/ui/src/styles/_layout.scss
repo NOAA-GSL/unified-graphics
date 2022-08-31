@@ -13,7 +13,16 @@
 
   display: grid;
 
-  grid-template-columns: repeat(auto-fit, minmax(min(30rem, 100%), 1fr));
+  grid-auto-rows: var(--row-size);
+
+  grid-template-columns: repeat(
+    auto-fit,
+    var(--column-size, minmax(min(30rem, 100%), 1fr))
+  );
+}
+
+[data-colspan="full"] {
+  grid-column: 1 / -1;
 }
 
 :where(.flow) > * + * {
