@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, jsonify
+from flask import Blueprint, jsonify, url_for
 
 from unified_graphics import diag
 
@@ -18,24 +18,26 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    current_app.logger.info("index()")
-    return jsonify({"msg": "Hello, Dave"})
+    return jsonify({"diagnostics": url_for(".list_variables")})
 
 
-@bp.route("/diag/wind/")
-def wind():
-    data = diag.wind()
+@bp.route("/diag/")
+def list_variables():
+    variables = [v.name.lower() for v in diag.Variable]
 
-    return jsonify(
-        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
-    )
+    return jsonify({v: url_for(".diagnostics", variable=v) for v in variables})
 
 
-@bp.route("/diag/<variable>/<loop>/")
-def diagnostics(variable, loop):
+@bp.route("/diag/<variable>/")
+def diagnostics(variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
+    data = variable_diagnostics()
 
-    return jsonify(variable_diagnostics(diag.MinimLoop(loop)))
+    response = jsonify(
+        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
+    )
+
+    return response

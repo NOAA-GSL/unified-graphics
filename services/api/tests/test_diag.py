@@ -1,7 +1,7 @@
 from pathlib import Path
-from unittest import mock
 
 import pytest
+import numpy as np
 import xarray as xr
 
 from unified_graphics import diag
@@ -19,35 +19,6 @@ def make_scalar_diag():
     return _make_scalar_diag
 
 
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-@pytest.mark.parametrize("loop", ([diag.MinimLoop.GUESS], [diag.MinimLoop.ANALYSIS]))
-def test_temperature(mock_open_diagnostic, loop):
-    mock_open_diagnostic.return_value = xr.Dataset(
-        {"Obs_Minus_Forecast_unadjusted": xr.DataArray([1, 3, 5])}
-    )
-
-    result = diag.temperature(loop)
-
-    mock_open_diagnostic.assert_called_once_with(diag.Variable.TEMPERATURE, loop)
-    assert result == [1.0, 3.0, 5.0]
-
-
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_temperature_diag_does_not_exist(mock_open_diagnostic):
-    mock_open_diagnostic.side_effect = FileNotFoundError()
-
-    with pytest.raises(FileNotFoundError):
-        diag.temperature(diag.MinimLoop.GUESS)
-
-
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_temperature_diag_unknown_backend(mock_open_diagnostic):
-    mock_open_diagnostic.side_effect = ValueError()
-
-    with pytest.raises(ValueError):
-        diag.temperature(diag.MinimLoop.GUESS)
-
-
 @pytest.mark.parametrize(
     "variable,loop,filename",
     [
@@ -59,7 +30,7 @@ def test_temperature_diag_unknown_backend(mock_open_diagnostic):
         (
             diag.Variable.PRESSURE,
             diag.MinimLoop.ANALYSIS,
-            "ncdiag_conv_p_anl.nc4.2022050514",
+            "ncdiag_conv_ps_anl.nc4.2022050514",
         ),
         (
             diag.Variable.TEMPERATURE,
@@ -102,75 +73,35 @@ def test_open_diagnostic_unknown_backend(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
-@mock.patch("unified_graphics.diag.open_diagnostic", autospec=True)
-def test_wind(mock_open_diagnostic):
-    # Arrange
+# Test cases taken from the examples at
+# http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
+@pytest.mark.parametrize(
+    "u,v,expected",
+    (
+        [
+            np.array([10, 0, 0, -10, 10, 10, -10, -10]),
+            np.array([0, 10, -10, 0, 10, -10, 10, -10]),
+            np.array([270, 180, 0, 90, 225, 315, 135, 45]),
+        ],
+        [
+            np.array([0.0, -0.0, 0.0, -0.0]),
+            np.array([0.0, 0.0, -0.0, -0.0]),
+            np.array([0.0, 0.0, 0.0, 0.0]),
+        ],
+    ),
+)
+def test_vector_direction(u, v, expected):
+    result = diag.vector_direction(u, v)
 
-    test_dataset = xr.Dataset(
-        {
-            "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-            "u_Observation": xr.DataArray([0, 0]),
-            "u_Obs_Minus_Forecast_adjusted": xr.DataArray([3, 1]),
-            "v_Observation": xr.DataArray([10, 10]),
-            "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-4, 0]),
-            "Longitude": xr.DataArray([240, 272]),
-            "Latitude": xr.DataArray([40, 30]),
-        }
+    np.testing.assert_array_almost_equal(result, expected, decimal=5)
+
+
+def test_vector_magnitude():
+    u = np.array([1, 0, 1, 0])
+    v = np.array([0, 1, 1, 0])
+
+    result = diag.vector_magnitude(u, v)
+
+    np.testing.assert_array_almost_equal(
+        result, np.array([1, 1, 1.41421, 0]), decimal=5
     )
-
-    mock_open_diagnostic.return_value = test_dataset
-
-    # Act
-
-    data = diag.wind()
-
-    # Assert
-
-    assert mock_open_diagnostic.mock_calls == [
-        mock.call(diag.Variable.WIND, diag.MinimLoop.GUESS),
-        mock.call(diag.Variable.WIND, diag.MinimLoop.ANALYSIS),
-    ]
-
-    assert data == [
-        diag.VectorObservation(
-            stationId="WV270",
-            variable="wind",
-            guess=diag.PolarCoordinate(5.0, 323.13010235415595),
-            analysis=diag.PolarCoordinate(5.0, 323.13010235415595),
-            observed=diag.PolarCoordinate(10.0, 180.0),
-            position=diag.Coordinate(-120.0, 40.0),
-        ),
-        diag.VectorObservation(
-            stationId="E4294",
-            variable="wind",
-            guess=diag.PolarCoordinate(1.0, 270.0),
-            analysis=diag.PolarCoordinate(1.0, 270.0),
-            observed=diag.PolarCoordinate(10.0, 180.0),
-            position=diag.Coordinate(-88.0, 30.0),
-        ),
-    ]
-
-
-def test_VectorObservation_to_geojson():
-    subject = diag.VectorObservation(
-        "WV270",
-        "wind",
-        diag.PolarCoordinate(1, 180),
-        diag.PolarCoordinate(0.5, 0),
-        diag.PolarCoordinate(1, 90),
-        diag.Coordinate(0, 0),
-    )
-
-    result = subject.to_geojson()
-
-    assert result == {
-        "type": "Feature",
-        "properties": {
-            "stationId": "WV270",
-            "variable": "wind",
-            "guess": {"magnitude": 1, "direction": 180},
-            "analysis": {"magnitude": 0.5, "direction": 0},
-            "observed": {"magnitude": 1, "direction": 90},
-        },
-        "geometry": {"type": "Point", "coordinates": [0, 0]},
-    }

@@ -32,10 +32,7 @@ export default class ChartMap extends HTMLElement {
   #pendingUpdate = null;
   #borders = null;
   #data = null;
-
-  static getObservedAttributes() {
-    return ["loop", "value-property"];
-  }
+  #radiusAccessor = null;
 
   constructor() {
     super();
@@ -93,12 +90,12 @@ export default class ChartMap extends HTMLElement {
     this.requestUpdate();
   }
 
-  get loop() {
-    return this.getAttribute("loop");
+  get radius() {
+    return this.#radiusAccessor;
   }
 
-  set loop(value) {
-    this.setAttribute("loop", value);
+  set radius(fn) {
+    this.#radiusAccessor = fn;
   }
 
   get selection() {
@@ -108,14 +105,6 @@ export default class ChartMap extends HTMLElement {
   set selection(value) {
     this.#selection = value;
     this.requestUpdate();
-  }
-
-  get valueProperty() {
-    return this.getAttribute("value-property");
-  }
-
-  set valueProperty(value) {
-    this.setAttribute("value-property", value);
   }
 
   requestUpdate() {
@@ -164,12 +153,9 @@ export default class ChartMap extends HTMLElement {
       ctx.restore();
     }
 
-    if (!observations) return;
+    if (!(observations && this.#radiusAccessor)) return;
 
-    const [minDiff, maxDiff] = extent(
-      observations.features,
-      (feature) => feature.properties[this.loop][this.valueProperty]
-    );
+    const [minDiff, maxDiff] = extent(observations.features, this.#radiusAccessor);
 
     const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);
 
@@ -182,11 +168,12 @@ export default class ChartMap extends HTMLElement {
       .range([0.5, 6]);
 
     observations.features.forEach((feature) => {
-      const radius = r(Math.abs(feature.properties[this.loop][this.valueProperty]));
+      const value = this.#radiusAccessor(feature);
+      const radius = r(Math.abs(value));
       const [x, y] = this.#projection(feature.geometry.coordinates);
 
       ctx.save();
-      ctx.fillStyle = fill(feature.properties[this.loop][this.valueProperty]);
+      ctx.fillStyle = fill(value);
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, 2 * Math.PI);

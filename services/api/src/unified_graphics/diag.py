@@ -2,7 +2,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from flask import current_app
 import numpy as np
@@ -21,9 +21,14 @@ class ValueType(Enum):
 
 class Variable(Enum):
     MOISTURE = "q"
-    PRESSURE = "p"
+    PRESSURE = "ps"
     TEMPERATURE = "t"
     WIND = "uv"
+
+
+class VariableType(Enum):
+    SCALAR = "scalar"
+    VECTOR = "vector"
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
@@ -31,31 +36,36 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
 
 @dataclass
-class VectorObservation:
+class Observation:
     stationId: str
     variable: str
-    guess: PolarCoordinate
-    analysis: PolarCoordinate
-    observed: PolarCoordinate
+    variable_type: VariableType
+    guess: Union[float, PolarCoordinate]
+    analysis: Union[float, PolarCoordinate]
+    observed: Union[float, PolarCoordinate]
     position: Coordinate
 
     def to_geojson(self):
-        return {
-            "type": "Feature",
-            "properties": {
-                "stationId": self.stationId,
-                "variable": self.variable,
-                "guess": self.guess._asdict(),
-                "analysis": self.analysis._asdict(),
-                "observed": self.observed._asdict(),
-            },
-            "geometry": {"type": "Point", "coordinates": list(self.position)},
+        properties = {
+            "stationId": self.stationId,
+            "type": self.variable_type.value,
+            "variable": self.variable,
         }
 
+        if isinstance(self.guess, float):
+            properties["guess"] = self.guess
+            properties["analysis"] = self.analysis
+            properties["observed"] = self.observed
+        else:
+            properties["guess"] = self.guess._asdict()
+            properties["analysis"] = self.analysis._asdict()
+            properties["observed"] = self.observed._asdict()
 
-def temperature(loop: MinimLoop) -> List[float]:
-    ds = open_diagnostic(Variable.TEMPERATURE, loop)
-    return [float(v) for v in ds["Obs_Minus_Forecast_unadjusted"]]
+        return {
+            "type": "Feature",
+            "properties": properties,
+            "geometry": {"type": "Point", "coordinates": list(self.position)},
+        }
 
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
@@ -71,65 +81,103 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
-def wind() -> List[VectorObservation]:
-    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
-    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
-
-    # FIXME: This seems like this should be refactored into helper methods or
-    # something. Although, ideally, I think all of these values should be
-    # pre-calculated and stored on-disk as part of a pipeline that processes new
-    # data.
-    ges_mag = np.sqrt(
-        ges["u_Obs_Minus_Forecast_adjusted"].values ** 2
-        + ges["v_Obs_Minus_Forecast_adjusted"].values ** 2
-    )
-    ges_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -ges["v_Obs_Minus_Forecast_adjusted"].values,
-                -ges["u_Obs_Minus_Forecast_adjusted"].values,
-            )
-        )
-    ) % 360
-
-    anl_mag = np.sqrt(
-        anl["u_Obs_Minus_Forecast_adjusted"].values ** 2
-        + anl["v_Obs_Minus_Forecast_adjusted"].values ** 2
-    )
-    anl_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -anl["v_Obs_Minus_Forecast_adjusted"].values,
-                -anl["u_Obs_Minus_Forecast_adjusted"].values,
-            )
-        )
-    ) % 360
-
-    obs_mag = np.sqrt(
-        ges["u_Observation"].values ** 2 + ges["v_Observation"].values ** 2
-    )
-    obs_dir = (
-        90
-        - np.degrees(
-            np.arctan2(
-                -ges["v_Observation"].values,
-                -ges["u_Observation"].values,
-            )
-        )
-    ) % 360
+def scalar(variable: Variable) -> List[Observation]:
+    ges = open_diagnostic(variable, MinimLoop.GUESS)
+    anl = open_diagnostic(variable, MinimLoop.ANALYSIS)
 
     return [
-        VectorObservation(
+        Observation(
             stationId.decode("utf-8").strip(),
-            "wind",
-            guess=PolarCoordinate(float(ges_mag[idx]), float(ges_dir[idx])),
-            analysis=PolarCoordinate(float(anl_mag[idx]), float(anl_dir[idx])),
-            observed=PolarCoordinate(float(obs_mag[idx]), float(obs_dir[idx])),
+            variable.name.lower(),
+            VariableType.SCALAR,
+            guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
+            analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
+            observed=float(ges["Observation"].values[idx]),
             position=Coordinate(
                 float(ges["Longitude"].values[idx] - 360),
                 float(ges["Latitude"].values[idx]),
+            ),
+        )
+        for idx, stationId in enumerate(ges["Station_ID"].values)
+    ]
+
+
+def temperature() -> List[Observation]:
+    return scalar(Variable.TEMPERATURE)
+
+
+def moisture() -> List[Observation]:
+    return scalar(Variable.MOISTURE)
+
+
+def pressure() -> List[Observation]:
+    return scalar(Variable.PRESSURE)
+
+
+def vector_direction(u, v):
+    direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
+
+    # Anywhere the magnitude of the vector is 0
+    calm = (np.abs(u) == 0) & (np.abs(v) == 0)
+
+    # numpy.arctan2 treats 0.0 and -0.0 differently. Whenever the second
+    # argument to the function is -0.0, it return pi or -pi depending on the
+    # sign of the first argument. Whenever the second argument is 0.0, it will
+    # return 0.0 or -0.0 depending on the sign of the first argument. We
+    # normalize all calm vectors (magnitude 0) to have a direction of 0.0, per
+    # the NCAR Command Language docs.
+    # http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
+    direction[calm] = 0.0
+
+    return direction
+
+
+def vector_magnitude(u, v):
+    return np.sqrt(u**2 + v**2)
+
+
+def wind() -> List[Observation]:
+    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
+
+    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
+    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
+
+    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
+    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
+
+    ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
+    ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
+
+    anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
+    anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
+
+    obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_dir = vector_direction(ges["u_Observation"].values, ges["v_Observation"].values)
+
+    ges_mag = obs_mag - ges_forecast_mag
+    ges_dir = obs_dir - ges_forecast_dir
+
+    anl_mag = obs_mag - anl_forecast_mag
+    anl_dir = obs_dir - anl_forecast_dir
+
+    return [
+        Observation(
+            stationId.decode("utf-8").strip(),
+            "wind",
+            VariableType.VECTOR,
+            guess=PolarCoordinate(
+                round(float(ges_mag[idx]), 5), round(float(ges_dir[idx]), 5)
+            ),
+            analysis=PolarCoordinate(
+                round(float(anl_mag[idx]), 5), round(float(anl_dir[idx]), 5)
+            ),
+            observed=PolarCoordinate(
+                round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
+            ),
+            position=Coordinate(
+                round(float(ges["Longitude"].values[idx] - 360), 5),
+                round(float(ges["Latitude"].values[idx]), 5),
             ),
         )
         for idx, stationId in enumerate(ges["Station_ID"].values)
