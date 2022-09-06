@@ -15,12 +15,12 @@ export default function VectorVariable(props) {
   const analysis = data.map((feature) => feature.properties.analysis.magnitude);
 
   return html`<h2 data-colspan="full">Guess</h2>
-    <chart-histogram
+    <chart-density
       class="flex-1"
       data=${guess}
       title-x="Observation − Forecast"
       title-y="Observation Count"
-    ></chart-histogram>
+    ></chart-density>
     <chart-map
       class="flex-1"
       data=${props.featureCollection}
@@ -30,12 +30,12 @@ export default function VectorVariable(props) {
     ></chart-map>
 
     <h2 data-colspan="full">Analysis</h2>
-    <chart-histogram
+    <chart-density
       class="flex-1"
       data=${analysis}
       title-x="Observation − Forecast"
       title-y="Observation Count"
-    ></chart-histogram>
+    ></chart-density>
     <chart-map
       class="flex-1"
       data=${props.featureCollection}
