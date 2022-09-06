@@ -52,6 +52,9 @@ class ChartElement extends HTMLElement {
       shape-rendering: crispEdges;
     }`;
 
+  #data = [];
+  #range = null;
+
   static get observedAttributes() {
     return ["format-x", "format-y", "src", "title-x", "title-y"];
   }
@@ -107,6 +110,15 @@ class ChartElement extends HTMLElement {
     return ChartElement.#STYLE;
   }
 
+  get data() {
+    return structuredClone(this.#data);
+  }
+
+  set data(value) {
+    this.#data = value;
+    this.render();
+  }
+
   get formatX() {
     return this.getAttribute("format-x") ?? ",";
   }
@@ -129,6 +141,15 @@ class ChartElement extends HTMLElement {
     } else {
       this.setAttribute("format-y", value);
     }
+  }
+
+  get range() {
+    return structuredClone(this.#range);
+  }
+
+  set range(value) {
+    this.#range = value;
+    this.render();
   }
 
   get src() {
@@ -167,6 +188,8 @@ class ChartElement extends HTMLElement {
       this.setAttribute("title-y", value);
     }
   }
+
+  render() {}
 
   #updateLabel(id, value) {
     const span = this.shadowRoot?.getElementById(id);

@@ -24,9 +24,7 @@ class ChartHistogram extends ChartElement {
     stroke: currentColor;
   }`;
 
-  #data = [];
   #thresholds = null;
-  #range = null;
   #mean = 0;
   #deviation = 0;
 
@@ -52,24 +50,24 @@ class ChartHistogram extends ChartElement {
   }
 
   get data() {
-    return this.#data;
+    // We have to override the getter if we override the setter, otherwise
+    // this.data is undefined for the subclass. JavaScript is great.
+    return super.data;
   }
 
   set data(value) {
-    this.#data = value;
     this.#mean = mean(value);
     this.#deviation = deviation(value);
 
-    this.render();
+    super.data = value;
   }
 
-  get range() {
-    return this.#range;
+  get deviation() {
+    return this.#deviation;
   }
 
-  set range(value) {
-    this.#range = value;
-    this.render();
+  get mean() {
+    return this.#mean;
   }
 
   get thresholds() {
@@ -90,7 +88,7 @@ class ChartHistogram extends ChartElement {
 
     svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-    if (!this.#data?.length) return;
+    if (!this.data?.length) return;
 
     const data = this.bins;
 
@@ -132,7 +130,7 @@ class ChartHistogram extends ChartElement {
       .selectAll(".deviation")
       .data([null])
       .join((enter) => enter.append("g").attr("class", "deviation"))
-      .attr("transform", `translate(${xScale(this.#mean - this.#deviation)},1)`)
+      .attr("transform", `translate(${xScale(this.mean - this.deviation)},1)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
 
@@ -141,7 +139,7 @@ class ChartHistogram extends ChartElement {
           .join("rect")
           .attr(
             "width",
-            xScale(this.#mean + this.#deviation) - xScale(this.#mean - this.#deviation)
+            xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation)
           )
           .attr("height", height - margin.top - margin.bottom);
 
@@ -156,14 +154,14 @@ class ChartHistogram extends ChartElement {
           .attr("x", -fontSize)
           .attr("text-anchor", "end")
           .attr("dominant-baseline", "middle")
-          .text(`σ = ${fmt(this.#deviation)}`);
+          .text(`σ = ${fmt(this.deviation)}`);
       });
 
     annotation
       .selectAll(".mean")
       .data([null])
       .join((enter) => enter.append("g").attr("class", "mean"))
-      .attr("transform", `translate(${xScale(this.#mean)},0)`)
+      .attr("transform", `translate(${xScale(this.mean)},0)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
 
@@ -177,7 +175,7 @@ class ChartHistogram extends ChartElement {
           .join("text")
           .attr("dominant-baseline", "middle")
           .attr("x", fontSize * 0.25)
-          .text(`mean = ${fmt(this.#mean)}`);
+          .text(`mean = ${fmt(this.mean)}`);
       });
 
     annotation
@@ -187,7 +185,7 @@ class ChartHistogram extends ChartElement {
       .attr("text-anchor", "end")
       .attr("dominant-baseline", "top")
       .attr("x", width - margin.left - margin.right)
-      .text(`Observations: ${yAxis.tickFormat()(this.#data.length)}`);
+      .text(`Observations: ${yAxis.tickFormat()(this.data.length)}`);
 
     svg
       .select(".x-axis")
