@@ -54,6 +54,7 @@ class ChartElement extends HTMLElement {
 
   #data = [];
   #range = null;
+  #pendingUpdate = null;
 
   static get observedAttributes() {
     return ["format-x", "format-y", "src", "title-x", "title-y"];
@@ -70,7 +71,7 @@ class ChartElement extends HTMLElement {
 
   connectedCallback() {
     this.resizeObserver = new ResizeObserver(() => {
-      this.render();
+      this.requestUpdate();
     });
     this.resizeObserver.observe(this.shadowRoot?.querySelector("svg"));
   }
@@ -95,7 +96,7 @@ class ChartElement extends HTMLElement {
         break;
       case "format-x":
       case "format-y":
-        this.render();
+        this.requestUpdate();
         break;
       case "title-x":
       case "title-y":
@@ -116,7 +117,7 @@ class ChartElement extends HTMLElement {
 
   set data(value) {
     this.#data = value;
-    this.render();
+    this.requestUpdate();
   }
 
   get formatX() {
@@ -149,7 +150,7 @@ class ChartElement extends HTMLElement {
 
   set range(value) {
     this.#range = value;
-    this.render();
+    this.requestUpdate();
   }
 
   get src() {
@@ -187,6 +188,15 @@ class ChartElement extends HTMLElement {
     } else {
       this.setAttribute("title-y", value);
     }
+  }
+
+  requestUpdate() {
+    if (this.#pendingUpdate) return;
+
+    this.#pendingUpdate = window.requestAnimationFrame(() => {
+      this.#pendingUpdate = null;
+      this.render();
+    });
   }
 
   render() {}
