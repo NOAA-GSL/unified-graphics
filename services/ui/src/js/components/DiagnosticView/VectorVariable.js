@@ -15,7 +15,7 @@ export default function VectorVariable(props) {
   const analysis = data.map((feature) => feature.properties.analysis);
 
   return html`<h2 data-colspan="full">Guess</h2>
-    <chart-density
+    <chart-2dhistogram
       class="flex-1"
       data=${guess}
       title-x="Direction (Observation − Forecast)"
@@ -30,7 +30,7 @@ export default function VectorVariable(props) {
     ></chart-map>
 
     <h2 data-colspan="full">Analysis</h2>
-    <chart-density
+    <chart-2dhistogram
       class="flex-1"
       data=${analysis}
       title-x="Direction (Observation − Forecast)"
