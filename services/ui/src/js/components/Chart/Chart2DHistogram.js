@@ -3,7 +3,7 @@ import {
   axisLeft,
   extent,
   format,
-  interpolateBlues,
+  interpolateCividis,
   scaleLinear,
   scaleSequential,
   select,
@@ -58,7 +58,7 @@ export default class Chart2DHistogram extends ChartElement {
 
     const fill = scaleSequential(
       extent(bins, (d) => d.length),
-      interpolateBlues
+      interpolateCividis
     );
 
     const xAxis = axisBottom(xScale)
