@@ -3,9 +3,9 @@ import {
   axisLeft,
   extent,
   format,
-  interpolateCividis,
   scaleLinear,
-  scaleSequential,
+  scaleQuantize,
+  schemeYlGnBu,
   select,
 } from "d3";
 
@@ -56,9 +56,9 @@ export default class Chart2DHistogram extends ChartElement {
 
     const bins = binner(data);
 
-    const fill = scaleSequential(
+    const fill = scaleQuantize(
       extent(bins, (d) => d.length),
-      interpolateCividis
+      schemeYlGnBu[9]
     );
 
     const xAxis = axisBottom(xScale)
@@ -73,7 +73,7 @@ export default class Chart2DHistogram extends ChartElement {
     svg
       .select(".data")
       .attr("transform", `translate(${margin.left}, ${margin.top})`)
-      .attr("stroke", "#fff")
+      .attr("stroke", "#a9aeb1")
       .attr("stroke-opacity", 0.6)
       .selectAll("rect")
       .data(bins)
