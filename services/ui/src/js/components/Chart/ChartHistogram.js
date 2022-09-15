@@ -12,124 +12,28 @@ import {
   select,
 } from "d3";
 
-class Histogram extends HTMLElement {
-  static #TEMPLATE = `<span id="title-y"></span>
-  <svg>
-    <g class="x-axis"></g>
-    <g class="y-axis"></g>
-    <g class="data"></g>
-    <g class="annotation"></g>
-  </svg>
-  <span id="title-x"></span>`;
+import ChartElement from "./ChartElement";
 
-  static #STYLE = `<style>
-  :host {
-    display: grid;
-    gap: 0.5em;
-    grid-template-columns: min-content 1fr;
-    grid-template-rows: 1fr min-content;
-    place-items: center;
-  }
-
-  #title-x,
-  svg {
-    grid-column: 2 / 3;
-  }
-
-  #title-y,
-  svg {
-    grid-row: 1 / 2;
-  }
-
-  #title-y {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-  }
-
-  #title-x,
-  .x-axis {
-    color: #3d4551;
-  }
-
-  #title-y,
-  .y-axis {
-    color: #71767a;
-  }
-
-  svg {
-    place-self: stretch;
-    aspect-ratio: 4 / 3;
-  }
-
-  line,
-  path,
-  rect {
-    shape-rendering: crispEdges;
-  }
-
-  .deviation rect {
+class ChartHistogram extends ChartElement {
+  static #STYLE = `.deviation rect {
     fill: #dfe1e2;
     mix-blend-mode: color-burn;
   }
 
   .annotation line {
     stroke: currentColor;
-  }
-  </style>`;
+  }`;
 
-  #data = [];
   #thresholds = null;
-  #range = null;
   #mean = 0;
   #deviation = 0;
 
-  constructor() {
-    super();
-
-    const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = Histogram.#STYLE + Histogram.#TEMPLATE;
-  }
-
   static get observedAttributes() {
-    return ["format-x", "format-y", "src", "title-x", "title-y"];
+    return ChartElement.observedAttributes;
   }
 
-  connectedCallback() {
-    this.resizeObserver = new ResizeObserver(() => {
-      this.render();
-    });
-    this.resizeObserver.observe(this.shadowRoot?.querySelector("svg"));
-  }
-
-  disconnectedCallback() {
-    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector("svg"));
-    delete this?.resizeObserver;
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case "src":
-        fetch(newValue)
-          .then((response) => response.json())
-          .then((data) => {
-            this.data = data;
-            this.dispatchEvent(new CustomEvent("data-load", { bubbles: true }));
-          })
-          .catch((err) => {
-            console.error(err);
-          });
-        break;
-      case "format-x":
-      case "format-y":
-        this.render();
-        break;
-      case "title-x":
-      case "title-y":
-        this.#updateLabel(name, newValue);
-        break;
-      default:
-        break;
-    }
+  get componentStyles() {
+    return super.componentStyles + ChartHistogram.#STYLE;
   }
 
   get bins() {
@@ -146,61 +50,24 @@ class Histogram extends HTMLElement {
   }
 
   get data() {
-    return this.#data;
+    // We have to override the getter if we override the setter, otherwise
+    // this.data is undefined for the subclass. JavaScript is great.
+    return super.data;
   }
 
   set data(value) {
-    this.#data = value;
     this.#mean = mean(value);
     this.#deviation = deviation(value);
 
-    this.render();
+    super.data = value;
   }
 
-  get formatX() {
-    return this.getAttribute("format-x") ?? ",";
+  get deviation() {
+    return this.#deviation;
   }
 
-  set formatX(value) {
-    if (!value) {
-      this.removeAttribute("format-x");
-    } else {
-      this.setAttribute("format-x", value);
-    }
-  }
-
-  get formatY() {
-    return this.getAttribute("format-y") ?? ",";
-  }
-
-  set formatY(value) {
-    if (!value) {
-      this.removeAttribute("format-y");
-    } else {
-      this.setAttribute("format-y", value);
-    }
-  }
-
-  get range() {
-    return this.#range;
-  }
-
-  set range(value) {
-    this.#range = value;
-    this.render();
-  }
-
-  get src() {
-    return this.getAttribute("src");
-  }
-
-  set src(value) {
-    if (!value) {
-      this.removeAttribute("src");
-      this.data = [];
-    } else {
-      this.setAttribute("src", value);
-    }
+  get mean() {
+    return this.#mean;
   }
 
   get thresholds() {
@@ -212,30 +79,6 @@ class Histogram extends HTMLElement {
     this.render();
   }
 
-  get titleX() {
-    return this.getAttribute("title-x");
-  }
-
-  set titleX(value) {
-    if (!value) {
-      this.removeAttribute("title-x");
-    } else {
-      this.setAttribute("title-x", value);
-    }
-  }
-
-  get titleY() {
-    return this.getAttribute("title-y");
-  }
-
-  set titleY(value) {
-    if (!value) {
-      this.removeAttribute("title-y");
-    } else {
-      this.setAttribute("title-y", value);
-    }
-  }
-
   render() {
     const svg = select(this.shadowRoot).select("svg");
     const { height, width } = svg.node().getBoundingClientRect();
@@ -245,7 +88,7 @@ class Histogram extends HTMLElement {
 
     svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-    if (!this.#data?.length) return;
+    if (!this.data?.length) return;
 
     const data = this.bins;
 
@@ -287,7 +130,7 @@ class Histogram extends HTMLElement {
       .selectAll(".deviation")
       .data([null])
       .join((enter) => enter.append("g").attr("class", "deviation"))
-      .attr("transform", `translate(${xScale(this.#mean - this.#deviation)},1)`)
+      .attr("transform", `translate(${xScale(this.mean - this.deviation)},1)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
 
@@ -296,7 +139,7 @@ class Histogram extends HTMLElement {
           .join("rect")
           .attr(
             "width",
-            xScale(this.#mean + this.#deviation) - xScale(this.#mean - this.#deviation)
+            xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation)
           )
           .attr("height", height - margin.top - margin.bottom);
 
@@ -311,14 +154,14 @@ class Histogram extends HTMLElement {
           .attr("x", -fontSize)
           .attr("text-anchor", "end")
           .attr("dominant-baseline", "middle")
-          .text(`σ = ${fmt(this.#deviation)}`);
+          .text(`σ = ${fmt(this.deviation)}`);
       });
 
     annotation
       .selectAll(".mean")
       .data([null])
       .join((enter) => enter.append("g").attr("class", "mean"))
-      .attr("transform", `translate(${xScale(this.#mean)},0)`)
+      .attr("transform", `translate(${xScale(this.mean)},0)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
 
@@ -332,7 +175,7 @@ class Histogram extends HTMLElement {
           .join("text")
           .attr("dominant-baseline", "middle")
           .attr("x", fontSize * 0.25)
-          .text(`mean = ${fmt(this.#mean)}`);
+          .text(`mean = ${fmt(this.mean)}`);
       });
 
     annotation
@@ -342,7 +185,7 @@ class Histogram extends HTMLElement {
       .attr("text-anchor", "end")
       .attr("dominant-baseline", "top")
       .attr("x", width - margin.left - margin.right)
-      .text(`Observations: ${yAxis.tickFormat()(this.#data.length)}`);
+      .text(`Observations: ${yAxis.tickFormat()(this.data.length)}`);
 
     svg
       .select(".x-axis")
@@ -358,12 +201,6 @@ class Histogram extends HTMLElement {
         g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
       });
   }
-
-  #updateLabel(id, value) {
-    const span = this.shadowRoot?.getElementById(id);
-    if (!span) return;
-    span.textContent = value;
-  }
 }
 
-export default Histogram;
+export default ChartHistogram;

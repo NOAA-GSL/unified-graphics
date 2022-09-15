@@ -5,10 +5,12 @@ import styles from "../styles/_index.scss"; // eslint-disable-line
 import App from "./components/App";
 import DataSource from "./components/DataSource";
 import DiagScalar from "./components/DiagScalar";
-import Histogram from "./components/Histogram";
+import { Chart2DHistogram, ChartDensity, ChartHistogram } from "./components/Chart";
 import ChartMap from "./components/ChartMap";
 
-customElements.define("chart-histogram", Histogram);
+customElements.define("chart-2dhistogram", Chart2DHistogram);
+customElements.define("chart-histogram", ChartHistogram);
+customElements.define("chart-density", ChartDensity);
 customElements.define("chart-map", ChartMap);
 customElements.define("data-source", DataSource);
 customElements.define("diag-scalar", DiagScalar);

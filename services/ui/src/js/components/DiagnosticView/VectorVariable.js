@@ -11,16 +11,16 @@ export default function VectorVariable(props) {
   };
 
   const data = props.featureCollection.features.filter(geoFilter(selection));
-  const guess = data.map((feature) => feature.properties.guess.magnitude);
-  const analysis = data.map((feature) => feature.properties.analysis.magnitude);
+  const guess = data.map((feature) => feature.properties.guess);
+  const analysis = data.map((feature) => feature.properties.analysis);
 
   return html`<h2 data-colspan="full">Guess</h2>
-    <chart-histogram
+    <chart-2dhistogram
       class="flex-1"
       data=${guess}
-      title-x="Observation − Forecast"
-      title-y="Observation Count"
-    ></chart-histogram>
+      title-x="Direction (Observation − Forecast)"
+      title-y="Magnitude (Observation − Forecast)"
+    ></chart-density>
     <chart-map
       class="flex-1"
       data=${props.featureCollection}
@@ -30,12 +30,12 @@ export default function VectorVariable(props) {
     ></chart-map>
 
     <h2 data-colspan="full">Analysis</h2>
-    <chart-histogram
+    <chart-2dhistogram
       class="flex-1"
       data=${analysis}
-      title-x="Observation − Forecast"
-      title-y="Observation Count"
-    ></chart-histogram>
+      title-x="Direction (Observation − Forecast)"
+      title-y="Magnitude (Observation − Forecast)"
+    ></chart-density>
     <chart-map
       class="flex-1"
       data=${props.featureCollection}

@@ -1,5 +1,5 @@
 import { extent, max, scaleLinear } from "d3";
-import Histogram from "./Histogram";
+import ChartHistogram from "./Chart/ChartHistogram";
 
 class DiagScalar extends HTMLElement {
   constructor() {
@@ -8,8 +8,8 @@ class DiagScalar extends HTMLElement {
     const container = document.createElement("div");
     container.setAttribute("data-layout", "grid");
 
-    this.guess = new Histogram();
-    this.analysis = new Histogram();
+    this.guess = new ChartHistogram();
+    this.analysis = new ChartHistogram();
 
     this.guess.titleX = this.analysis.titleX = "Observation − Forecast";
     this.guess.titleY = this.analysis.titleY = "Observation Count";
