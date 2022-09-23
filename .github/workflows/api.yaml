@@ -76,6 +76,7 @@ jobs:
         working-directory: services/api
         run: |
           poetry run coverage run -m pytest
+          poetry run coverage report
           poetry run coverage html
       - name: Archive code coverage report
         uses: actions/upload-artifact@v3
