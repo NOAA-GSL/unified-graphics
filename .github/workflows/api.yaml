@@ -74,7 +74,14 @@ jobs:
         run: poetry install
       - name: Test
         working-directory: services/api
-        run: poetry run pytest
+        run: |
+          poetry run coverage run -m pytest
+          poetry run coverage html
+      - name: Archive code coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-code-coverage-report
+          path: services/api/htmlcov/
   build:
     runs-on: ubuntu-latest
     needs: [lint, type-check, test]
