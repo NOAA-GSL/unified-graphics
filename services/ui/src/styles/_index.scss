@@ -1,10 +1,9 @@
-@forward "uswds-theme";
-@forward "uswds-global";
-@forward "uswds-helpers";
-@forward "uswds-typography";
+@use "sass:meta";
 
-@forward "global";
-@forward "layout";
-@forward "utilities";
+@layer default {
+  @include meta.load-css("global");
+}
 
-@forward "uswds-utilities/src/styles";
+@layer framework {
+  @include meta.load-css("uswds");
+}
