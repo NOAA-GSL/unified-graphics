@@ -2,11 +2,11 @@ import { html } from "htm/preact";
 
 export default function Header() {
   return html`<header
-    class="usa-dark-background padding-y-2 padding-x-3"
+    class="usa-dark-background text-base-lightest padding-y-2 padding-x-3"
     style="justify-content: space-between"
     data-layout="cluster"
   >
-    <h1>Unified Graphics</h1>
+    <h1 class="text-bold">Unified Graphics</h1>
     <form data-layout="cluster">
       <select>
         <option>RRFS</option>
