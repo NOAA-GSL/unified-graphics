@@ -1,6 +1,17 @@
+// Our settings
 @forward "uswds-theme";
-@forward "uswds-global";
-@forward "uswds-helpers";
-@forward "uswds-typography";
 
+// @font-face definitions
+@forward "uswds-fonts";
+
+// Defaults for HTML elements, important for setting fonts
+@forward "uswds-elements";
+
+// .usa-sr-only and .usa-focus
+@forward "uswds-helpers";
+
+// USWDS components
+@forward "usa-dark-background";
+
+// Utilities
 @forward "uswds-utilities/src/styles";
