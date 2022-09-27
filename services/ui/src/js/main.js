@@ -1,7 +1,5 @@
 import { render } from "preact";
 
-import styles from "../styles/_index.scss"; // eslint-disable-line
-
 import App from "./components/App";
 import DataSource from "./components/DataSource";
 import DiagScalar from "./components/DiagScalar";
