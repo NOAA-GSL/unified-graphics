@@ -1,15 +1,15 @@
 @use "sass:meta";
 
-@use "reset";
-@use "global";
+@use "default";
 @use "layout";
+@use "reset";
 
 @layer reset {
   @include reset.css;
 }
 
 @layer default {
-  @include global.css;
+  @include default.css;
 }
 
 @layer framework {
