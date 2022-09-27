@@ -7,7 +7,7 @@ export default function Header() {
     data-layout="cluster"
   >
     <strong><span>Unified Graphics</span></strong>
-    <form class="display-flex gap-2">
+    <form data-layout="cluster">
       <select>
         <option>RRFS</option>
       </select>
