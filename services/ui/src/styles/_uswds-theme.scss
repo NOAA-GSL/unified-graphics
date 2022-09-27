@@ -1,3 +1,7 @@
+@use "sass:meta";
+@use "sass:string";
+@use "sass:map";
+
 @use "uswds-core" with (
   $theme-show-notifications: false,
 
@@ -13,6 +17,27 @@
   )
 );
 
+/* Custom properties
+ *
+ * We use the palettes and functions that USWDS uses to generate utility
+ * classes to generate some CSS custom properties. We can use these in our own
+ * styles to avoid the issue of importing uswds-core anywhere outside of this
+ * module.
+ *
+ * https://github.com/uswds/uswds/issues/4962
+ *
+ * There is some risk here, using their get-palettes function, since it's an
+ * undocumented API I found by digging around their source code.
+ */
+@use "uswds-utilities/src/styles/functions/get-palettes" as *;
+
+$space-palettes: (
+  "palette-units-system-positive-small",
+  "palette-units-system-positive-medium"
+);
+
 :root {
-  --space-2: uswds-core.units(2);
+  @each $name, $val in get-palettes($space-palettes) {
+    --space-#{$name}: #{$val};
+  }
 }
