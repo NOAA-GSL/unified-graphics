@@ -1,0 +1,19 @@
+@mixin css {
+  * {
+    margin: 0;
+    box-sizing: border-box;
+
+    font: inherit;
+  }
+
+  html,
+  body {
+    overflow: hidden;
+
+    height: 100%;
+  }
+
+  svg {
+    display: block;
+  }
+}

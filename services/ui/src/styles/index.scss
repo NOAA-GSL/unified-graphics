@@ -1,7 +1,15 @@
 @use "sass:meta";
 
+@use "reset";
+@use "global";
+@use "layout";
+
+@layer reset {
+  @include reset.css;
+}
+
 @layer default {
-  @include meta.load-css("global");
+  @include global.css;
 }
 
 @layer framework {
@@ -9,5 +17,5 @@
 }
 
 @layer layout {
-  @include meta.load-css("layout");
+  @include layout.css;
 }
