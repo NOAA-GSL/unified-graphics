@@ -20,11 +20,12 @@
     );
   }
 
-  [data-colspan="full"] {
-    grid-column: 1 / -1;
-  }
-
+  // Layout utilities
   :where(.flow) > * + * {
     margin-top: var(--space, var(--space-s));
+  }
+
+  .grid-col-full {
+    grid-column: 1 / -1;
   }
 }
