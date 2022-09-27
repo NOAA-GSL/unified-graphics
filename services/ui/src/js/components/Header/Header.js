@@ -6,7 +6,7 @@ export default function Header() {
     style="justify-content: space-between"
     data-layout="cluster"
   >
-    <strong><span>Unified Graphics</span></strong>
+    <h1>Unified Graphics</h1>
     <form data-layout="cluster">
       <select>
         <option>RRFS</option>
