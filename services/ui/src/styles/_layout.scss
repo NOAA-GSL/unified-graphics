@@ -1,15 +1,13 @@
-@use "uswds-core" as uswds;
-
 [data-layout="cluster"] {
   flex-direction: row;
   flex-wrap: wrap;
-  gap: uswds.units(2);
+  gap: var(--space-2);
 
   display: flex;
 }
 
 [data-layout="grid"] {
-  gap: var(--gutter, #{uswds.units(2)});
+  gap: var(--gutter, var(--space-2));
 
   display: grid;
 
@@ -26,5 +24,5 @@
 }
 
 :where(.flow) > * + * {
-  margin-top: var(--space, uswds.units(2));
+  margin-top: var(--space, var(--space-s));
 }
