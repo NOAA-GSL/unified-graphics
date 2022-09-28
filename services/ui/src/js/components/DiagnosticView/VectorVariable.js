@@ -14,7 +14,7 @@ export default function VectorVariable(props) {
   const guess = data.map((feature) => feature.properties.guess);
   const analysis = data.map((feature) => feature.properties.analysis);
 
-  return html`<h2 class="grid-col-full">Guess</h2>
+  return html`<h2 class="font-ui-lg text-bold grid-col-full">Guess</h2>
     <chart-2dhistogram
       class="flex-1"
       data=${guess}
@@ -29,7 +29,7 @@ export default function VectorVariable(props) {
       onchart-brush=${brushCallback}
     ></chart-map>
 
-    <h2 class="grid-col-full">Analysis</h2>
+    <h2 class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     <chart-2dhistogram
       class="flex-1"
       data=${analysis}

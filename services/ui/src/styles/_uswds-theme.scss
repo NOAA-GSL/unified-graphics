@@ -5,9 +5,13 @@
 @use "uswds-core" with (
   $theme-show-notifications: false,
 
+  $font-palettes: (
+    "palette-font-theme-roles",
+  ),
   $output-these-utilities: (
     "color",
     "flex",
+    "font",
     "font-weight",
     "padding",
   )
