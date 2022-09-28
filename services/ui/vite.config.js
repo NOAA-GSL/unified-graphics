@@ -7,7 +7,10 @@ const config = {
   },
   plugins: [
     viteStaticCopy({
-      targets: [{ src: "../node_modules/@uswds/uswds/dist/img", dest: "." }],
+      targets: [
+        { src: "../node_modules/@uswds/uswds/dist/img", dest: "." },
+        { src: "../node_modules/@uswds/uswds/dist/fonts", dest: "." },
+      ],
     }),
   ],
   css: {
