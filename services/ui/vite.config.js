@@ -1,8 +1,15 @@
+import { viteStaticCopy } from "vite-plugin-static-copy";
+
 const config = {
   root: "src/",
   build: {
     outDir: "../build/",
   },
+  plugins: [
+    viteStaticCopy({
+      targets: [{ src: "../node_modules/@uswds/uswds/dist/img", dest: "." }],
+    }),
+  ],
   css: {
     preprocessorOptions: {
       scss: {
