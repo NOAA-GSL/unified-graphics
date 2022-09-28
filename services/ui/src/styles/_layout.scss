@@ -23,7 +23,7 @@
 
   // Layout utilities
   :where(.flow) > * + * {
-    margin-top: var(--space, var(--space-s));
+    margin-top: var(--space, var(--space-2));
   }
 
   .grid-col-full {
