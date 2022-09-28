@@ -40,7 +40,7 @@ export default function DiagnosticView() {
   );
 
   return html`<div class="flow">
-    <select onChange=${onVariableSelect}>
+    <select class="usa-select" onChange=${onVariableSelect}>
       ${options}
     </select>
 

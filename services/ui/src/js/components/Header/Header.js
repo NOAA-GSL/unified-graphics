@@ -8,10 +8,10 @@ export default function Header() {
   >
     <h1 class="text-bold">Unified Graphics</h1>
     <form data-layout="cluster">
-      <select>
+      <select class="usa-select">
         <option>RRFS</option>
       </select>
-      <select>
+      <select class="usa-select">
         <option>05 May 2022 14:00</option>
       </select>
     </form>
