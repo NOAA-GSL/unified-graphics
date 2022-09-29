@@ -58,9 +58,8 @@ jobs:
           npm test
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
-        working-directory: services/ui
         with:
-          filename: src/coverage/cobertura-coverage.xml
+          filename: services/ui/src/coverage/cobertura-coverage.xml
           badge: true
           fail_below_min: true
           format: markdown

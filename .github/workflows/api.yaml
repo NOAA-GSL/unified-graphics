@@ -80,9 +80,8 @@ jobs:
           poetry run coverage xml
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
-        working-directory: services/api
         with:
-          filename: coverage.xml
+          filename: services/api/coverage.xml
           badge: true
           fail_below_min: true
           format: markdown
