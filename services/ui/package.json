@@ -9,7 +9,7 @@
     "build:vite": "vite build",
     "preview": "vite preview",
     "start": "npm run dev",
-    "test": "NODE_V8_COVERAGE='.coverage/' vitest --run --coverage",
+    "test": "vitest --run --coverage",
     "lint": "prettier --ignore-path .gitignore --check --plugin-search-dir=. . && eslint --ignore-path .gitignore . && stylelint --ignore-path .gitignore src/**/*.{css,scss}",
     "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. . && stylelint --ignore-path .gitignore --fix src/**/*.{css,scss}"
   },

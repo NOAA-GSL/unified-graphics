@@ -38,7 +38,7 @@ export default defineConfig({
     include: ["../tests/unit/**/*.js"],
     coverage: {
       all: true,
-      reporter: ["text"],
+      reporter: ["text", "cobertura"],
     },
   },
 });
