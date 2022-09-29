@@ -14,7 +14,7 @@ export default function ScalarVariable(props) {
   const guess = data.map((feature) => feature.properties.guess);
   const analysis = data.map((feature) => feature.properties.analysis);
 
-  return html`<h2 data-colspan="full">Guess</h2>
+  return html`<h2 class="font-ui-lg text-bold grid-col-full">Guess</h2>
     <chart-histogram
       class="flex-1"
       data=${guess}
@@ -29,7 +29,7 @@ export default function ScalarVariable(props) {
       onchart-brush=${brushCallback}
     ></chart-map>
 
-    <h2 data-colspan="full">Analysis</h2>
+    <h2 class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     <chart-histogram
       class="flex-1"
       data=${analysis}

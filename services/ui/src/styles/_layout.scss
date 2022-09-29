@@ -1,30 +1,32 @@
-@use "uswds-core" as uswds;
+@mixin css {
+  [data-layout="cluster"] {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
 
-[data-layout="cluster"] {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: uswds.units(2);
+    display: flex;
+  }
 
-  display: flex;
-}
+  [data-layout="grid"] {
+    gap: var(--gutter, var(--space-2));
 
-[data-layout="grid"] {
-  gap: var(--gutter, #{uswds.units(2)});
+    display: grid;
 
-  display: grid;
+    grid-auto-rows: var(--row-size);
 
-  grid-auto-rows: var(--row-size);
+    grid-template-columns: repeat(
+      auto-fit,
+      var(--column-size, minmax(min(30rem, 100%), 1fr))
+    );
+  }
 
-  grid-template-columns: repeat(
-    auto-fit,
-    var(--column-size, minmax(min(30rem, 100%), 1fr))
-  );
-}
+  // Layout utilities
+  :where(.flow) > * + * {
+    margin-top: var(--space, var(--space-2));
+  }
 
-[data-colspan="full"] {
-  grid-column: 1 / -1;
-}
-
-:where(.flow) > * + * {
-  margin-top: var(--space, uswds.units(2));
+  .grid-col-full {
+    grid-column: 1 / -1;
+  }
 }
