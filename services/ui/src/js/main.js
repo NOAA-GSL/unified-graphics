@@ -1,6 +1,5 @@
-import { render } from "preact";
+import App from "./App.svelte";
 
-import App from "./components/App";
 import DataSource from "./components/DataSource";
 import DiagScalar from "./components/DiagScalar";
 import { Chart2DHistogram, ChartDensity, ChartHistogram } from "./components/Chart";
@@ -13,4 +12,8 @@ customElements.define("chart-map", ChartMap);
 customElements.define("data-source", DataSource);
 customElements.define("diag-scalar", DiagScalar);
 
-render(App, document.body);
+const app = new App({
+  target: document.body,
+});
+
+export default app;
