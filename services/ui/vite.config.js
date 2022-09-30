@@ -1,11 +1,14 @@
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
-const config = {
+export default defineConfig({
   root: "src/",
   build: {
     outDir: "../build/",
   },
   plugins: [
+    svelte(),
     viteStaticCopy({
       targets: [
         { src: "../node_modules/@uswds/uswds/dist/img", dest: "." },
@@ -34,6 +37,4 @@ const config = {
     environment: "jsdom",
     include: ["../tests/unit/**/*.js"],
   },
-};
-
-export default config;
+});
