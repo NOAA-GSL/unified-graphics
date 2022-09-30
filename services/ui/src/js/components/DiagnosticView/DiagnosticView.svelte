@@ -1,4 +1,5 @@
 <script>
+  import ScalarVariable from "./ScalarVariable.svelte";
   let currentVariable;
 
   $: variables = fetch("/api/diag/")
@@ -31,7 +32,7 @@
       {#if data.features[0].properties.type === "vector"}
         <p>Vector display not implemented yet.</p>
       {:else}
-        <p>Scalar display not implemented yet.</p>
+        <ScalarVariable {data} />
       {/if}
     {/await}
   </div>
