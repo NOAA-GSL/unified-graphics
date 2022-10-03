@@ -13,9 +13,10 @@
     </select>
   </form>
   <nav>
+    <!-- svelte-ignore a11y-no-redundant-roles -->
     <ul data-layout="cluster" role="list">
-      <li><a href="#">Diagnostics</a></li>
-      <li><a href="#">Model Output</a></li>
+      <li>Diagnostics</li>
+      <li>Model Output</li>
     </ul>
   </nav>
 </header>
