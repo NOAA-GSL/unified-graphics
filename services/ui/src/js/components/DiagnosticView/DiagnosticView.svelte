@@ -1,8 +1,13 @@
 <script>
-  import ScalarVariable from "./ScalarVariable.svelte";
-  import VectorVariable from "./VectorVariable.svelte";
+  import LoopDisplay from "./LoopDisplay.svelte";
+  import { geoFilter } from "./DiagnosticView.helpers.js";
 
-  let currentVariable;
+  function onBrush(event) {
+    selection = event.detail;
+  }
+
+  let currentVariable = null;
+  let selection = null;
 
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
@@ -16,6 +21,10 @@
   $: featureCollection = currentVariable
     ? fetch(`/api${currentVariable}`).then((response) => response.json())
     : new Promise(() => {});
+
+  $: filtered = featureCollection.then((data) =>
+    data.features.filter(geoFilter(selection))
+  );
 </script>
 
 <div class="flow">
@@ -28,14 +37,15 @@
   </select>
 
   <div data-layout="grid">
-    {#await featureCollection}
+    {#await filtered}
       <p>Loading</p>
     {:then data}
-      {#if data.features[0].properties.type === "vector"}
-        <VectorVariable {data} />
-      {:else}
-        <ScalarVariable {data} />
-      {/if}
+      <LoopDisplay {data} loop="guess" {selection} on:chart-brush={onBrush}>
+        <h2 slot="title" class="font-ui-lg text-bold">Guess</h2>
+      </LoopDisplay>
+      <LoopDisplay {data} loop="analysis" {selection} on:chart-brush={onBrush}>
+        <h2 slot="title" class="font-ui-lg text-bold">Analysis</h2>
+      </LoopDisplay>
     {/await}
   </div>
 </div>
