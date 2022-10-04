@@ -22,11 +22,12 @@
 </script>
 
 <slot name="title" />
-<svelte:element
-  this={distributionEl}
-  class="flex-1"
-  data={distributionData}
-  title-x="Direction (Observation − Forecast)"
-  title-y="Magnitude (Observation − Forecast)"
-/>
-<chart-map class="flex-1" data={mapData} {selection} radius={mapRadius} />
+<div data-layout="grid" class="flex-1" style="--row-size: minmax(30rem, 1fr)">
+  <svelte:element
+    this={distributionEl}
+    data={distributionData}
+    title-x="Direction (Observation − Forecast)"
+    title-y="Magnitude (Observation − Forecast)"
+  />
+  <chart-map data={mapData} {selection} radius={mapRadius} />
+</div>

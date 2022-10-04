@@ -27,25 +27,21 @@
   );
 </script>
 
-<div class="flow">
-  <select class="usa-select" bind:value={currentVariable}>
-    {#await variables then vars}
-      {#each vars as variable}
-        <option value={variable.url}>{variable.name}</option>
-      {/each}
-    {/await}
-  </select>
+<select class="usa-select" bind:value={currentVariable}>
+  {#await variables then vars}
+    {#each vars as variable}
+      <option value={variable.url}>{variable.name}</option>
+    {/each}
+  {/await}
+</select>
 
-  <div data-layout="grid">
-    {#await filtered}
-      <p>Loading</p>
-    {:then data}
-      <LoopDisplay {data} loop="guess" {selection} on:chart-brush={onBrush}>
-        <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
-      </LoopDisplay>
-      <LoopDisplay {data} loop="analysis" {selection} on:chart-brush={onBrush}>
-        <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
-      </LoopDisplay>
-    {/await}
-  </div>
-</div>
+{#await filtered}
+  <p>Loading</p>
+{:then data}
+  <LoopDisplay {data} loop="guess" {selection} on:chart-brush={onBrush}>
+    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
+  </LoopDisplay>
+  <LoopDisplay {data} loop="analysis" {selection} on:chart-brush={onBrush}>
+    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
+  </LoopDisplay>
+{/await}
