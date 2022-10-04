@@ -41,10 +41,10 @@
       <p>Loading</p>
     {:then data}
       <LoopDisplay {data} loop="guess" {selection} on:chart-brush={onBrush}>
-        <h2 slot="title" class="font-ui-lg text-bold">Guess</h2>
+        <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
       </LoopDisplay>
       <LoopDisplay {data} loop="analysis" {selection} on:chart-brush={onBrush}>
-        <h2 slot="title" class="font-ui-lg text-bold">Analysis</h2>
+        <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
       </LoopDisplay>
     {/await}
   </div>
