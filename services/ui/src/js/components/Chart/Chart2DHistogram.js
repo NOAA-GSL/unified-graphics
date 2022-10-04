@@ -19,7 +19,7 @@ export default class Chart2DHistogram extends ChartElement {
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().getBoundingClientRect();
+    const { height, width } = svg.node().parentElement.getBoundingClientRect();
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = {

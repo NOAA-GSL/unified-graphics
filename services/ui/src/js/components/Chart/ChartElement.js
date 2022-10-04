@@ -1,11 +1,13 @@
 class ChartElement extends HTMLElement {
   static #TEMPLATE = `<span id="title-y"></span>
-  <svg>
-    <g class="x-axis"></g>
-    <g class="y-axis"></g>
-    <g class="data"></g>
-    <g class="annotation"></g>
-  </svg>
+  <div class="container">
+    <svg>
+      <g class="x-axis"></g>
+      <g class="y-axis"></g>
+      <g class="data"></g>
+      <g class="annotation"></g>
+    </svg>
+  </div>
   <span id="title-x"></span>`;
 
   static #STYLE = `:host {
@@ -41,8 +43,18 @@ class ChartElement extends HTMLElement {
       color: #71767a;
     }
 
-    svg {
+    .container {
+      position: relative;
+      overflow: hidden;
       place-self: stretch;
+    }
+
+    .container > * {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
 
     line,
@@ -72,11 +84,11 @@ class ChartElement extends HTMLElement {
     this.resizeObserver = new ResizeObserver(() => {
       this.requestUpdate();
     });
-    this.resizeObserver.observe(this.shadowRoot?.querySelector("svg"));
+    this.resizeObserver.observe(this.shadowRoot?.querySelector(".container"));
   }
 
   disconnectedCallback() {
-    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector("svg"));
+    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector(".container"));
     delete this?.resizeObserver;
   }
 
