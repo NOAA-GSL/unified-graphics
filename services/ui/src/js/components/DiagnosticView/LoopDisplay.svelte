@@ -6,11 +6,6 @@
   // FIXME: Should be an enum;
   export let variableType = "scalar";
 
-  $: {
-    console.log("LoopDisplay");
-    console.log(data);
-  }
-
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
   $: distributionData = data.map((d) => d.properties[loop]);
