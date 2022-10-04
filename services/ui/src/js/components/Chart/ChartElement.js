@@ -43,7 +43,6 @@ class ChartElement extends HTMLElement {
 
     svg {
       place-self: stretch;
-      aspect-ratio: 4 / 3;
     }
 
     line,
