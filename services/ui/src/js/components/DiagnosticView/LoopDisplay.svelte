@@ -17,7 +17,7 @@
 </script>
 
 <slot name="title" />
-<div data-layout="grid" class="flex-1" style="--row-size: minmax(30rem, 1fr)">
+<div data-layout="grid" class="flex-1" style="--row-size: minmax(20rem, 1fr)">
   <svelte:element
     this={distributionEl}
     data={distributionData}
