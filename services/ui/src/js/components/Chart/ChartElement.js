@@ -18,6 +18,11 @@ class ChartElement extends HTMLElement {
       place-items: center;
     }
 
+    :host,
+    .container {
+      contain: strict;
+    }
+
     #title-x,
     svg {
       grid-column: 2 / 3;
@@ -44,17 +49,7 @@ class ChartElement extends HTMLElement {
     }
 
     .container {
-      position: relative;
-      overflow: hidden;
       place-self: stretch;
-    }
-
-    .container > * {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
     }
 
     line,
