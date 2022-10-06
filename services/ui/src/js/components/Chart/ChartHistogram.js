@@ -81,7 +81,7 @@ class ChartHistogram extends ChartElement {
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().getBoundingClientRect();
+    const { height, width } = svg.node().parentElement.getBoundingClientRect();
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };

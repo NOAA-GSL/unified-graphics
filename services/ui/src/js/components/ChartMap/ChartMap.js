@@ -11,18 +11,20 @@ import {
 } from "d3";
 
 export default class ChartMap extends HTMLElement {
-  static #TEMPLATE = `<canvas></canvas>`;
+  static #TEMPLATE = `<div class="container"><canvas></canvas></div>`;
 
   static #STYLE = `<style>
     :host {
-      display: block;
+      display: grid;
+    }
+
+    :host,
+    .container {
+      contain: strict;
     }
 
     canvas {
-      aspect-ratio: 4 / 3;
       cursor: crosshair;
-      width: 100%;
-      height: 100%;
     }
   </style>`;
 
@@ -49,7 +51,9 @@ export default class ChartMap extends HTMLElement {
         this.requestUpdate();
       });
 
-    this.resizeObserver = new ResizeObserver(this.update);
+    this.resizeObserver = new ResizeObserver(() => {
+      this.requestUpdate();
+    });
 
     const canvas = this.shadowRoot?.querySelector("canvas");
 
@@ -58,7 +62,7 @@ export default class ChartMap extends HTMLElement {
         this.mapMousedownCallback(event);
       };
 
-      this.resizeObserver.observe(canvas);
+      this.resizeObserver.observe(canvas.parentElement);
       canvas.addEventListener("mousedown", this.#mousedownWrapper);
     }
 
@@ -69,7 +73,7 @@ export default class ChartMap extends HTMLElement {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
-      this.resizeObserver?.unobserve(canvas);
+      this.resizeObserver?.unobserve(canvas.parentElement);
       canvas.removeEventListener("mousedown", this.#mousedownWrapper);
       this.#mousedownWrapper = null;
     }
@@ -122,7 +126,7 @@ export default class ChartMap extends HTMLElement {
 
     if (!canvas) return;
 
-    const { height, width } = canvas.getBoundingClientRect();
+    const { height, width } = canvas.parentElement.getBoundingClientRect();
 
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());

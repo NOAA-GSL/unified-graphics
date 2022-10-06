@@ -1,11 +1,13 @@
 class ChartElement extends HTMLElement {
   static #TEMPLATE = `<span id="title-y"></span>
-  <svg>
-    <g class="x-axis"></g>
-    <g class="y-axis"></g>
-    <g class="data"></g>
-    <g class="annotation"></g>
-  </svg>
+  <div class="container">
+    <svg>
+      <g class="x-axis"></g>
+      <g class="y-axis"></g>
+      <g class="data"></g>
+      <g class="annotation"></g>
+    </svg>
+  </div>
   <span id="title-x"></span>`;
 
   static #STYLE = `:host {
@@ -14,6 +16,11 @@ class ChartElement extends HTMLElement {
       grid-template-columns: min-content 1fr;
       grid-template-rows: 1fr min-content;
       place-items: center;
+    }
+
+    :host,
+    .container {
+      contain: strict;
     }
 
     #title-x,
@@ -41,9 +48,8 @@ class ChartElement extends HTMLElement {
       color: #71767a;
     }
 
-    svg {
+    .container {
       place-self: stretch;
-      aspect-ratio: 4 / 3;
     }
 
     line,
@@ -73,11 +79,11 @@ class ChartElement extends HTMLElement {
     this.resizeObserver = new ResizeObserver(() => {
       this.requestUpdate();
     });
-    this.resizeObserver.observe(this.shadowRoot?.querySelector("svg"));
+    this.resizeObserver.observe(this.shadowRoot?.querySelector(".container"));
   }
 
   disconnectedCallback() {
-    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector("svg"));
+    this?.resizeObserver.unobserve(this.shadowRoot?.querySelector(".container"));
     delete this?.resizeObserver;
   }
 
