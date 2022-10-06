@@ -8,6 +8,7 @@
 
   let currentVariable = null;
   let selection = null;
+  let variableType = "scalar";
 
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
@@ -25,6 +26,12 @@
   $: filtered = featureCollection.then((data) =>
     data.features.filter(geoFilter(selection))
   );
+
+  $: {
+    featureCollection.then((data) => {
+      variableType = data.features[0].properties.type;
+    });
+  }
 </script>
 
 <select class="usa-select" bind:value={currentVariable}>
@@ -38,10 +45,16 @@
 {#await filtered}
   <p>Loading</p>
 {:then data}
-  <LoopDisplay {data} loop="guess" {selection} on:chart-brush={onBrush}>
+  <LoopDisplay {data} loop="guess" {variableType} {selection} on:chart-brush={onBrush}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
   </LoopDisplay>
-  <LoopDisplay {data} loop="analysis" {selection} on:chart-brush={onBrush}>
+  <LoopDisplay
+    {data}
+    loop="analysis"
+    {variableType}
+    {selection}
+    on:chart-brush={onBrush}
+  >
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
   </LoopDisplay>
 {/await}
