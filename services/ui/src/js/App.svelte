@@ -1,6 +1,6 @@
 <script>
   import DiagnosticView from "./components/DiagnosticView/DiagnosticView.svelte";
-  import Header from "./components/Header.svelte";
+  import Header from "./components/Header";
 </script>
 
 <Header />
