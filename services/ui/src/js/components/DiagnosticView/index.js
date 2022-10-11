@@ -1,1 +1,1 @@
-export { default } from "./DiagnosticView";
+export { default } from "./DiagnosticView.svelte";

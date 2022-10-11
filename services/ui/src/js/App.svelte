@@ -1,5 +1,5 @@
 <script>
-  import DiagnosticView from "./components/DiagnosticView/DiagnosticView.svelte";
+  import DiagnosticView from "./components/DiagnosticView";
   import Header from "./components/Header";
 </script>
 
