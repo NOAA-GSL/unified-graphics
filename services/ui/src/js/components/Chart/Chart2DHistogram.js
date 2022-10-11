@@ -17,6 +17,17 @@ export default class Chart2DHistogram extends ChartElement {
     return ChartElement.observedAttributes;
   }
 
+  // If we don't override this here, Svelte ends up setting a data attribute on
+  // the web component instead of using the property, which means no data gets
+  // displayed.
+  get data() {
+    return super.data;
+  }
+
+  set data(value) {
+    super.data = value;
+  }
+
   render() {
     const svg = select(this.shadowRoot).select("svg");
     const { height, width } = svg.node().parentElement.getBoundingClientRect();
