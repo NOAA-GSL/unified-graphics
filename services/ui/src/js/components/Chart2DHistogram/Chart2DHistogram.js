@@ -9,8 +9,8 @@ import {
   select,
 } from "d3";
 
-import ChartElement from "./ChartElement";
-import { bin2d } from "./Chart.helpers";
+import ChartElement from "../ChartElement";
+import { bin2d } from "../../helpers";
 
 export default class Chart2DHistogram extends ChartElement {
   static #TEMPLATE = `<svg>

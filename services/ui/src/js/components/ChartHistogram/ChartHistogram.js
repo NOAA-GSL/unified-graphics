@@ -12,7 +12,7 @@ import {
   select,
 } from "d3";
 
-import ChartElement from "./ChartElement";
+import ChartElement from "../ChartElement";
 
 class ChartHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
