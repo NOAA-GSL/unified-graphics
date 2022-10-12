@@ -15,7 +15,18 @@ import {
 import ChartElement from "./ChartElement";
 
 class ChartHistogram extends ChartElement {
-  static #STYLE = `.deviation rect {
+  static #TEMPLATE = `<svg>
+    <g class="x-axis"></g>
+    <g class="y-axis"></g>
+    <g class="data"></g>
+    <g class="annotation"></g>
+  </svg>`;
+
+  static #STYLE = `:host {
+    display: block;
+  }
+
+  .deviation rect {
     fill: #dfe1e2;
     mix-blend-mode: color-burn;
   }
@@ -25,15 +36,32 @@ class ChartHistogram extends ChartElement {
   }`;
 
   #thresholds = null;
+  #data = [];
   #mean = 0;
   #deviation = 0;
 
   static get observedAttributes() {
-    return ChartElement.observedAttributes;
+    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
   }
 
-  get componentStyles() {
-    return super.componentStyles + ChartHistogram.#STYLE;
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `<style>${ChartHistogram.#STYLE}</style>
+      ${ChartHistogram.#TEMPLATE}`;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "format-x":
+      case "format-y":
+        this.update();
+        break;
+      default:
+        super.attributeChangedCallback(name, oldValue, newValue);
+        break;
+    }
   }
 
   get bins() {
@@ -50,20 +78,42 @@ class ChartHistogram extends ChartElement {
   }
 
   get data() {
-    // We have to override the getter if we override the setter, otherwise
-    // this.data is undefined for the subclass. JavaScript is great.
-    return super.data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
     this.#mean = mean(value);
     this.#deviation = deviation(value);
 
-    super.data = value;
+    this.#data = value;
   }
 
   get deviation() {
     return this.#deviation;
+  }
+
+  get formatX() {
+    return this.getAttribute("format-x") ?? ",";
+  }
+
+  set formatX(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-x");
+    } else {
+      this.setAttribute("format-x", formatStr);
+    }
+  }
+
+  get formatY() {
+    return this.getAttribute("format-y") ?? ",";
+  }
+
+  set formatY(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-y");
+    } else {
+      this.setAttribute("format-y", formatStr);
+    }
   }
 
   get mean() {
@@ -81,7 +131,8 @@ class ChartHistogram extends ChartElement {
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };
