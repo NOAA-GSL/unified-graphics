@@ -13,24 +13,66 @@ import ChartElement from "./ChartElement";
 import { bin2d } from "./Chart.helpers";
 
 export default class Chart2DHistogram extends ChartElement {
+  static #TEMPLATE = `<svg>
+    <g class="x-axis"></g>
+    <g class="y-axis"></g>
+    <g class="data"></g>
+  </svg>`;
+
+  static #STYLE = `:host {
+    display: block;
+  }`;
+
+  #data = [];
+
   static get observedAttributes() {
-    return ChartElement.observedAttributes;
+    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
   }
 
-  // If we don't override this here, Svelte ends up setting a data attribute on
-  // the web component instead of using the property, which means no data gets
-  // displayed.
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `<style>${Chart2DHistogram.#STYLE}</style>
+      ${Chart2DHistogram.#TEMPLATE}`;
+  }
+
   get data() {
-    return super.data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
-    super.data = value;
+    this.#data = value;
+  }
+
+  get formatX() {
+    return this.getAttribute("format-x") ?? ",";
+  }
+
+  set formatX(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-x");
+    } else {
+      this.setAttribute("format-x", formatStr);
+    }
+  }
+
+  get formatY() {
+    return this.getAttribute("format-y") ?? ",";
+  }
+
+  set formatY(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-y");
+    } else {
+      this.setAttribute("format-y", formatStr);
+    }
   }
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = {
