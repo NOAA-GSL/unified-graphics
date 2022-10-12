@@ -9,6 +9,14 @@
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
   $: distributionData = data.map((d) => d.properties[loop]);
+  $: xTitle =
+    variableType === "vector"
+      ? "Direction (Observation − Forecast)"
+      : "Observation − Forecast";
+  $: yTitle =
+    variableType === "vector"
+      ? "Magnitude (Observation − Forecast)"
+      : "Observation count";
   $: mapData = { type: "FeatureCollection", features: data };
   $: mapRadius =
     variableType === "vector"
@@ -18,11 +26,10 @@
 
 <slot name="title" />
 <div data-layout="grid" class="flex-1" style="--row-size: minmax(20rem, 1fr)">
-  <svelte:element
-    this={distributionEl}
-    data={distributionData}
-    title-x="Direction (Observation − Forecast)"
-    title-y="Magnitude (Observation − Forecast)"
-  />
+  <chart-container>
+    <span class="axis-y title" slot="title-y">{yTitle}</span>
+    <svelte:element this={distributionEl} data={distributionData} />
+    <span class="axis-x title" slot="title-x">{xTitle}</span>
+  </chart-container>
   <chart-map data={mapData} {selection} radius={mapRadius} />
 </div>
