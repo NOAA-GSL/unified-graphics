@@ -166,7 +166,8 @@ def test_diag_not_found(variable_name, client):
 )
 def test_diag_read_error(variable_name, variable_code, app, client):
     empty = (
-        Path(app.config["DIAG_DIR"]) / f"ncdiag_conv_{variable_code}_ges.nc4.2022050514"
+        Path(app.config["DIAG_DIR"].removeprefix("file://"))
+        / f"ncdiag_conv_{variable_code}_ges.nc4.2022050514"
     )
     empty.touch()
 

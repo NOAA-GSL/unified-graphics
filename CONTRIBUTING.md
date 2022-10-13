@@ -54,8 +54,9 @@ them automatically to its config.
   `FLASK_ENV=development`, the server adds a CORS header permitting connections
   from http://localhost:3000 so that the frontend can make requests without
   proxying
-- `FLASK_DIAG_DIR` - The path to the directory containing the NetCDF diagnostics
-  files
+- `FLASK_DIAG_DIR` - The path to the local directory or S3 bucekt containing the
+  NetCDF diagnostics files. Should be prefixed with `file://` or `s3://` depending
+  on the storage backend used.
 
 ### UI Service
 

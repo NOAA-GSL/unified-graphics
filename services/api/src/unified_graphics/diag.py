@@ -70,7 +70,20 @@ class Observation:
 
 def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
     filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
-    diag_file = Path(current_app.config["DIAG_DIR"]) / filename
+    diag_uri = current_app.config["DIAG_DIR"]
+
+    if diag_uri.startswith("file://"):
+        return open_local_diagnostic(diag_uri, filename)
+    elif diag_uri.startswith("s3://"):
+        return open_s3_diagnostic(diag_uri, filename)
+    else:
+        raise FileNotFoundError(f"Unknown file URI: '{str(diag_uri)}'")
+
+
+def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
+    """Opens a local diag file"""
+    diag_uri = diag_uri.removeprefix("file://")  # Path doesn't support file URIs
+    diag_file = Path(diag_uri) / filename
 
     # xarray.open_dataset doesn't distinguish between a file it can't understand
     # and a file that's not there. It raises a ValueError even for missing
@@ -79,6 +92,14 @@ def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
         raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
     return xr.open_dataset(diag_file)
+
+
+def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
+    """Opens a diag file in S3.
+
+    Assumes AWS S3, and grabs credentials via Boto3 defaults.
+    """
+    raise NotImplementedError
 
 
 def scalar(variable: Variable) -> List[Observation]:
