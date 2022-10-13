@@ -96,6 +96,8 @@ export default class ChartMap extends ChartElement {
     const height = this.height;
     const width = this.width;
 
+    if (height === undefined || width === undefined) return;
+
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());
 
