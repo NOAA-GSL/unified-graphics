@@ -10,28 +10,18 @@ import {
   scaleSqrt,
 } from "d3";
 
-export default class ChartMap extends HTMLElement {
-  static #TEMPLATE = `<div class="container"><canvas></canvas></div>`;
+import ChartElement from "../ChartElement";
 
-  static #STYLE = `<style>
-    :host {
-      display: grid;
-    }
+export default class ChartMap extends ChartElement {
+  static #TEMPLATE = `<canvas></canvas>`;
 
-    :host,
-    .container {
-      contain: strict;
-    }
-
-    canvas {
-      cursor: crosshair;
-    }
-  </style>`;
+  static #STYLE = `host {
+    cursor: crosshair;
+  }`;
 
   #projection = geoAlbers();
   #selection = null;
   #mousedownWrapper = null;
-  #pendingUpdate = null;
   #borders = null;
   #data = null;
   #radiusAccessor = null;
@@ -40,7 +30,8 @@ export default class ChartMap extends HTMLElement {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = ChartMap.#STYLE + ChartMap.#TEMPLATE;
+    shadowRoot.innerHTML = `<style>${ChartMap.#STYLE}</style>
+      ${ChartMap.#TEMPLATE}`;
   }
 
   connectedCallback() {
@@ -48,12 +39,8 @@ export default class ChartMap extends HTMLElement {
       .then((response) => response.json())
       .then((json) => {
         this.#borders = json;
-        this.requestUpdate();
+        this.update();
       });
-
-    this.resizeObserver = new ResizeObserver(() => {
-      this.requestUpdate();
-    });
 
     const canvas = this.shadowRoot?.querySelector("canvas");
 
@@ -62,36 +49,26 @@ export default class ChartMap extends HTMLElement {
         this.mapMousedownCallback(event);
       };
 
-      this.resizeObserver.observe(canvas.parentElement);
       canvas.addEventListener("mousedown", this.#mousedownWrapper);
     }
-
-    this.update();
   }
 
   disconnectedCallback() {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
-      this.resizeObserver?.unobserve(canvas.parentElement);
       canvas.removeEventListener("mousedown", this.#mousedownWrapper);
       this.#mousedownWrapper = null;
     }
-
-    delete this.resizeObserver;
-  }
-
-  attributeChangedCallback() {
-    this.requestUpdate();
   }
 
   get data() {
-    return this.#data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
     this.#data = value;
-    this.requestUpdate();
+    this.update();
   }
 
   get radius() {
@@ -108,25 +85,16 @@ export default class ChartMap extends HTMLElement {
 
   set selection(value) {
     this.#selection = value;
-    this.requestUpdate();
+    this.update();
   }
 
-  requestUpdate() {
-    if (this.#pendingUpdate) {
-      window.cancelAnimationFrame(this.#pendingUpdate);
-    }
-
-    this.#pendingUpdate = window.requestAnimationFrame(() => {
-      this.update();
-    });
-  }
-
-  update() {
+  render() {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (!canvas) return;
 
-    const { height, width } = canvas.parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
 
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());
@@ -260,7 +228,7 @@ export default class ChartMap extends HTMLElement {
         this.#selection[0][1] === this.#selection[1][1]
       ) {
         this.#selection = null;
-        this.requestUpdate();
+        this.update();
       }
 
       const brush = new CustomEvent("chart-brush", {
@@ -272,7 +240,7 @@ export default class ChartMap extends HTMLElement {
 
     const mousemoveCallback = ({ offsetX, offsetY }) => {
       this.#selection[1] = this.#projection.invert([offsetX, offsetY]);
-      this.requestUpdate();
+      this.update();
     };
 
     target.addEventListener("mousemove", mousemoveCallback);

@@ -31,5 +31,7 @@
     <svelte:element this={distributionEl} data={distributionData} />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
   </chart-container>
-  <chart-map data={mapData} {selection} radius={mapRadius} />
+  <chart-container>
+    <chart-map data={mapData} {selection} radius={mapRadius} />
+  </chart-container>
 </div>
