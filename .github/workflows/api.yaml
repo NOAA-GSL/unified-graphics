@@ -32,7 +32,9 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - run: poetry env use 3.9
+      - name: Force Poetry to the correct Python version
+        working-directory: services/api
+        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
         run: poetry install
@@ -53,7 +55,9 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - run: poetry env use 3.9
+      - name: Force Poetry to the correct Python version
+        working-directory: services/api
+        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
         run: poetry install
@@ -71,7 +75,9 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - run: poetry env use 3.9
+      - name: Force Poetry to the correct Python version
+        working-directory: services/api
+        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
         run: poetry install
