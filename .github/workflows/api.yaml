@@ -32,12 +32,11 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - name: Force Poetry to the correct Python version
-        working-directory: services/api
-        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
-        run: poetry install
+        run: |
+          poetry env use 3.9
+          poetry install
       - name: Lint with Black
         working-directory: services/api
         run: poetry run black --check .
@@ -55,12 +54,11 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - name: Force Poetry to the correct Python version
-        working-directory: services/api
-        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
-        run: poetry install
+        run: |
+          poetry env use 3.9
+          poetry install
       - name: Check Types with mypy
         working-directory: services/api
         run: poetry run mypy src/
@@ -75,12 +73,11 @@ jobs:
           python-version: '3.9'
           cache: 'poetry'
           cache-dependency-path: 'services/api/poetry.lock'
-      - name: Force Poetry to the correct Python version
-        working-directory: services/api
-        run: poetry env use 3.9
       - name: Install dependencies
         working-directory: services/api
-        run: poetry install
+        run: |
+          poetry env use 3.9
+          poetry install
       - name: Test
         working-directory: services/api
         run: poetry run pytest
