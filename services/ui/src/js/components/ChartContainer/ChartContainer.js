@@ -1,3 +1,21 @@
+/**
+ * Containing element that automatically resizes the elements in its default
+ * slot.
+ *
+ * This component uses a ResizeObserver and a MutationObserver to set the
+ * `width` and `height` properties on whatever elements are in the default
+ * slot whenever the container is resized, or the children change.
+ *
+ * It provides slots for inserting axis title for the x- and y-axes called
+ * "title-x" and "title-y" respectively.
+ *
+ * @example
+ * <chart-container>
+ *   <span slot="title-y">Y Axis Title</span>
+ *   <chart-histogram></chart-histogram>
+ *   <span slot="title-x">X Axis Title</span>
+ * <chart-container>
+ */
 export default class ChartContainer extends HTMLElement {
   static #TEMPLATE = `<slot name=title-y></slot>
     <div class=container><slot></slot></div>

@@ -1,3 +1,5 @@
+/** @module components/Chart2DHistogram */
+
 import {
   axisBottom,
   axisLeft,
@@ -12,6 +14,26 @@ import {
 import ChartElement from "../ChartElement";
 import { bin2d } from "../../helpers";
 
+/**
+ * @typedef {object} DiagVector
+ * @property {number} direction
+ *   A value between 0 and 360 representing the orientation of the vector.
+ * @property {number} magnitude The length of the vector.
+ */
+
+/**
+ * Render a heatmap for data.
+ *
+ * @property {DiagVector[]} data Values to visualize
+ * @property {string} formatX
+ *   A d3 format string used to format values along the x-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-x`.
+ * @property {string} formatY
+ *   A d3 format string used to format values along the y-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-y`.
+ */
 export default class Chart2DHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
@@ -23,6 +45,7 @@ export default class Chart2DHistogram extends ChartElement {
     display: block;
   }`;
 
+  /** @type {DiagVector[]} */
   #data = [];
 
   static get observedAttributes() {
@@ -73,6 +96,8 @@ export default class Chart2DHistogram extends ChartElement {
     const svg = select(this.shadowRoot).select("svg");
     const height = this.height;
     const width = this.width;
+
+    if (width === undefined || height === undefined) return;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = {

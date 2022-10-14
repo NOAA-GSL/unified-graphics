@@ -1,4 +1,21 @@
+/**
+ * Bass class for web component visualizations.
+ *
+ * `ChartElement` provides `width` and `height` properties for the
+ * visualization that are reflected as observed attributes on the element for
+ * ease of use. Setting these properties triggers a re-render of the
+ * visualization. Renders are batched into a single frame with
+ * `requestAnimationFrame` to prevent too many redraws when properties are
+ * being set.
+ *
+ * @property {number} height The height of the element
+ * @property {number} width The width of the element
+ */
 class ChartElement extends HTMLElement {
+  /**
+   * The request ID from requestAnimationFrame when an update is pending.
+   * @type {?number}
+   */
   #pendingUpdate = null;
 
   static get observedAttributes() {
@@ -48,6 +65,9 @@ class ChartElement extends HTMLElement {
     }
   }
 
+  /**
+   * Schedule a call to the render method on the next frame.
+   */
   update() {
     if (this.#pendingUpdate) return;
 
@@ -57,6 +77,9 @@ class ChartElement extends HTMLElement {
     });
   }
 
+  /**
+   * Abstract method for rendering the visualization.
+   */
   render() {}
 }
 

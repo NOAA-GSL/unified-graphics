@@ -1,3 +1,7 @@
+<!--
+@component
+The site header for the application.
+-->
 <header
   class="usa-dark-background text-base-lightest padding-y-2 padding-x-3"
   style="justify-content: space-between"

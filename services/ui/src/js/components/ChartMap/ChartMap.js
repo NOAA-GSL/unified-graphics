@@ -1,3 +1,5 @@
+/** @module components/ChartMap */
+
 import {
   extent,
   geoAlbers,
@@ -12,6 +14,38 @@ import {
 
 import ChartElement from "../ChartElement";
 
+/**
+ * @typedef {[[number, number], [number, number]]} Region
+ * A bounding box describing a region selected on the map. It consists of two
+ * coordinates, the first defines the left, top corner of the region, the
+ * second defines the right, bottom corner.
+ */
+
+/**
+ * @event ChartMap#BrushEvent
+ * @type {object}
+ * @property {Region} detail The bounding box for the current selection
+ */
+
+/**
+ * Return the value used as the radius for each datum.
+ * @callback radiusAccessor
+ * @param {object} datum The observation being plotted on the map
+ * @return {number} The value that will be mapped to the bubble's radius for
+ *   `datum`
+ */
+
+/**
+ * A bubble map component.
+ *
+ * @property {object[]} data A GeoJSON object to be plotted on the map
+ * @property {radiusAccessor} radius An accessor function to
+ *   retrieve the radius value for each datum
+ * @property {[number, number][]} selection A bounding box for the map
+ *   selection consisting of two tuples, the first of which is the left, top
+ *   corner, and the second of which is the right, bottom corner
+ * @fires ChartMap#BrushEvent
+ */
 export default class ChartMap extends ChartElement {
   static #TEMPLATE = `<canvas></canvas>`;
 
@@ -20,11 +54,16 @@ export default class ChartMap extends ChartElement {
   }`;
 
   #projection = geoAlbers();
+
+  /** @type {?[number, number][]} */
   #selection = null;
+
   #mousedownWrapper = null;
   #borders = null;
   #data = null;
-  #radiusAccessor = null;
+
+  /** @type radiusAccessor */
+  #radiusAccessor = (d) => d;
 
   constructor() {
     super();
@@ -129,6 +168,7 @@ export default class ChartMap extends ChartElement {
 
     if (!(observations && this.#radiusAccessor)) return;
 
+    /** @type number[] */
     const [minDiff, maxDiff] = extent(observations.features, this.#radiusAccessor);
 
     const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);

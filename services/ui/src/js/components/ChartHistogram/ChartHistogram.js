@@ -14,6 +14,41 @@ import {
 
 import ChartElement from "../ChartElement";
 
+/**
+ * @typedef {Array.<number>} D3Bin
+ * @property {number} x0 The lower bound of the bin
+ * @property {number} x1 The upper bound of the bin
+ */
+
+/**
+ * @typedef {D3Bin[]} D3BinArray
+ * @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bins}
+ */
+
+/**
+ * Render a histogram for data.
+ *
+ * @property {number[]} data Values to visualize
+ * @readonly
+ * @property {D3BinArray} bins Binned `data` for the histogram.
+ * @readonly
+ * @property {number} deviation The standard deviation for `data`
+ * @property {string} formatX
+ *   A d3 format string used to format values along the x-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-x`.
+ * @property {string} formatY
+ *   A d3 format string used to format values along the y-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-y`.
+ * @readonly
+ * @property {number} mean The mean for `data`
+ * @property thresholds {(number[]|function)}
+ *   An array of numbers defining the bin boundaries or a function that
+ *   generates those boundaries from `data`. There will be `thresholds.length`
+ *   + 1 bins in the histogram.
+ *   @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bin_thresholds}
+ */
 class ChartHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
