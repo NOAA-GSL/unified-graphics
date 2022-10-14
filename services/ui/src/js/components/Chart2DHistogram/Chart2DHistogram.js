@@ -115,11 +115,15 @@ export default class Chart2DHistogram extends ChartElement {
     if (!this.data?.length) return;
 
     const data = this.data;
-    let domain = this.domain;
-    let range = this.range;
 
-    if (!domain) domain = extent(data, (d) => d.direction);
-    if (!range) range = extent(data, (d) => d.magnitude);
+    // FIXME: These should be something we can set as properties / attributes
+    // so that we can create multiple charts with the same axes.
+
+    /** @type {[number, number]} */
+    let domain = extent(data, (d) => d.direction);
+
+    /** @type {[number, number]} */
+    let range = extent(data, (d) => d.magnitude);
 
     const xScale = scaleLinear().domain(domain).range([0, contentWidth]).nice();
 
