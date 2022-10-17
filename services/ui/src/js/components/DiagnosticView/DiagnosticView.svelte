@@ -1,18 +1,7 @@
 <script>
   import LoopDisplay from "./LoopDisplay.svelte";
-  import { geoFilter } from "./DiagnosticView.helpers.js";
-
-  /**
-   * Brush event handler for ChartMap component
-   *
-   * @param {module:components/ChartMap#BrushEvent} event The brush event
-   */
-  function onBrush(event) {
-    selection = event.detail;
-  }
 
   let currentVariable = null;
-  let selection = null;
   let variableType = "scalar";
 
   $: variables = fetch("/api/diag/")
@@ -27,10 +16,6 @@
   $: featureCollection = currentVariable
     ? fetch(`/api${currentVariable}`).then((response) => response.json())
     : new Promise(() => {});
-
-  $: filtered = featureCollection.then((data) =>
-    data.features.filter(geoFilter(selection))
-  );
 
   $: {
     featureCollection.then((data) => {
@@ -53,19 +38,13 @@ observations side-by-side for both the guess and analysis loops.
   {/await}
 </select>
 
-{#await filtered}
+{#await featureCollection}
   <p>Loading</p>
 {:then data}
-  <LoopDisplay {data} loop="guess" {variableType} {selection} on:chart-brush={onBrush}>
+  <LoopDisplay {data} loop="guess" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
   </LoopDisplay>
-  <LoopDisplay
-    {data}
-    loop="analysis"
-    {variableType}
-    {selection}
-    on:chart-brush={onBrush}
-  >
+  <LoopDisplay {data} loop="analysis" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
   </LoopDisplay>
 {/await}

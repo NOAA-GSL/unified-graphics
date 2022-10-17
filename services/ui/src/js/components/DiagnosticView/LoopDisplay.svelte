@@ -1,12 +1,9 @@
 <script>
+  import { containedIn } from "./DiagnosticView.helpers.js";
+  import { range, region } from "./DiagnosticView.stores.js";
+
   /** Data for this loop */
   export let data = [];
-
-  /**
-   * Current selection on the map.
-   * @type {?[[number, number], [number, number]]}
-   */
-  export let selection = null;
 
   // FIXME: Should be an enum;
   /**
@@ -24,18 +21,36 @@
    */
   export let variableType = "scalar";
 
+  /**
+   * Handle range selection on histograms.
+   *
+   * @param {CustomEvent} event
+   */
+  const onBrushHistogram = (event) => {
+    event.stopImmediatePropagation();
+    range.set(event.detail);
+  };
+
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
-  $: distributionData = data.map((d) => d.properties[loop]);
+
+  $: distributionData = data.features.map((d) => d.properties[loop]);
+
   $: xTitle =
     variableType === "vector"
       ? "Direction (Observation − Forecast)"
       : "Observation − Forecast";
+
   $: yTitle =
     variableType === "vector"
       ? "Magnitude (Observation − Forecast)"
       : "Observation count";
-  $: mapData = { type: "FeatureCollection", features: data };
+
+  $: mapData = {
+    type: "FeatureCollection",
+    features: data.features.filter(containedIn($range, loop)),
+  };
+
   $: mapRadius =
     variableType === "vector"
       ? (d) => d.properties[loop].magnitude
@@ -64,10 +79,15 @@ Usage:
 <div data-layout="grid" class="flex-1" style="--row-size: minmax(20rem, 1fr)">
   <chart-container>
     <span class="axis-y title" slot="title-y">{yTitle}</span>
-    <svelte:element this={distributionEl} data={distributionData} />
+    <svelte:element
+      this={distributionEl}
+      data={distributionData}
+      selection={$range}
+      on:chart-brush={onBrushHistogram}
+    />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
   </chart-container>
   <chart-container>
-    <chart-map data={mapData} {selection} radius={mapRadius} />
+    <chart-map data={mapData} region={$region} radius={mapRadius} />
   </chart-container>
 </div>

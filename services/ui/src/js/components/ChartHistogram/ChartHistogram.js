@@ -179,6 +179,14 @@ class ChartHistogram extends ChartElement {
     return this.#mean;
   }
 
+  get selection() {
+    return structuredClone(this.#selection.datum());
+  }
+
+  set selection(value) {
+    this.#selection.datum(value).call(this.#brush);
+  }
+
   get thresholds() {
     return this.#thresholds;
   }
@@ -243,6 +251,12 @@ class ChartHistogram extends ChartElement {
     // mousemove, this will never be called, leaving the old selection still
     // visible despite having updated the actual range.
     this.#selection.call(this.#brush);
+
+    const brush = new CustomEvent("chart-brush", {
+      bubbles: true,
+      detail: structuredClone(this.#selection.datum()),
+    });
+    this.dispatchEvent(brush);
   };
 
   render() {
