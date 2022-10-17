@@ -55,13 +55,16 @@ class ChartHistogram extends ChartElement {
     <g class="y-axis"></g>
     <g class="data"></g>
     <g class="annotation"></g>
+    <rect id="selection"></rect>
   </svg>`;
 
   static #STYLE = `:host {
     display: block;
+    user-select: none;
   }
 
-  .deviation rect {
+  .deviation rect,
+  #selection {
     fill: #dfe1e2;
     mix-blend-mode: color-burn;
   }
@@ -70,10 +73,22 @@ class ChartHistogram extends ChartElement {
     stroke: currentColor;
   }`;
 
+  /** @type {?number[]} **/
   #thresholds = null;
+
+  /** @type {number[]} **/
   #data = [];
+
+  /** @type {number | undefined} */
   #mean = 0;
+
+  /** @type {number | undefined} */
   #deviation = 0;
+
+  #selection = null;
+
+  #xScale = scaleLinear();
+  #yScale = scaleLinear();
 
   static get observedAttributes() {
     return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
@@ -97,6 +112,15 @@ class ChartHistogram extends ChartElement {
         super.attributeChangedCallback(name, oldValue, newValue);
         break;
     }
+  }
+
+  connectedCallback() {
+    const svg = this.shadowRoot.querySelector("svg");
+
+    if (!svg) return;
+
+    this.#selection = select(svg).select("#selection").datum([0, 0]);
+    svg.addEventListener("mousedown", this.onMouseDown);
   }
 
   get bins() {
@@ -164,6 +188,63 @@ class ChartHistogram extends ChartElement {
     this.render();
   }
 
+  /**
+   * Handle mouse down events on the SVG.
+   *
+   * The mousedown event starts brushing on the histogram.
+   *
+   * **Note**: This has to be an arrow function assigned to a property so that
+   * `this` refers to the ChartHistogram object. If it's defined as a regular
+   * function, `this` will refer to the `<svg>` element that was clicked.
+   *
+   * @param {MouseEvent} event
+   */
+  onMouseDown = (event) => {
+    const svg = event.currentTarget;
+    this.#selection.datum(
+      [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d))
+    );
+
+    window.addEventListener("mouseup", this.onMouseUp, { once: true });
+    svg.addEventListener("mousemove", this.onMouseMove);
+  };
+
+  /**
+   * Update selection during mouse drags.
+   *
+   * **Note**: This has to be an arrow function assigned to a property so that
+   * `this` refers to the ChartHistogram object. If it's defined as a regular
+   * function, `this` will refer to the `<svg>` element that was clicked.
+   *
+   * @param {MouseEvent} event
+   */
+  onMouseMove = (event) => {
+    this.#selection.datum()[1] = this.#xScale.invert(event.offsetX);
+    this.#selection.call(this.#brush);
+  };
+
+  /**
+   * Handle mouseup events on the SVG.
+   *
+   * This handler is connected by `onMouseDown` to register the end of the
+   * brushing action.
+   *
+   * **Note**: This has to be an arrow function assigned to a property so that
+   * `this` refers to the ChartHistogram object. If it's defined as a regular
+   * function, `this` will refer to the `<svg>` element that was clicked.
+   *
+   * @param {MouseEvent} event
+   */
+  onMouseUp = () => {
+    this.shadowRoot
+      .querySelector("svg")
+      .removeEventListener("mousemove", this.onMouseMove);
+    // Update the brush one last time because, in the event of a click with no
+    // mousemove, this will never be called, leaving the old selection still
+    // visible despite having updated the actual range.
+    this.#selection.call(this.#brush);
+  };
+
   render() {
     const svg = select(this.shadowRoot).select("svg");
     const height = this.height;
@@ -178,17 +259,18 @@ class ChartHistogram extends ChartElement {
 
     const data = this.bins;
 
-    const xScale = scaleLinear()
+    // Store the x scale so we can invert values from mouse events.
+    const xScale = (this.#xScale = scaleLinear()
       .domain(
         this.thresholds
           ? extent(this.thresholds)
           : [min(data, (d) => d.x0), max(data, (d) => d.x1)]
       )
-      .range([0, width - margin.left - margin.right]);
+      .range([0, width - margin.left - margin.right]));
 
-    const yScale = scaleLinear()
+    const yScale = (this.#yScale = scaleLinear()
       .domain(this.range ?? [0, max(data, (d) => d.length)])
-      .range([height - margin.top - margin.bottom, 0]);
+      .range([height - margin.top - margin.bottom, 0]));
 
     const xAxis = axisBottom(xScale).tickFormat(format(this.formatX));
     const yAxis = axisRight(yScale)
@@ -286,7 +368,26 @@ class ChartHistogram extends ChartElement {
         g.select(".domain").remove();
         g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
       });
+
+    this.#selection
+      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .call(this.#brush);
   }
+
+  /**
+   * Update the brush selection
+   *
+   * @param {object} g - The D3 selection of the brush <rect>
+   */
+  #brush = (g) => {
+    const y = Math.min(...this.#yScale.range());
+    const height = Math.max(...this.#yScale.range()) - y;
+
+    g.attr("x", (d) => this.#xScale(Math.min(...d)))
+      .attr("y", y)
+      .attr("width", (d) => Math.abs(this.#xScale(d[1]) - this.#xScale(d[0])))
+      .attr("height", height);
+  };
 }
 
 export default ChartHistogram;
