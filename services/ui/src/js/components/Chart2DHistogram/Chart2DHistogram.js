@@ -1,3 +1,5 @@
+/** @module components/Chart2DHistogram */
+
 import {
   axisBottom,
   axisLeft,
@@ -9,28 +11,93 @@ import {
   select,
 } from "d3";
 
-import ChartElement from "./ChartElement";
-import { bin2d } from "./Chart.helpers";
+import ChartElement from "../ChartElement";
+import { bin2d } from "../../helpers";
 
+/**
+ * @typedef {object} DiagVector
+ * @property {number} direction
+ *   A value between 0 and 360 representing the orientation of the vector.
+ * @property {number} magnitude The length of the vector.
+ */
+
+/**
+ * Render a heatmap for data.
+ *
+ * @property {DiagVector[]} data Values to visualize
+ * @property {string} formatX
+ *   A d3 format string used to format values along the x-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-x`.
+ * @property {string} formatY
+ *   A d3 format string used to format values along the y-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-y`.
+ */
 export default class Chart2DHistogram extends ChartElement {
+  static #TEMPLATE = `<svg>
+    <g class="x-axis"></g>
+    <g class="y-axis"></g>
+    <g class="data"></g>
+  </svg>`;
+
+  static #STYLE = `:host {
+    display: block;
+  }`;
+
+  /** @type {DiagVector[]} */
+  #data = [];
+
   static get observedAttributes() {
-    return ChartElement.observedAttributes;
+    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
   }
 
-  // If we don't override this here, Svelte ends up setting a data attribute on
-  // the web component instead of using the property, which means no data gets
-  // displayed.
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `<style>${Chart2DHistogram.#STYLE}</style>
+      ${Chart2DHistogram.#TEMPLATE}`;
+  }
+
   get data() {
-    return super.data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
-    super.data = value;
+    this.#data = value;
+  }
+
+  get formatX() {
+    return this.getAttribute("format-x") ?? ",";
+  }
+
+  set formatX(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-x");
+    } else {
+      this.setAttribute("format-x", formatStr);
+    }
+  }
+
+  get formatY() {
+    return this.getAttribute("format-y") ?? ",";
+  }
+
+  set formatY(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-y");
+    } else {
+      this.setAttribute("format-y", formatStr);
+    }
   }
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
+
+    if (width === undefined || height === undefined) return;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = {
@@ -48,11 +115,15 @@ export default class Chart2DHistogram extends ChartElement {
     if (!this.data?.length) return;
 
     const data = this.data;
-    let domain = this.domain;
-    let range = this.range;
 
-    if (!domain) domain = extent(data, (d) => d.direction);
-    if (!range) range = extent(data, (d) => d.magnitude);
+    // FIXME: These should be something we can set as properties / attributes
+    // so that we can create multiple charts with the same axes.
+
+    /** @type {[number, number]} */
+    let domain = extent(data, (d) => d.direction);
+
+    /** @type {[number, number]} */
+    let range = extent(data, (d) => d.magnitude);
 
     const xScale = scaleLinear().domain(domain).range([0, contentWidth]).nice();
 

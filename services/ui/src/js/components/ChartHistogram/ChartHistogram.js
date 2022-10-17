@@ -12,10 +12,56 @@ import {
   select,
 } from "d3";
 
-import ChartElement from "./ChartElement";
+import ChartElement from "../ChartElement";
 
+/**
+ * @typedef {Array.<number>} D3Bin
+ * @property {number} x0 The lower bound of the bin
+ * @property {number} x1 The upper bound of the bin
+ */
+
+/**
+ * @typedef {D3Bin[]} D3BinArray
+ * @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bins}
+ */
+
+/**
+ * Render a histogram for data.
+ *
+ * @property {number[]} data Values to visualize
+ * @readonly
+ * @property {D3BinArray} bins Binned `data` for the histogram.
+ * @readonly
+ * @property {number} deviation The standard deviation for `data`
+ * @property {string} formatX
+ *   A d3 format string used to format values along the x-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-x`.
+ * @property {string} formatY
+ *   A d3 format string used to format values along the y-axis. This property
+ *   is reflected in an HTML attribute on the custom element called
+ *   `format-y`.
+ * @readonly
+ * @property {number} mean The mean for `data`
+ * @property thresholds {(number[]|function)}
+ *   An array of numbers defining the bin boundaries or a function that
+ *   generates those boundaries from `data`. There will be `thresholds.length`
+ *   + 1 bins in the histogram.
+ *   @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bin_thresholds}
+ */
 class ChartHistogram extends ChartElement {
-  static #STYLE = `.deviation rect {
+  static #TEMPLATE = `<svg>
+    <g class="x-axis"></g>
+    <g class="y-axis"></g>
+    <g class="data"></g>
+    <g class="annotation"></g>
+  </svg>`;
+
+  static #STYLE = `:host {
+    display: block;
+  }
+
+  .deviation rect {
     fill: #dfe1e2;
     mix-blend-mode: color-burn;
   }
@@ -25,15 +71,32 @@ class ChartHistogram extends ChartElement {
   }`;
 
   #thresholds = null;
+  #data = [];
   #mean = 0;
   #deviation = 0;
 
   static get observedAttributes() {
-    return ChartElement.observedAttributes;
+    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
   }
 
-  get componentStyles() {
-    return super.componentStyles + ChartHistogram.#STYLE;
+  constructor() {
+    super();
+
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `<style>${ChartHistogram.#STYLE}</style>
+      ${ChartHistogram.#TEMPLATE}`;
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "format-x":
+      case "format-y":
+        this.update();
+        break;
+      default:
+        super.attributeChangedCallback(name, oldValue, newValue);
+        break;
+    }
   }
 
   get bins() {
@@ -50,20 +113,42 @@ class ChartHistogram extends ChartElement {
   }
 
   get data() {
-    // We have to override the getter if we override the setter, otherwise
-    // this.data is undefined for the subclass. JavaScript is great.
-    return super.data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
     this.#mean = mean(value);
     this.#deviation = deviation(value);
 
-    super.data = value;
+    this.#data = value;
   }
 
   get deviation() {
     return this.#deviation;
+  }
+
+  get formatX() {
+    return this.getAttribute("format-x") ?? ",";
+  }
+
+  set formatX(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-x");
+    } else {
+      this.setAttribute("format-x", formatStr);
+    }
+  }
+
+  get formatY() {
+    return this.getAttribute("format-y") ?? ",";
+  }
+
+  set formatY(formatStr) {
+    if (!formatStr) {
+      this.removeAttribute("format-y");
+    } else {
+      this.setAttribute("format-y", formatStr);
+    }
   }
 
   get mean() {
@@ -81,7 +166,8 @@ class ChartHistogram extends ChartElement {
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
-    const { height, width } = svg.node().parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };

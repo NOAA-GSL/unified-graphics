@@ -1,3 +1,5 @@
+/** @module components/ChartMap */
+
 import {
   extent,
   geoAlbers,
@@ -10,37 +12,65 @@ import {
   scaleSqrt,
 } from "d3";
 
-export default class ChartMap extends HTMLElement {
-  static #TEMPLATE = `<div class="container"><canvas></canvas></div>`;
+import ChartElement from "../ChartElement";
 
-  static #STYLE = `<style>
-    :host {
-      display: grid;
-    }
+/**
+ * @typedef {[[number, number], [number, number]]} Region
+ * A bounding box describing a region selected on the map. It consists of two
+ * coordinates, the first defines the left, top corner of the region, the
+ * second defines the right, bottom corner.
+ */
 
-    :host,
-    .container {
-      contain: strict;
-    }
+/**
+ * @event ChartMap#BrushEvent
+ * @type {object}
+ * @property {Region} detail The bounding box for the current selection
+ */
 
-    canvas {
-      cursor: crosshair;
-    }
-  </style>`;
+/**
+ * Return the value used as the radius for each datum.
+ * @callback radiusAccessor
+ * @param {object} datum The observation being plotted on the map
+ * @return {number} The value that will be mapped to the bubble's radius for
+ *   `datum`
+ */
+
+/**
+ * A bubble map component.
+ *
+ * @property {object[]} data A GeoJSON object to be plotted on the map
+ * @property {radiusAccessor} radius An accessor function to
+ *   retrieve the radius value for each datum
+ * @property {[number, number][]} selection A bounding box for the map
+ *   selection consisting of two tuples, the first of which is the left, top
+ *   corner, and the second of which is the right, bottom corner
+ * @fires ChartMap#BrushEvent
+ */
+export default class ChartMap extends ChartElement {
+  static #TEMPLATE = `<canvas></canvas>`;
+
+  static #STYLE = `host {
+    cursor: crosshair;
+  }`;
 
   #projection = geoAlbers();
+
+  /** @type {?[number, number][]} */
   #selection = null;
+
   #mousedownWrapper = null;
-  #pendingUpdate = null;
   #borders = null;
   #data = null;
-  #radiusAccessor = null;
+
+  /** @type radiusAccessor */
+  #radiusAccessor = (d) => d;
 
   constructor() {
     super();
 
     const shadowRoot = this.attachShadow({ mode: "open" });
-    shadowRoot.innerHTML = ChartMap.#STYLE + ChartMap.#TEMPLATE;
+    shadowRoot.innerHTML = `<style>${ChartMap.#STYLE}</style>
+      ${ChartMap.#TEMPLATE}`;
   }
 
   connectedCallback() {
@@ -48,12 +78,8 @@ export default class ChartMap extends HTMLElement {
       .then((response) => response.json())
       .then((json) => {
         this.#borders = json;
-        this.requestUpdate();
+        this.update();
       });
-
-    this.resizeObserver = new ResizeObserver(() => {
-      this.requestUpdate();
-    });
 
     const canvas = this.shadowRoot?.querySelector("canvas");
 
@@ -62,36 +88,26 @@ export default class ChartMap extends HTMLElement {
         this.mapMousedownCallback(event);
       };
 
-      this.resizeObserver.observe(canvas.parentElement);
       canvas.addEventListener("mousedown", this.#mousedownWrapper);
     }
-
-    this.update();
   }
 
   disconnectedCallback() {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (canvas) {
-      this.resizeObserver?.unobserve(canvas.parentElement);
       canvas.removeEventListener("mousedown", this.#mousedownWrapper);
       this.#mousedownWrapper = null;
     }
-
-    delete this.resizeObserver;
-  }
-
-  attributeChangedCallback() {
-    this.requestUpdate();
   }
 
   get data() {
-    return this.#data;
+    return structuredClone(this.#data);
   }
 
   set data(value) {
     this.#data = value;
-    this.requestUpdate();
+    this.update();
   }
 
   get radius() {
@@ -108,25 +124,18 @@ export default class ChartMap extends HTMLElement {
 
   set selection(value) {
     this.#selection = value;
-    this.requestUpdate();
+    this.update();
   }
 
-  requestUpdate() {
-    if (this.#pendingUpdate) {
-      window.cancelAnimationFrame(this.#pendingUpdate);
-    }
-
-    this.#pendingUpdate = window.requestAnimationFrame(() => {
-      this.update();
-    });
-  }
-
-  update() {
+  render() {
     const canvas = this.shadowRoot?.querySelector("canvas");
 
     if (!canvas) return;
 
-    const { height, width } = canvas.parentElement.getBoundingClientRect();
+    const height = this.height;
+    const width = this.width;
+
+    if (height === undefined || width === undefined) return;
 
     canvas.setAttribute("width", width.toString());
     canvas.setAttribute("height", height.toString());
@@ -159,6 +168,7 @@ export default class ChartMap extends HTMLElement {
 
     if (!(observations && this.#radiusAccessor)) return;
 
+    /** @type number[] */
     const [minDiff, maxDiff] = extent(observations.features, this.#radiusAccessor);
 
     const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);
@@ -260,7 +270,7 @@ export default class ChartMap extends HTMLElement {
         this.#selection[0][1] === this.#selection[1][1]
       ) {
         this.#selection = null;
-        this.requestUpdate();
+        this.update();
       }
 
       const brush = new CustomEvent("chart-brush", {
@@ -272,7 +282,7 @@ export default class ChartMap extends HTMLElement {
 
     const mousemoveCallback = ({ offsetX, offsetY }) => {
       this.#selection[1] = this.#projection.invert([offsetX, offsetY]);
-      this.requestUpdate();
+      this.update();
     };
 
     target.addEventListener("mousemove", mousemoveCallback);

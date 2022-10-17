@@ -2,6 +2,11 @@
   import LoopDisplay from "./LoopDisplay.svelte";
   import { geoFilter } from "./DiagnosticView.helpers.js";
 
+  /**
+   * Brush event handler for ChartMap component
+   *
+   * @param {module:components/ChartMap#BrushEvent} event The brush event
+   */
   function onBrush(event) {
     selection = event.detail;
   }
@@ -33,6 +38,12 @@
     });
   }
 </script>
+
+<!--
+@component
+The DiagnosticView displays the distribution of values and location of
+observations side-by-side for both the guess and analysis loops.
+-->
 
 <select class="usa-select" bind:value={currentVariable}>
   {#await variables then vars}
