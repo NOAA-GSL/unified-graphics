@@ -47,10 +47,19 @@ import ChartElement from "../ChartElement";
  * @fires ChartMap#BrushEvent
  */
 export default class ChartMap extends ChartElement {
-  static #TEMPLATE = `<canvas></canvas>`;
+  static #TEMPLATE = `<canvas id="data"></canvas><canvas id="selection"></canvas>`;
 
-  static #STYLE = `host {
+  static #STYLE = `:host {
+    contain: size layout style;
+
+    display: grid;
+    grid-template-areas: main;
+
     cursor: crosshair;
+  }
+
+  :host > * {
+    grid-area: main;
   }`;
 
   #projection = geoAlbers();
@@ -58,7 +67,6 @@ export default class ChartMap extends ChartElement {
   /** @type {?[number, number][]} */
   #selection = null;
 
-  #mousedownWrapper = null;
   #borders = null;
   #data = null;
 
@@ -81,23 +89,18 @@ export default class ChartMap extends ChartElement {
         this.update();
       });
 
-    const canvas = this.shadowRoot?.querySelector("canvas");
+    const canvas = this.shadowRoot?.getElementById("selection");
 
     if (canvas) {
-      this.#mousedownWrapper = (event) => {
-        this.mapMousedownCallback(event);
-      };
-
-      canvas.addEventListener("mousedown", this.#mousedownWrapper);
+      canvas.addEventListener("mousedown", this.mousedownCallback);
     }
   }
 
   disconnectedCallback() {
-    const canvas = this.shadowRoot?.querySelector("canvas");
+    const canvas = this.shadowRoot?.getElementById("selection");
 
     if (canvas) {
-      canvas.removeEventListener("mousedown", this.#mousedownWrapper);
-      this.#mousedownWrapper = null;
+      canvas.removeEventListener("mousedown", this.mousedownCallback);
     }
   }
 
@@ -124,11 +127,11 @@ export default class ChartMap extends ChartElement {
 
   set selection(value) {
     this.#selection = value;
-    this.update();
+    this.#brush();
   }
 
   render() {
-    const canvas = this.shadowRoot?.querySelector("canvas");
+    const canvas = this.shadowRoot?.getElementById("data");
 
     if (!canvas) return;
 
@@ -137,8 +140,10 @@ export default class ChartMap extends ChartElement {
 
     if (height === undefined || width === undefined) return;
 
-    canvas.setAttribute("width", width.toString());
-    canvas.setAttribute("height", height.toString());
+    for (let c of this.shadowRoot.querySelectorAll("canvas")) {
+      c.setAttribute("width", width.toString());
+      c.setAttribute("height", height.toString());
+    }
 
     const borders = this.#borders;
     const observations = this.#data;
@@ -196,34 +201,7 @@ export default class ChartMap extends ChartElement {
       ctx.restore();
     });
 
-    if (this.#selection) {
-      const [[left, top], [right, bottom]] = this.#selection;
-      const polygon = {
-        type: "Feature",
-        geometry: {
-          type: "Polygon",
-          coordinates: [
-            [
-              [left, top],
-              [right, top],
-              [right, bottom],
-              [left, bottom],
-              [left, top],
-            ],
-          ],
-        },
-      };
-
-      ctx.save();
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = "#aaa";
-
-      ctx.beginPath();
-      path(polygon);
-      ctx.fill();
-
-      ctx.restore();
-    }
+    this.#brush();
 
     // Legend
     const start = fill.domain()[0],
@@ -254,7 +232,7 @@ export default class ChartMap extends ChartElement {
     ctx.restore();
   }
 
-  mapMousedownCallback({ target, offsetX, offsetY }) {
+  mousedownCallback = ({ target, offsetX, offsetY }) => {
     const [lng, lat] = this.#projection.invert([offsetX, offsetY]);
 
     this.#selection = [
@@ -262,30 +240,108 @@ export default class ChartMap extends ChartElement {
       [lng, lat],
     ];
 
-    const mouseupCallback = () => {
-      window.removeEventListener("mouseup", mouseupCallback);
-      target.removeEventListener("mousemove", mousemoveCallback);
-      if (
-        this.#selection[0][0] === this.#selection[1][0] &&
-        this.#selection[0][1] === this.#selection[1][1]
-      ) {
-        this.#selection = null;
-        this.update();
-      }
+    target.addEventListener("mousemove", this.mousemoveCallback);
+    window.addEventListener("mouseup", this.mouseupCallback, { once: true });
+  };
 
-      const brush = new CustomEvent("chart-brush", {
-        bubbles: true,
-        detail: this.#selection,
-      });
-      this.dispatchEvent(brush);
+  mousemoveCallback = ({ offsetX, offsetY }) => {
+    this.#selection[1] = this.#projection.invert([offsetX, offsetY]);
+    this.#brush();
+  };
+
+  mouseupCallback = () => {
+    this.shadowRoot
+      ?.getElementById("selection")
+      ?.removeEventListener("mousemove", this.mousemoveCallback);
+
+    const [[x0, y0], [x1, y1]] = this.#selection;
+
+    if (x0 === x1 || y0 === y1) {
+      this.#selection = null;
+      this.#brush();
+    }
+
+    let left, right, top, bottom;
+
+    if (x0 < x1) {
+      left = x0;
+      right = x1;
+    } else {
+      left = x1;
+      right = x0;
+    }
+
+    if (y0 > y1) {
+      top = y0;
+      bottom = y1;
+    } else {
+      top = y1;
+      bottom = y0;
+    }
+
+    const brush = new CustomEvent("chart-brush", {
+      bubbles: true,
+      detail:
+        this.#selection === null
+          ? null
+          : [
+              [left, top],
+              [right, bottom],
+            ],
+    });
+    this.dispatchEvent(brush);
+  };
+
+  #brush() {
+    const canvas = this.shadowRoot?.getElementById("selection");
+    const ctx = canvas.getContext("2d");
+    const path = geoPath(this.#projection, ctx);
+
+    ctx.clearRect(0, 0, this.width, this.height);
+
+    if (!this.#selection) return;
+
+    const [[x0, y0], [x1, y1]] = this.#selection;
+    let left, right, top, bottom;
+
+    if (x0 < x1) {
+      left = x0;
+      right = x1;
+    } else {
+      left = x1;
+      right = x0;
+    }
+
+    if (y0 > y1) {
+      top = y0;
+      bottom = y1;
+    } else {
+      top = y1;
+      bottom = y0;
+    }
+    const polygon = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [left, top],
+            [right, top],
+            [right, bottom],
+            [left, bottom],
+            [left, top],
+          ],
+        ],
+      },
     };
 
-    const mousemoveCallback = ({ offsetX, offsetY }) => {
-      this.#selection[1] = this.#projection.invert([offsetX, offsetY]);
-      this.update();
-    };
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = "#aaa";
 
-    target.addEventListener("mousemove", mousemoveCallback);
-    window.addEventListener("mouseup", mouseupCallback);
+    ctx.beginPath();
+    path(polygon);
+    ctx.fill();
+    ctx.restore();
   }
 }

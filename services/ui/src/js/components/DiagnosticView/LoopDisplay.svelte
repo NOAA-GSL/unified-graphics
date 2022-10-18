@@ -1,9 +1,9 @@
 <script>
-  import { containedIn } from "./DiagnosticView.helpers.js";
+  import { containedIn, geoFilter } from "./DiagnosticView.helpers.js";
   import { range, region } from "./DiagnosticView.stores.js";
 
-  /** Data for this loop */
-  export let data = [];
+  /** GeoJSON data for this loop */
+  export let data = {};
 
   // FIXME: Should be an enum;
   /**
@@ -31,10 +31,20 @@
     range.set(event.detail);
   };
 
+  /**
+   * @param {CustomEvent} event
+   */
+  const onBrushMap = (event) => {
+    event.stopImmediatePropagation();
+    region.set(event.detail);
+  };
+
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
 
-  $: distributionData = data.features.map((d) => d.properties[loop]);
+  $: distributionData = data.features
+    .filter(geoFilter($region))
+    .map((d) => d.properties[loop]);
 
   $: xTitle =
     variableType === "vector"
@@ -88,6 +98,11 @@ Usage:
     <span class="axis-x title" slot="title-x">{xTitle}</span>
   </chart-container>
   <chart-container>
-    <chart-map data={mapData} region={$region} radius={mapRadius} />
+    <chart-map
+      data={mapData}
+      selection={$region}
+      radius={mapRadius}
+      on:chart-brush={onBrushMap}
+    />
   </chart-container>
 </div>

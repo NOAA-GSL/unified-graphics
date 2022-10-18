@@ -145,6 +145,7 @@ class ChartHistogram extends ChartElement {
     this.#deviation = deviation(value);
 
     this.#data = value;
+    this.update();
   }
 
   get deviation() {
@@ -263,6 +264,8 @@ class ChartHistogram extends ChartElement {
     const svg = select(this.shadowRoot).select("svg");
     const height = this.height;
     const width = this.width;
+
+    if (!(width && height)) return;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
     const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };
