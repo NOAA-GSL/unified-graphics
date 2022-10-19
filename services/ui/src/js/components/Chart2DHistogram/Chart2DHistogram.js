@@ -39,14 +39,27 @@ export default class Chart2DHistogram extends ChartElement {
     <g class="x-axis"></g>
     <g class="y-axis"></g>
     <g class="data"></g>
+    <rect id="selection"></rect>
   </svg>`;
 
   static #STYLE = `:host {
     display: block;
+    user-select: none;
+  }
+
+  #selection {
+    fill: #dfe1e2;
+    mix-blend-mode: multiply;
   }`;
 
   /** @type {DiagVector[]} */
   #data = [];
+
+  #selection = null;
+
+  #margin = { top: 0, right: 0, bottom: 0, left: 0 };
+  #xScale = scaleLinear();
+  #yScale = scaleLinear();
 
   static get observedAttributes() {
     return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
@@ -60,12 +73,21 @@ export default class Chart2DHistogram extends ChartElement {
       ${Chart2DHistogram.#TEMPLATE}`;
   }
 
+  connectedCallback() {
+    const svg = this.shadowRoot.querySelector("svg");
+
+    if (!svg) return;
+
+    svg.addEventListener("mousedown", this.onMouseDown);
+  }
+
   get data() {
     return structuredClone(this.#data);
   }
 
   set data(value) {
     this.#data = value;
+    this.update();
   }
 
   get formatX() {
@@ -92,6 +114,51 @@ export default class Chart2DHistogram extends ChartElement {
     }
   }
 
+  get selection() {
+    return structuredClone(this.#selection);
+  }
+
+  set selection(value) {
+    this.#selection = structuredClone(value);
+    this.#brush();
+  }
+
+  onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
+    const x = this.#xScale.invert(offsetX - this.#margin.left);
+    const y = this.#yScale.invert(offsetY - this.#margin.top);
+
+    this.#selection = [
+      [x, y],
+      [x, y],
+    ];
+
+    window.addEventListener("mouseup", this.onMouseUp, { once: true });
+    currentTarget.addEventListener("mousemove", this.onMouseMove);
+  };
+
+  onMouseMove = ({ offsetX, offsetY }) => {
+    this.#selection[1] = [
+      this.#xScale.invert(offsetX - this.#margin.left),
+      this.#yScale.invert(offsetY - this.#margin.top),
+    ];
+
+    this.#brush();
+  };
+
+  onMouseUp = () => {
+    this.shadowRoot
+      .querySelector("svg")
+      .removeEventListener("mousemove", this.onMouseMove);
+
+    this.#brush();
+
+    const brush = new CustomEvent("chart-brush", {
+      bubbles: true,
+      detail: this.selection,
+    });
+    this.dispatchEvent(brush);
+  };
+
   render() {
     const svg = select(this.shadowRoot).select("svg");
     const height = this.height;
@@ -100,12 +167,12 @@ export default class Chart2DHistogram extends ChartElement {
     if (width === undefined || height === undefined) return;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
-    const margin = {
+    const margin = (this.#margin = {
       top: fontSize,
       right: fontSize,
       bottom: fontSize,
       left: fontSize * 3,
-    };
+    });
 
     const contentWidth = width - margin.left - margin.right;
     const contentHeight = height - margin.top - margin.bottom;
@@ -125,9 +192,15 @@ export default class Chart2DHistogram extends ChartElement {
     /** @type {[number, number]} */
     let range = extent(data, (d) => d.magnitude);
 
-    const xScale = scaleLinear().domain(domain).range([0, contentWidth]).nice();
+    const xScale = (this.#xScale = scaleLinear()
+      .domain(domain)
+      .range([0, contentWidth])
+      .nice());
 
-    const yScale = scaleLinear().domain(range).range([contentHeight, 0]).nice();
+    const yScale = (this.#yScale = scaleLinear()
+      .domain(range)
+      .range([contentHeight, 0])
+      .nice());
 
     const binner = bin2d(
       xScale.ticks(Math.floor(contentWidth / 10)),
@@ -183,5 +256,25 @@ export default class Chart2DHistogram extends ChartElement {
         g.select(".domain").remove();
         g.selectAll("line").attr("stroke", "#dfe1e2");
       });
+
+    svg
+      .select("#selection")
+      .attr("transform", `translate(${margin.left}, ${margin.right})`);
+    this.#brush();
+  }
+
+  #brush() {
+    if (this.#selection === null) return;
+
+    const [x0, y0, x1, y1] = this.#selection
+      .flat()
+      .map((val, idx) => (idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)));
+
+    select(this.shadowRoot.querySelector("svg"))
+      .select("#selection")
+      .attr("x", Math.min(x0, x1))
+      .attr("y", Math.min(y0, y1))
+      .attr("width", Math.abs(x1 - x0))
+      .attr("height", Math.abs(y1 - y0));
   }
 }
