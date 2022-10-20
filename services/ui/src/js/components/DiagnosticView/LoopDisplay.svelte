@@ -56,9 +56,25 @@
       ? "Magnitude (Observation − Forecast)"
       : "Observation count";
 
+  $: mapFilter = containedIn(
+    variableType === "scalar" || $range === null
+      ? $range
+      : {
+          direction: [
+            Math.min($range[0][0], $range[1][0]),
+            Math.max($range[0][0], $range[1][0]),
+          ],
+          magnitude: [
+            Math.min($range[0][1], $range[1][1]),
+            Math.max($range[0][1], $range[1][1]),
+          ],
+        },
+    loop
+  );
+
   $: mapData = {
     type: "FeatureCollection",
-    features: data.features.filter(containedIn($range, loop)),
+    features: data.features.filter(mapFilter),
   };
 
   $: mapRadius =
