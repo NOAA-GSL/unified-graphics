@@ -1,8 +1,16 @@
 <script>
+  import { range, region } from "./DiagnosticView.stores.js";
   import LoopDisplay from "./LoopDisplay.svelte";
 
   let currentVariable = null;
   let variableType = "scalar";
+
+  $: {
+    // Clear the filters when currentVariable changes
+    currentVariable;
+    range.set(null);
+    region.set(null);
+  }
 
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
