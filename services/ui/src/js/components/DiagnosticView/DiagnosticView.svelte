@@ -4,6 +4,7 @@
 
   let currentVariable = null;
   let variableType = "scalar";
+  let variableData = { features: [] };
 
   $: {
     // Clear the filters when currentVariable changes
@@ -28,6 +29,7 @@
   $: {
     featureCollection.then((data) => {
       variableType = data.features[0].properties.type;
+      variableData = data;
     });
   }
 </script>
@@ -46,13 +48,34 @@ observations side-by-side for both the guess and analysis loops.
   {/await}
 </select>
 
-{#await featureCollection}
-  <p>Loading</p>
-{:then data}
-  <LoopDisplay {data} loop="guess" {variableType}>
+<div class="container">
+  <LoopDisplay data={variableData} loop="guess" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
   </LoopDisplay>
-  <LoopDisplay {data} loop="analysis" {variableType}>
+  <LoopDisplay data={variableData} loop="analysis" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
   </LoopDisplay>
-{/await}
+
+  {#await featureCollection}
+    <div class="overlay">
+      <loading-spinner />
+    </div>
+  {/await}
+</div>
+
+<style>
+  .container {
+    position: relative;
+    display: flex;
+    flex-grow: 1;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.5);
+
+    display: grid;
+    place-items: center;
+  }
+</style>
