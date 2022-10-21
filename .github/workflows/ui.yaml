@@ -72,8 +72,9 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request'
         with:
+          header: UI Coverage
           recreate: true
-          path: ui-code-coverage-results.md
+          path: code-coverage-results.md
   build:
     runs-on: ubuntu-latest
     needs: [lint, test]
