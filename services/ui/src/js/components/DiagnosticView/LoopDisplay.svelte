@@ -1,12 +1,9 @@
 <script>
-  /** Data for this loop */
-  export let data = [];
+  import { containedIn, geoFilter } from "./DiagnosticView.helpers.js";
+  import { range, region } from "./DiagnosticView.stores.js";
 
-  /**
-   * Current selection on the map.
-   * @type {?[[number, number], [number, number]]}
-   */
-  export let selection = null;
+  /** GeoJSON data for this loop */
+  export let data = {};
 
   // FIXME: Should be an enum;
   /**
@@ -24,18 +21,62 @@
    */
   export let variableType = "scalar";
 
+  /**
+   * Handle range selection on histograms.
+   *
+   * @param {CustomEvent} event
+   */
+  const onBrushHistogram = (event) => {
+    event.stopImmediatePropagation();
+    range.set(event.detail);
+  };
+
+  /**
+   * @param {CustomEvent} event
+   */
+  const onBrushMap = (event) => {
+    event.stopImmediatePropagation();
+    region.set(event.detail);
+  };
+
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
-  $: distributionData = data.map((d) => d.properties[loop]);
+
+  $: distributionData = data.features
+    .filter(geoFilter($region))
+    .map((d) => d.properties[loop]);
+
   $: xTitle =
     variableType === "vector"
       ? "Direction (Observation − Forecast)"
       : "Observation − Forecast";
+
   $: yTitle =
     variableType === "vector"
       ? "Magnitude (Observation − Forecast)"
       : "Observation count";
-  $: mapData = { type: "FeatureCollection", features: data };
+
+  $: mapFilter = containedIn(
+    variableType === "scalar" || $range === null
+      ? $range
+      : {
+          direction: [
+            Math.min($range[0][0], $range[1][0]),
+            Math.max($range[0][0], $range[1][0]),
+          ],
+          magnitude: [
+            Math.min($range[0][1], $range[1][1]),
+            Math.max($range[0][1], $range[1][1]),
+          ],
+        },
+    loop
+  );
+
+  $: mapData = {
+    type: "FeatureCollection",
+    features: data.features.filter(mapFilter),
+  };
+
   $: mapRadius =
     variableType === "vector"
       ? (d) => d.properties[loop].magnitude
@@ -64,10 +105,20 @@ Usage:
 <div data-layout="grid" class="flex-1" style="--row-size: minmax(20rem, 1fr)">
   <chart-container>
     <span class="axis-y title" slot="title-y">{yTitle}</span>
-    <svelte:element this={distributionEl} data={distributionData} />
+    <svelte:element
+      this={distributionEl}
+      data={distributionData}
+      selection={$range}
+      on:chart-brush={onBrushHistogram}
+    />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
   </chart-container>
   <chart-container>
-    <chart-map data={mapData} {selection} radius={mapRadius} />
+    <chart-map
+      data={mapData}
+      selection={$region}
+      radius={mapRadius}
+      on:chart-brush={onBrushMap}
+    />
   </chart-container>
 </div>
