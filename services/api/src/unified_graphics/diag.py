@@ -7,6 +7,8 @@ from typing import List, Union
 from flask import current_app
 import numpy as np
 import xarray as xr
+import s3fs  # type: ignore
+import fsspec  # type: ignore
 
 
 class MinimLoop(Enum):
@@ -95,11 +97,23 @@ def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
 
 
 def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
-    """Opens a diag file in S3.
+    """Opens a diag file in S3. Assumes AWS S3, and grabs credentials via Boto3 defaults."""
 
-    Assumes AWS S3, and grabs credentials via Boto3 defaults.
-    """
-    raise NotImplementedError
+    bucket = s3fs.S3FileSystem(anon=False)
+    diag_file = diag_uri + filename  # Path doesn't support file URIs
+
+    # xarray.open_dataset doesn't distinguish between a file it can't understand
+    # and a file that's not there. It raises a ValueError even for missing
+    # files. We raise a FileNotFoundError to make debugging easier.
+    if not bucket.exists(diag_file):
+        print(f"No such file: '{str(diag_file)}'")
+        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
+
+    # xarray.open_dataset can't open netcdf datasets natively - only
+    # Zarr datasets. We'll use fsspec to cache the file locally so xarray
+    # can access it from disk.
+    with fsspec.open(f"simplecache::{diag_file}", s3=dict(anon=False)) as f:
+        return xr.open_dataset(f.name)
 
 
 def scalar(variable: Variable) -> List[Observation]:

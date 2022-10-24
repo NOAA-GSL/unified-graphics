@@ -84,10 +84,10 @@ def test_open_diagnostic_unknown_uri(app):
 
 
 def test_open_diagnostic_s3(app):
-    app.config["DIAG_DIR"] = "s3://foo"
+    app.config["DIAG_DIR"] = "s3://foo/"
 
     with app.app_context():
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(PermissionError):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
