@@ -56,6 +56,25 @@ jobs:
           npx playwright install-deps
           npx playwright install
           npm test
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: services/ui/src/coverage/cobertura-coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '0 80'
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          header: UI Coverage
+          recreate: true
+          path: code-coverage-results.md
   build:
     runs-on: ubuntu-latest
     needs: [lint, test]

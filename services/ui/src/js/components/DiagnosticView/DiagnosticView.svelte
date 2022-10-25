@@ -1,14 +1,16 @@
 <script>
+  import { range, region } from "./DiagnosticView.stores.js";
   import LoopDisplay from "./LoopDisplay.svelte";
-  import { geoFilter } from "./DiagnosticView.helpers.js";
-
-  function onBrush(event) {
-    selection = event.detail;
-  }
 
   let currentVariable = null;
-  let selection = null;
   let variableType = "scalar";
+
+  $: {
+    // Clear the filters when currentVariable changes
+    currentVariable;
+    range.set(null);
+    region.set(null);
+  }
 
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
@@ -23,16 +25,18 @@
     ? fetch(`/api${currentVariable}`).then((response) => response.json())
     : new Promise(() => {});
 
-  $: filtered = featureCollection.then((data) =>
-    data.features.filter(geoFilter(selection))
-  );
-
   $: {
     featureCollection.then((data) => {
       variableType = data.features[0].properties.type;
     });
   }
 </script>
+
+<!--
+@component
+The DiagnosticView displays the distribution of values and location of
+observations side-by-side for both the guess and analysis loops.
+-->
 
 <select class="usa-select" bind:value={currentVariable}>
   {#await variables then vars}
@@ -42,19 +46,13 @@
   {/await}
 </select>
 
-{#await filtered}
+{#await featureCollection}
   <p>Loading</p>
 {:then data}
-  <LoopDisplay {data} loop="guess" {variableType} {selection} on:chart-brush={onBrush}>
+  <LoopDisplay {data} loop="guess" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
   </LoopDisplay>
-  <LoopDisplay
-    {data}
-    loop="analysis"
-    {variableType}
-    {selection}
-    on:chart-brush={onBrush}
-  >
+  <LoopDisplay {data} loop="analysis" {variableType}>
     <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
   </LoopDisplay>
 {/await}

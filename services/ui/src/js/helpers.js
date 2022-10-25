@@ -1,9 +1,38 @@
+/** @module helpers */
+
 import { range, scaleThreshold } from "d3";
 
+/**
+ * @typedef {Array.<number>} TwoDBin
+ * @property {number} x0 The lower bound of the bin on the x-axis
+ * @property {number} x1 The upper bound of the bin on the x-axis
+ * @property {number} y0 The lower bound of the bin on the y-axis
+ * @property {number} y1 The upper bound of the bin on the y-axis
+ */
+
+/**
+ * @typedef {Array.<TwoDBin>} TwoDBinArray
+ */
+
+/**
+ * Create a function for binning data in two dimensions.
+ *
+ * @constructor
+ * @param {number[]} xThresholds The boundaries for bins along the x-axis
+ * @param {number[]} yThresholds The boundaries for bins along the y-axis
+ *
+ * @return {BinFunction} The function that bins the data
+ */
 export function bin2d(xThresholds, yThresholds) {
   let x = (d) => d[0];
   let y = (d) => d[1];
 
+  /**
+   * Bin data into two-dimensional cells.
+   *
+   * @param {object[]} data The data to bin
+   * @return {TwoDBinArray}
+   */
   function bin(data) {
     const colCount = xThresholds.length - 1;
     const rowCount = yThresholds.length - 1;
@@ -17,6 +46,7 @@ export function bin2d(xThresholds, yThresholds) {
       const idx = k * colCount + j;
 
       if (result[idx] === undefined) {
+        /** @type {TwoDBin} */
         const bin = [];
 
         bin.x0 = xThresholds[j];

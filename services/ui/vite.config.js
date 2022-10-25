@@ -36,5 +36,9 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     include: ["../tests/unit/**/*.js"],
+    coverage: {
+      all: true,
+      reporter: ["text", "cobertura"],
+    },
   },
 });
