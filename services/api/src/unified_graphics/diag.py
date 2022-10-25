@@ -91,13 +91,17 @@ def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
     # and a file that's not there. It raises a ValueError even for missing
     # files. We raise a FileNotFoundError to make debugging easier.
     if not diag_file.exists():
+        current_app.logger.error(f"No such file: '{str(diag_file)}'")
         raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
     return xr.open_dataset(diag_file)
 
 
 def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
-    """Opens a diag file in S3. Assumes AWS S3, and grabs credentials via Boto3 defaults."""
+    """Opens a diag file stored in S3
+
+    Assumes AWS S3, and grabs credentials via Boto3 defaults.
+    """
 
     bucket = s3fs.S3FileSystem(anon=False)
     diag_file = diag_uri + filename  # Path doesn't support file URIs
@@ -106,7 +110,7 @@ def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
     # and a file that's not there. It raises a ValueError even for missing
     # files. We raise a FileNotFoundError to make debugging easier.
     if not bucket.exists(diag_file):
-        print(f"No such file: '{str(diag_file)}'")
+        current_app.logger.error(f"No such file: '{str(diag_file)}'")
         raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
     # xarray.open_dataset can't open netcdf datasets natively - only
