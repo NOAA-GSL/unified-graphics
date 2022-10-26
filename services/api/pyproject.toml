@@ -16,7 +16,7 @@ fsspec = "^2022.10.0"
 s3fs = "^2022.10.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^7.2"
 mypy = "^0.950"
 black = "^22.3.0"
 flake8 = "^4.0.1"
