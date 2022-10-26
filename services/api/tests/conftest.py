@@ -12,7 +12,7 @@ def app(tmp_path):
     diag_dir.mkdir()
 
     app = create_app()
-    app.config["DIAG_DIR"] = str(diag_dir)
+    app.config["DIAG_DIR"] = str(diag_dir.as_uri())
 
     yield app
 
@@ -29,7 +29,7 @@ def diag_file(app):
         data.to_netcdf(test_file)
         files_created.append(test_file)
 
-    working_dir = Path(app.config["DIAG_DIR"])
+    working_dir = Path(app.config["DIAG_DIR"].removeprefix("file://"))
     files_created = []
 
     yield factory
