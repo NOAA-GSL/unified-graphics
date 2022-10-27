@@ -48,13 +48,15 @@ observations side-by-side for both the guess and analysis loops.
   {/await}
 </select>
 
-<div class="container">
-  <LoopDisplay data={variableData} loop="guess" {variableType}>
-    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
-  </LoopDisplay>
-  <LoopDisplay data={variableData} loop="analysis" {variableType}>
-    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
-  </LoopDisplay>
+<div class="container flex-1" data-layout="stack">
+  <div class="scroll-container flex-1" data-layout="stack">
+    <LoopDisplay data={variableData} loop="guess" {variableType}>
+      <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
+    </LoopDisplay>
+    <LoopDisplay data={variableData} loop="analysis" {variableType}>
+      <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
+    </LoopDisplay>
+  </div>
 
   {#await featureCollection}
     <div class="overlay">
@@ -65,9 +67,8 @@ observations side-by-side for both the guess and analysis loops.
 
 <style>
   .container {
+    contain: strict;
     position: relative;
-    display: flex;
-    flex-grow: 1;
   }
 
   .overlay {
@@ -77,5 +78,7 @@ observations side-by-side for both the guess and analysis loops.
 
     display: grid;
     place-items: center;
+
+    pointer-events: none;
   }
 </style>
