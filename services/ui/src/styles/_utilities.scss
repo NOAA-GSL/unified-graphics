@@ -1,17 +1,6 @@
-@use "uswds-core" as uswds;
-
-[class*="aspect-"] {
-  overflow: hidden;
-}
-
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-
-.overflow-hidden {
-  overflow: hidden;
-}
-
-.gap-2 {
-  gap: uswds.units(2);
+@mixin css {
+  .scroll-container {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
 }

@@ -4,6 +4,7 @@
 
   let currentVariable = null;
   let variableType = "scalar";
+  let variableData = { features: [] };
 
   $: {
     // Clear the filters when currentVariable changes
@@ -28,6 +29,7 @@
   $: {
     featureCollection.then((data) => {
       variableType = data.features[0].properties.type;
+      variableData = data;
     });
   }
 </script>
@@ -46,13 +48,37 @@ observations side-by-side for both the guess and analysis loops.
   {/await}
 </select>
 
-{#await featureCollection}
-  <p>Loading</p>
-{:then data}
-  <LoopDisplay {data} loop="guess" {variableType}>
-    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
-  </LoopDisplay>
-  <LoopDisplay {data} loop="analysis" {variableType}>
-    <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
-  </LoopDisplay>
-{/await}
+<div class="container flex-1" data-layout="stack">
+  <div class="scroll-container flex-1" data-layout="stack">
+    <LoopDisplay data={variableData} loop="guess" {variableType}>
+      <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
+    </LoopDisplay>
+    <LoopDisplay data={variableData} loop="analysis" {variableType}>
+      <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
+    </LoopDisplay>
+  </div>
+
+  {#await featureCollection}
+    <div class="overlay">
+      <loading-spinner class="text-accent-cool-darker" />
+    </div>
+  {/await}
+</div>
+
+<style>
+  .container {
+    contain: strict;
+    position: relative;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.5);
+
+    display: grid;
+    place-items: center;
+
+    pointer-events: none;
+  }
+</style>

@@ -4,6 +4,7 @@
 @use "layout";
 @use "overrides";
 @use "reset";
+@use "utilities";
 
 @layer reset {
   @include reset.css;
@@ -23,4 +24,8 @@
 
 @layer layout {
   @include layout.css;
+}
+
+@layer utility {
+  @include utilities.css;
 }
