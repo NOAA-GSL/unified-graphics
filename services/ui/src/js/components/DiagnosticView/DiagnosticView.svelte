@@ -60,7 +60,7 @@ observations side-by-side for both the guess and analysis loops.
 
   {#await featureCollection}
     <div class="overlay">
-      <loading-spinner />
+      <loading-spinner class="text-accent-cool-darker" />
     </div>
   {/await}
 </div>
