@@ -78,7 +78,7 @@ export default class ChartContainer extends HTMLElement {
       this.#resized();
     });
 
-    this.#mutationObserver.observe(this.#container, {
+    this.#mutationObserver.observe(this, {
       childList: true,
       attributes: false,
       subtree: false,
@@ -87,7 +87,7 @@ export default class ChartContainer extends HTMLElement {
 
   disconnectedCallback() {
     this.#resizeObserver.unobserve(this.#container);
-    this.#mutationObserver.disconnect(this.#container);
+    this.#mutationObserver.disconnect(this);
   }
 
   #resized() {
