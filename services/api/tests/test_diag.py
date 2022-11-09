@@ -240,7 +240,6 @@ def test_open_diagnostic_s3(
     # Write the netcdf file to disk before uploading
     # Using a fileobj instead of writing to disk would be cleaner but requires using
     # the scipy engine
-    # diag_dir = Path(app.config["DIAG_DIR"].removeprefix("file://"))
     expected = make_scalar_diag(omf=[0, -1, 2])
     expected.to_netcdf(tmp_path / filename)
 
