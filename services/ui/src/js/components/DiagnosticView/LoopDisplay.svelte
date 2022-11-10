@@ -112,6 +112,9 @@ Usage:
       on:chart-brush={onBrushHistogram}
     />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
+    {#if variableType === "vector"}
+      <color-ramp slot="legend">Observation Count</color-ramp>
+    {/if}
   </chart-container>
   <chart-container>
     <chart-map
