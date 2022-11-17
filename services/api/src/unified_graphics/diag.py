@@ -4,11 +4,10 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Union
 
-from flask import current_app
+import fsspec  # type: ignore
 import numpy as np
 import xarray as xr
-import s3fs  # type: ignore
-import fsspec  # type: ignore
+from flask import current_app
 
 
 class MinimLoop(Enum):
@@ -97,27 +96,60 @@ def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
     return xr.open_dataset(diag_file)
 
 
+# TODO - logger statements don't appear to be printing - at least in pytests
 def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
     """Opens a diag file stored in S3
 
     Assumes AWS S3, and grabs credentials via Boto3 defaults.
+
+    If FLASK_ENDPOINT_URL is set in the environment, it will attempt to access
+    an S3-like server at the URL provided. This is mostly useful for testing.
     """
-
-    bucket = s3fs.S3FileSystem(anon=False)
+    try:
+        endpoint_url = current_app.config["ENDPOINT_URL"]
+    except KeyError:
+        endpoint_url = None
+    cache = current_app.config["LOCAL_CACHE_PATH"]
+    current_app.logger.info(f"Endpoint url set to: {endpoint_url}")
     diag_file = diag_uri + filename  # Path doesn't support file URIs
-
-    # xarray.open_dataset doesn't distinguish between a file it can't understand
-    # and a file that's not there. It raises a ValueError even for missing
-    # files. We raise a FileNotFoundError to make debugging easier.
-    if not bucket.exists(diag_file):
-        current_app.logger.error(f"No such file: '{str(diag_file)}'")
-        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
 
     # xarray.open_dataset can't open netcdf datasets natively - only
     # Zarr datasets. We'll use fsspec to cache the file locally so xarray
     # can access it from disk.
-    with fsspec.open(f"simplecache::{diag_file}", s3=dict(anon=False)) as f:
-        return xr.open_dataset(f.name)
+    try:
+        # TODO - if statement is a workaround
+        # TODO - for: https://github.com/fsspec/s3fs/issues/400
+        if endpoint_url:
+            with fsspec.open(
+                f"simplecache::{diag_file}",
+                s3={"anon": False, "client_kwargs": {"endpoint_url": endpoint_url}},
+                simplecache={"cache_storage": cache},
+            ) as f:
+                ds_contents = xr.open_dataset(f.name)
+        else:
+            with fsspec.open(
+                f"simplecache::{diag_file}",
+                s3={"anon": False},
+                simplecache={"cache_storage": cache},
+            ) as f:
+                ds_contents = xr.open_dataset(f.name)
+    except FileNotFoundError as e:
+        current_app.logger.error(
+            f"The following bucket or key don't exist: '{str(diag_file)}'",
+            exc_info=True,
+        )
+        raise e
+    except PermissionError as e:
+        current_app.logger.error(
+            f"Permissions issue accessing: '{str(diag_file)}'", exc_info=True
+        )
+        raise e
+    except ValueError as e:
+        current_app.logger.error(
+            f"Unknown file type: '{str(diag_file)}'", exc_info=True
+        )
+        raise e
+    return ds_contents
 
 
 def scalar(variable: Variable) -> List[Observation]:

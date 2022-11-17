@@ -1,9 +1,24 @@
+import os
 from pathlib import Path
 
 import pytest
 import xarray as xr
 
 from unified_graphics import create_app
+
+
+@pytest.fixture(autouse=True)
+def clear_aws_credentials():
+    """Mocked AWS Credentials for moto
+
+    Run this before every test to make sure we don't push to an actual S3
+    instance when running tests.
+    """
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
 @pytest.fixture
