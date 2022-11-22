@@ -17,9 +17,9 @@ s3fs = "^2022.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2"
-mypy = "^0.950"
+mypy = "^0.991"
 black = "^22.3.0"
-flake8 = "^4.0.1"
+flake8 = "^5.0.4"
 coverage = "^6.4.4"
 moto = {version = "^4.0.8", extras = ["server"]}
 isort = "^5.10.1"
