@@ -2,7 +2,6 @@ from logging.config import dictConfig
 
 from flask import Flask
 
-
 __version__ = "0.1.0"
 
 

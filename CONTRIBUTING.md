@@ -123,12 +123,13 @@ npm test
 
 ### Python
 
-For Python code, we lint using `flake8` and format using `black`.
+For Python code, we lint using `flake8`, format using `black`, and sort imports with `isort`.
 
 ```
 cd services/api
 poetry run flake8 .
 poetry run black .
+poetry run isort .
 ```
 
 ### JavaScript

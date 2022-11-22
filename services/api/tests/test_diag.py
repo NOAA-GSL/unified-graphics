@@ -7,7 +7,7 @@ import pytest
 import requests
 import xarray as xr
 
-from unified_graphics import diag, create_app
+from unified_graphics import create_app, diag
 
 # Global resources for s3
 test_bucket_name = "test"

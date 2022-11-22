@@ -37,6 +37,7 @@ check_py() {
   cd "services/api"
   git show ":$1" | poetry run flake8 "-qq" "-" || err "[flake8   ]: $1 failed linting"
   git show ":$1" | poetry run black "--check" "--quiet" "-" || err "[black    ]: $1 needs formatting"
+  git show ":$1" | poetry run isort "--check" "-" || err "[isort    ]: $1 needs import sorting"
   cd "${PROJ_ROOT}"
 }
 
