@@ -2,7 +2,6 @@ from flask import Blueprint, jsonify, url_for
 
 from unified_graphics import diag
 
-
 bp = Blueprint("api", __name__)
 
 
