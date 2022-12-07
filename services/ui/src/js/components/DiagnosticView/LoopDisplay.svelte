@@ -114,7 +114,9 @@ Usage:
     />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
     {#if variableType === "vector"}
-      <color-ramp slot="legend" for="distribution-{loop}">Observation Count</color-ramp>
+      <color-ramp slot="legend" for="distribution-{loop}" class="font-ui-3xs"
+        >Observation Count</color-ramp
+      >
     {/if}
   </chart-container>
   <chart-container>
