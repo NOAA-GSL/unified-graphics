@@ -121,10 +121,14 @@ Usage:
   </chart-container>
   <chart-container>
     <chart-map
+      id="observations-{loop}"
       data={mapData}
       selection={$region}
       radius={mapRadius}
       on:chart-brush={onBrushMap}
     />
+    <color-ramp slot="legend" for="observations-{loop}" class="font-ui-3xs" format="s"
+      >Value</color-ramp
+    >
   </chart-container>
 </div>
