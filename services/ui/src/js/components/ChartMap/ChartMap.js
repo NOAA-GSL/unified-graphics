@@ -4,12 +4,10 @@ import {
   extent,
   geoAlbers,
   geoPath,
-  interpolatePuOr,
-  interpolatePurples,
-  scaleDiverging,
-  scaleLinear,
-  scaleSequential,
+  scaleQuantize,
   scaleSqrt,
+  schemePuOr,
+  schemePurples,
 } from "d3";
 
 import ChartElement from "../ChartElement";
@@ -44,6 +42,8 @@ import ChartElement from "../ChartElement";
  * @property {[number, number][]} selection A bounding box for the map
  *   selection consisting of two tuples, the first of which is the left, top
  *   corner, and the second of which is the right, bottom corner
+ *   @readonly
+ *   @property {object} scale - a d3.scaleQuantize object for the fill colors on the map
  * @fires ChartMap#BrushEvent
  */
 export default class ChartMap extends ChartElement {
@@ -121,6 +121,22 @@ export default class ChartMap extends ChartElement {
     this.#radiusAccessor = fn;
   }
 
+  get scale() {
+    const observations = this.#data;
+
+    if (!observations) return scaleQuantize().range(schemePurples[9]);
+
+    /** @type number[] */
+    const [lower, upper] = extent(observations.features, this.#radiusAccessor);
+
+    const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
+    const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
+
+    return isDiverging
+      ? scaleQuantize().domain([-largestBound, largestBound]).range(schemePuOr[9])
+      : scaleQuantize().domain([lower, upper]).range(schemePurples[9]);
+  }
+
   get selection() {
     return this.#selection;
   }
@@ -173,17 +189,13 @@ export default class ChartMap extends ChartElement {
 
     if (!(observations && this.#radiusAccessor)) return;
 
+    const fill = this.scale;
+
     /** @type number[] */
-    const [minDiff, maxDiff] = extent(observations.features, this.#radiusAccessor);
-
-    const isDiverging = minDiff / Math.abs(minDiff) !== maxDiff / Math.abs(maxDiff);
-
-    const fill = isDiverging
-      ? scaleDiverging(interpolatePuOr).domain([minDiff, 0, maxDiff])
-      : scaleSequential([minDiff, maxDiff], interpolatePurples);
+    const [lower, upper] = extent(observations.features, this.#radiusAccessor);
 
     const r = scaleSqrt()
-      .domain([0, Math.max(Math.abs(minDiff), Math.abs(maxDiff))])
+      .domain([0, Math.max(Math.abs(lower), Math.abs(upper))])
       .range([0.5, 6]);
 
     observations.features.forEach((feature) => {
@@ -202,34 +214,6 @@ export default class ChartMap extends ChartElement {
     });
 
     this.#brush();
-
-    // Legend
-    const start = fill.domain()[0],
-      stop = fill.domain()[fill.domain().length - 1],
-      step = (stop - start) / (width / 2 - 16);
-
-    const legendX = scaleLinear()
-      .domain([start, stop])
-      .range([16, width / 2]);
-
-    ctx.save();
-
-    for (let diff = start; diff <= stop; diff += step) {
-      ctx.fillStyle = fill(diff);
-      ctx.fillRect(legendX(diff), height - 32, 1, 32);
-    }
-
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    fill.ticks().forEach((tick) => {
-      ctx.fillRect(legendX(tick), height - 40, 1, 8);
-      ctx.fillText(tick.toString(), legendX(tick), height - 48);
-    });
-
-    ctx.textAlign = "left";
-    ctx.fillText("Speed (Observation − Forecast)", 16, height - 64);
-
-    ctx.restore();
   }
 
   mousedownCallback = ({ target, offsetX, offsetY }) => {
