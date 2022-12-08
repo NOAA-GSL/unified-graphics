@@ -22,6 +22,11 @@
   export let variableType = "scalar";
 
   /**
+   * The name of the variable on display.
+   */
+  export let variableName = "";
+
+  /**
    * Handle range selection on histograms.
    *
    * @param {CustomEvent} event
@@ -81,6 +86,8 @@
     variableType === "vector"
       ? (d) => d.properties[loop].magnitude
       : (d) => d.properties[loop];
+
+  $: mapLegendTitle = variableName === "wind" ? `${variableName} speed` : variableName;
 </script>
 
 <!--
@@ -128,7 +135,7 @@ Usage:
       on:chart-brush={onBrushMap}
     />
     <color-ramp slot="legend" for="observations-{loop}" class="font-ui-3xs" format="s"
-      >Value</color-ramp
+      >{mapLegendTitle}</color-ramp
     >
   </chart-container>
 </div>

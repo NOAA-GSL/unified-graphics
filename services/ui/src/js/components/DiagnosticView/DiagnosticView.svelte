@@ -3,6 +3,7 @@
   import LoopDisplay from "./LoopDisplay.svelte";
 
   let currentVariable = null;
+  let variableName = "";
   let variableType = "scalar";
   let variableData = { features: [] };
 
@@ -25,6 +26,17 @@
   $: featureCollection = currentVariable
     ? fetch(`/api${currentVariable}`).then((response) => response.json())
     : new Promise(() => {});
+
+  $: {
+    if (currentVariable) {
+      variables.then((data) => {
+        variableName = data.reduce((name, variable) => {
+          if (variable.url === currentVariable) return variable.name;
+          return name;
+        }, "");
+      });
+    }
+  }
 
   $: {
     featureCollection.then((data) => {
@@ -50,10 +62,10 @@ observations side-by-side for both the guess and analysis loops.
 
 <div class="container flex-1" data-layout="stack">
   <div class="scroll-container flex-1" data-layout="stack">
-    <LoopDisplay data={variableData} loop="guess" {variableType}>
+    <LoopDisplay data={variableData} loop="guess" {variableType} {variableName}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
     </LoopDisplay>
-    <LoopDisplay data={variableData} loop="analysis" {variableType}>
+    <LoopDisplay data={variableData} loop="analysis" {variableType} {variableName}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     </LoopDisplay>
   </div>
