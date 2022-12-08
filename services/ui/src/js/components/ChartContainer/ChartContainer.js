@@ -19,15 +19,17 @@
 export default class ChartContainer extends HTMLElement {
   static #TEMPLATE = `<slot name=title-y></slot>
     <div class=container><slot></slot></div>
-    <slot name=title-x></slot>`;
+    <slot name=title-x></slot>
+    <slot name=legend></slot>`;
 
   static #STYLE = `:host {
     display: grid;
     grid-template-columns: min-content 1fr;
-    grid-template-rows: 1fr min-content;
+    grid-template-rows: 1fr repeat(2, min-content);
     grid-template-areas:
       "title-y container"
-      "....... title-x";
+      "....... title-x"
+      "....... legend";
   }
 
   :host,
@@ -51,6 +53,10 @@ export default class ChartContainer extends HTMLElement {
     grid-area: title-y;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
+  }
+
+  ::slotted([slot=legend]) {
+    grid-area: legend;
   }`;
 
   #resizeObserver = null;

@@ -24,7 +24,15 @@ import { bin2d } from "../../helpers";
 /**
  * Render a heatmap for data.
  *
+ * @readonly
+ * @property {object} bins Binned data for the histogram
+ * @readonly
+ * @property {number} contentHeight The height of the chart area excluding margins
+ * @readonly
+ * @property {number} contentWidth The width of the chart area excluding margins
  * @property {DiagVector[]} data Values to visualize
+ * @readonly
+ * @property {[number, number]} domain The min and max values for the x-axis
  * @property {string} formatX
  *   A d3 format string used to format values along the x-axis. This property
  *   is reflected in an HTML attribute on the custom element called
@@ -33,6 +41,20 @@ import { bin2d } from "../../helpers";
  *   A d3 format string used to format values along the y-axis. This property
  *   is reflected in an HTML attribute on the custom element called
  *   `format-y`.
+ * @readonly
+ * @property {object} margin
+ * @property {number} margin.top Top margin
+ * @property {number} margin.right Right margin
+ * @property {number} margin.bottom Bottom margin
+ * @property {number} margin.left Left margin
+ * @readonly
+ * @property {[number, number]} range The min and max values for the y-axis
+ * @readonly
+ * @property {object} scale The color scale used for the bin counts
+ * @readonly
+ * @property {object} xScale The scale used for the x-axis
+ * @readonly
+ * @property {object} yScale The scale used for the y-axis
  */
 export default class Chart2DHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
@@ -57,7 +79,6 @@ export default class Chart2DHistogram extends ChartElement {
 
   #selection = null;
 
-  #margin = { top: 0, right: 0, bottom: 0, left: 0 };
   #xScale = scaleLinear();
   #yScale = scaleLinear();
 
@@ -81,6 +102,27 @@ export default class Chart2DHistogram extends ChartElement {
     svg.addEventListener("mousedown", this.onMouseDown);
   }
 
+  get bins() {
+    const binner = bin2d(
+      this.xScale.ticks(Math.floor(this.contentWidth / 10)),
+      this.yScale.ticks(Math.floor(this.contentHeight / 10))
+    )
+      .x((d) => d.direction)
+      .y((d) => d.magnitude);
+
+    return binner(this.#data);
+  }
+
+  get contentHeight() {
+    const { top, bottom } = this.margin;
+    return this.height - top - bottom;
+  }
+
+  get contentWidth() {
+    const { left, right } = this.margin;
+    return this.width - left - right;
+  }
+
   get data() {
     return structuredClone(this.#data);
   }
@@ -88,6 +130,13 @@ export default class Chart2DHistogram extends ChartElement {
   set data(value) {
     this.#data = value;
     this.update();
+  }
+
+  // FIXME: These should be something we can set as properties / attributes
+  // so that we can create multiple charts with the same axes.
+  get domain() {
+    if (!this.#data) return [0, 0];
+    return extent(this.#data, (d) => d.direction);
   }
 
   get formatX() {
@@ -114,6 +163,31 @@ export default class Chart2DHistogram extends ChartElement {
     }
   }
 
+  // FIXME: These should be something we can set as properties / attributes
+  // so that we can create multiple charts with the same axes.
+  get range() {
+    if (!this.#data) return [0, 0];
+    return extent(this.#data, (d) => d.magnitude);
+  }
+
+  get margin() {
+    const fontSize = parseInt(getComputedStyle(this).fontSize);
+
+    return {
+      top: fontSize,
+      right: fontSize,
+      bottom: fontSize,
+      left: fontSize * 3,
+    };
+  }
+
+  get scale() {
+    return scaleQuantize(
+      extent(this.bins, (d) => d.length),
+      schemeYlGnBu[9]
+    );
+  }
+
   get selection() {
     return structuredClone(this.#selection);
   }
@@ -123,9 +197,18 @@ export default class Chart2DHistogram extends ChartElement {
     this.#brush();
   }
 
+  get xScale() {
+    return scaleLinear().domain(this.domain).range([0, this.contentWidth]).nice();
+  }
+
+  get yScale() {
+    return scaleLinear().domain(this.range).range([this.contentHeight, 0]).nice();
+  }
+
   onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
-    const x = this.#xScale.invert(offsetX - this.#margin.left);
-    const y = this.#yScale.invert(offsetY - this.#margin.top);
+    const { left, top } = this.margin;
+    const x = this.#xScale.invert(offsetX - left);
+    const y = this.#yScale.invert(offsetY - top);
 
     this.#selection = [
       [x, y],
@@ -137,9 +220,11 @@ export default class Chart2DHistogram extends ChartElement {
   };
 
   onMouseMove = ({ offsetX, offsetY }) => {
+    const { left, top } = this.margin;
+
     this.#selection[1] = [
-      this.#xScale.invert(offsetX - this.#margin.left),
-      this.#yScale.invert(offsetY - this.#margin.top),
+      this.#xScale.invert(offsetX - left),
+      this.#yScale.invert(offsetY - top),
     ];
 
     this.#brush();
@@ -166,55 +251,21 @@ export default class Chart2DHistogram extends ChartElement {
 
     if (width === undefined || height === undefined) return;
 
-    const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
-    const margin = (this.#margin = {
-      top: fontSize,
-      right: fontSize,
-      bottom: fontSize,
-      left: fontSize * 3,
-    });
+    const fontSize = parseInt(getComputedStyle(this).fontSize);
 
-    const contentWidth = width - margin.left - margin.right;
-    const contentHeight = height - margin.top - margin.bottom;
+    const contentWidth = this.contentWidth;
+    const contentHeight = this.contentHeight;
+    const margin = this.margin;
 
     svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-    if (!this.data?.length) return;
+    if (!this.#data?.length) return;
 
-    const data = this.data;
+    const bins = this.bins;
 
-    // FIXME: These should be something we can set as properties / attributes
-    // so that we can create multiple charts with the same axes.
-
-    /** @type {[number, number]} */
-    let domain = extent(data, (d) => d.direction);
-
-    /** @type {[number, number]} */
-    let range = extent(data, (d) => d.magnitude);
-
-    const xScale = (this.#xScale = scaleLinear()
-      .domain(domain)
-      .range([0, contentWidth])
-      .nice());
-
-    const yScale = (this.#yScale = scaleLinear()
-      .domain(range)
-      .range([contentHeight, 0])
-      .nice());
-
-    const binner = bin2d(
-      xScale.ticks(Math.floor(contentWidth / 10)),
-      yScale.ticks(Math.floor(contentHeight / 10))
-    )
-      .x((d) => d.direction)
-      .y((d) => d.magnitude);
-
-    const bins = binner(data);
-
-    const fill = scaleQuantize(
-      extent(bins, (d) => d.length),
-      schemeYlGnBu[9]
-    );
+    const fill = this.scale;
+    const xScale = this.xScale;
+    const yScale = this.yScale;
 
     const xAxis = axisBottom(xScale)
       .tickFormat(format(this.formatX))

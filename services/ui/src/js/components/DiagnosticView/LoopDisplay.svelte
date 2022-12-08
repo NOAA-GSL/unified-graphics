@@ -107,11 +107,17 @@ Usage:
     <span class="axis-y title" slot="title-y">{yTitle}</span>
     <svelte:element
       this={distributionEl}
+      id="distribution-{loop}"
       data={distributionData}
       selection={$range}
       on:chart-brush={onBrushHistogram}
     />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
+    {#if variableType === "vector"}
+      <color-ramp slot="legend" for="distribution-{loop}" class="font-ui-3xs"
+        >Observation Count</color-ramp
+      >
+    {/if}
   </chart-container>
   <chart-container>
     <chart-map
