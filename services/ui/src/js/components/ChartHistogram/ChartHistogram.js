@@ -145,6 +145,14 @@ class ChartHistogram extends ChartElement {
     this.#deviation = deviation(value);
 
     this.#data = value;
+
+    // FIXME: This is duplicated across all charts to ensure that they fire
+    // this event. This event is used by the ColorRamp component so that it
+    // knows when to update itself and could be useful for other chart
+    // interactions.
+    const event = new CustomEvent("chart-datachanged", { bubbles: true });
+    this.dispatchEvent(event);
+
     this.update();
   }
 

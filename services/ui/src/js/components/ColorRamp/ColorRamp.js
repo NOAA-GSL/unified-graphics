@@ -66,6 +66,14 @@ export default class ColorRamp extends HTMLElement {
     root.innerHTML = `<style>${ColorRamp.#STYLE}</style>${ColorRamp.#TEMPLATE}`;
   }
 
+  connectedCallback() {
+    document.addEventListener("chart-datachanged", this.onDataChanged);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener("chart-datachanged", this.onDataChanged);
+  }
+
   get for() {
     return this.getAttribute("for");
   }
@@ -93,6 +101,14 @@ export default class ColorRamp extends HTMLElement {
 
     this.update();
   }
+
+  /**
+   * Re-render when the data changes on the chart this legend is for.
+   */
+  onDataChanged = (event) => {
+    if (event.target.id !== this.for) return;
+    this.update();
+  };
 
   /**
    * Schedule an update to the component
