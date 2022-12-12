@@ -4,6 +4,38 @@ import pytest  # noqa: F401
 import xarray as xr
 
 
+@pytest.fixture
+def vector_data(diag_file):
+    diag_file(
+        "ncdiag_conv_uv_ges.nc4.2022050514",
+        xr.Dataset(
+            {
+                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
+                "u_Observation": xr.DataArray([1, 0]),
+                "v_Observation": xr.DataArray([0, 1]),
+                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0.5, -2]),
+                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([0, 1]),
+                "Longitude": xr.DataArray([240, 272]),
+                "Latitude": xr.DataArray([40, 30]),
+            }
+        ),
+    )
+    diag_file(
+        "ncdiag_conv_uv_anl.nc4.2022050514",
+        xr.Dataset(
+            {
+                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
+                "u_Observation": xr.DataArray([1, 0]),
+                "v_Observation": xr.DataArray([0, 1]),
+                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0, -1.0]),
+                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-1, 1.0]),
+                "Longitude": xr.DataArray([240, 272]),
+                "Latitude": xr.DataArray([40, 30]),
+            }
+        ),
+    )
+
+
 def test_root_endpoint(client):
     response = client.get("/")
 
@@ -86,36 +118,7 @@ def test_scalar_diag(variable_name, variable_code, diag_file, client):
     }
 
 
-def test_wind_diag(diag_file, client):
-    diag_file(
-        "ncdiag_conv_uv_ges.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "u_Observation": xr.DataArray([1, 0]),
-                "v_Observation": xr.DataArray([0, 1]),
-                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0.5, -2]),
-                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([0, 1]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
-    diag_file(
-        "ncdiag_conv_uv_anl.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "u_Observation": xr.DataArray([1, 0]),
-                "v_Observation": xr.DataArray([0, 1]),
-                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0, -1.0]),
-                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-1, 1.0]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
-
+def test_wind_diag(vector_data, client):
     response = client.get("/diag/wind/")
 
     assert response.status_code == 200
@@ -143,6 +146,41 @@ def test_wind_diag(diag_file, client):
                     "guess": {"magnitude": -1.0, "direction": -90.0},
                     "analysis": {"magnitude": 0.0, "direction": -90.0},
                     "observed": {"magnitude": 1.0, "direction": 180.0},
+                },
+                "geometry": {"type": "Point", "coordinates": [-88.0, 30.0]},
+            },
+        ],
+    }
+
+
+def test_vector_magnitude(vector_data, client):
+    response = client.get("/diag/wind/magnitude/")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "stationId": "WV270",
+                    "type": "vector",
+                    "variable": "wind",
+                    "guess": 0.5,
+                    "analysis": -0.41421,
+                    "observed": 1.0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-120.0, 40.0]},
+            },
+            {
+                "type": "Feature",
+                "properties": {
+                    "stationId": "E4294",
+                    "type": "vector",
+                    "variable": "wind",
+                    "guess": -1.0,
+                    "analysis": 0.0,
+                    "observed": 1.0,
                 },
                 "geometry": {"type": "Point", "coordinates": [-88.0, 30.0]},
             },
