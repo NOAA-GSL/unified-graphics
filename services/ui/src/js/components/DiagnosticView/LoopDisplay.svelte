@@ -33,6 +33,10 @@
    */
   const onBrushHistogram = (event) => {
     event.stopImmediatePropagation();
+    region.set([
+      [0, 0],
+      [0, 0],
+    ]);
     range.set(event.detail);
   };
 
@@ -41,6 +45,7 @@
    */
   const onBrushMap = (event) => {
     event.stopImmediatePropagation();
+    range.set([0, 0]);
     region.set(event.detail);
   };
 
