@@ -5,9 +5,10 @@ from pathlib import Path
 from typing import List, Union
 
 import fsspec  # type: ignore
-import numpy as np
 import xarray as xr
 from flask import current_app
+
+from . import vector
 
 
 class MinimLoop(Enum):
@@ -185,28 +186,6 @@ def pressure() -> List[Observation]:
     return scalar(Variable.PRESSURE)
 
 
-def vector_direction(u, v):
-    direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
-
-    # Anywhere the magnitude of the vector is 0
-    calm = (np.abs(u) == 0) & (np.abs(v) == 0)
-
-    # numpy.arctan2 treats 0.0 and -0.0 differently. Whenever the second
-    # argument to the function is -0.0, it return pi or -pi depending on the
-    # sign of the first argument. Whenever the second argument is 0.0, it will
-    # return 0.0 or -0.0 depending on the sign of the first argument. We
-    # normalize all calm vectors (magnitude 0) to have a direction of 0.0, per
-    # the NCAR Command Language docs.
-    # http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
-    direction[calm] = 0.0
-
-    return direction
-
-
-def vector_magnitude(u, v):
-    return np.sqrt(u**2 + v**2)
-
-
 def wind() -> List[Observation]:
     ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
     anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
@@ -217,14 +196,14 @@ def wind() -> List[Observation]:
     anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
     anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
 
-    ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
-    ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
+    ges_forecast_mag = vector.magnitude(ges_forecast_u.values, ges_forecast_v.values)
+    ges_forecast_dir = vector.direction(ges_forecast_u.values, ges_forecast_v.values)
 
-    anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
-    anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
+    anl_forecast_mag = vector.magnitude(anl_forecast_u.values, anl_forecast_v.values)
+    anl_forecast_dir = vector.direction(anl_forecast_u.values, anl_forecast_v.values)
 
-    obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
-    obs_dir = vector_direction(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_mag = vector.magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_dir = vector.direction(ges["u_Observation"].values, ges["v_Observation"].values)
 
     ges_mag = obs_mag - ges_forecast_mag
     ges_dir = obs_dir - ges_forecast_dir
