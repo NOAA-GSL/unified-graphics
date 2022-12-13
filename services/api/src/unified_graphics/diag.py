@@ -34,7 +34,7 @@ class VariableType(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
-PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
+Vector = namedtuple("Vector", "u v")
 
 
 @dataclass
@@ -42,9 +42,9 @@ class Observation:
     stationId: str
     variable: str
     variable_type: VariableType
-    guess: Union[float, PolarCoordinate]
-    analysis: Union[float, PolarCoordinate]
-    observed: Union[float, PolarCoordinate]
+    guess: Union[float, Vector]
+    analysis: Union[float, Vector]
+    observed: Union[float, Vector]
     position: Coordinate
 
     def to_geojson(self):
@@ -190,40 +190,22 @@ def wind() -> List[Observation]:
     ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
     anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
 
-    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
-    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
-
-    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
-    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
-
-    ges_forecast_mag = vector.magnitude(ges_forecast_u.values, ges_forecast_v.values)
-    ges_forecast_dir = vector.direction(ges_forecast_u.values, ges_forecast_v.values)
-
-    anl_forecast_mag = vector.magnitude(anl_forecast_u.values, anl_forecast_v.values)
-    anl_forecast_dir = vector.direction(anl_forecast_u.values, anl_forecast_v.values)
-
-    obs_mag = vector.magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
-    obs_dir = vector.direction(ges["u_Observation"].values, ges["v_Observation"].values)
-
-    ges_mag = obs_mag - ges_forecast_mag
-    ges_dir = obs_dir - ges_forecast_dir
-
-    anl_mag = obs_mag - anl_forecast_mag
-    anl_dir = obs_dir - anl_forecast_dir
-
     return [
         Observation(
             stationId.decode("utf-8").strip(),
             "wind",
             VariableType.VECTOR,
-            guess=PolarCoordinate(
-                round(float(ges_mag[idx]), 5), round(float(ges_dir[idx]), 5)
+            guess=Vector(
+                round(float(ges["u_Obs_Minus_Forecast_adjusted"][idx]), 5),
+                round(float(ges["v_Obs_Minus_Forecast_adjusted"][idx]), 5),
             ),
-            analysis=PolarCoordinate(
-                round(float(anl_mag[idx]), 5), round(float(anl_dir[idx]), 5)
+            analysis=Vector(
+                round(float(anl["u_Obs_Minus_Forecast_adjusted"][idx]), 5),
+                round(float(anl["v_Obs_Minus_Forecast_adjusted"][idx]), 5),
             ),
-            observed=PolarCoordinate(
-                round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
+            observed=Vector(
+                round(float(ges["u_Observation"][idx]), 5),
+                round(float(ges["v_Observation"][idx]), 5),
             ),
             position=Coordinate(
                 round(float(ges["Longitude"].values[idx] - 360), 5),

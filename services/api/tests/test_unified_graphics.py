@@ -118,7 +118,7 @@ def test_scalar_diag(variable_name, variable_code, diag_file, client):
     }
 
 
-def test_wind_diag(vector_data, client):
+def test_vector_diag(vector_data, client):
     response = client.get("/diag/wind/")
 
     assert response.status_code == 200
@@ -131,9 +131,9 @@ def test_wind_diag(vector_data, client):
                     "stationId": "WV270",
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": 0.5, "direction": 0.0},
-                    "analysis": {"magnitude": -0.41421, "direction": 45.0},
-                    "observed": {"magnitude": 1.0, "direction": 270.0},
+                    "guess": {"u": 0.5, "v": 0},
+                    "analysis": {"u": 0, "v": -1},
+                    "observed": {"u": 1, "v": 0},
                 },
                 "geometry": {"type": "Point", "coordinates": [-120.0, 40.0]},
             },
@@ -143,9 +143,9 @@ def test_wind_diag(vector_data, client):
                     "stationId": "E4294",
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": -1.0, "direction": -90.0},
-                    "analysis": {"magnitude": 0.0, "direction": -90.0},
-                    "observed": {"magnitude": 1.0, "direction": 180.0},
+                    "guess": {"u": -2, "v": 1},
+                    "analysis": {"u": -1, "v": 1},
+                    "observed": {"u": 0, "v": 1},
                 },
                 "geometry": {"type": "Point", "coordinates": [-88.0, 30.0]},
             },
