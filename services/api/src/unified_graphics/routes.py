@@ -40,3 +40,22 @@ def diagnostics(variable):
     )
 
     return response
+
+
+@bp.route("/diag/<variable>/<transform>/")
+def transform(variable, transform):
+    func = f"{variable}_{transform}"
+    if not hasattr(diag, func):
+        return (
+            jsonify(msg=f"'{transform}' is not available for variable '{variable}'"),
+            404,
+        )
+
+    variable_diagnostics = getattr(diag, func)
+    data = variable_diagnostics()
+
+    response = jsonify(
+        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
+    )
+
+    return response

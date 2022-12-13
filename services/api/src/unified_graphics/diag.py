@@ -232,3 +232,37 @@ def wind() -> List[Observation]:
         )
         for idx, stationId in enumerate(ges["Station_ID"].values)
     ]
+
+
+def wind_magnitude() -> List[Observation]:
+    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
+
+    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
+    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
+
+    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
+    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
+
+    ges_forecast_mag = vector.magnitude(ges_forecast_u.values, ges_forecast_v.values)
+    anl_forecast_mag = vector.magnitude(anl_forecast_u.values, anl_forecast_v.values)
+    obs_mag = vector.magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
+
+    ges_mag = obs_mag - ges_forecast_mag
+    anl_mag = obs_mag - anl_forecast_mag
+
+    return [
+        Observation(
+            stationId.decode("utf-8").strip(),
+            "wind",
+            VariableType.SCALAR,
+            guess=round(float(ges_mag[idx]), 5),
+            analysis=round(float(anl_mag[idx]), 5),
+            observed=round(float(obs_mag[idx]), 5),
+            position=Coordinate(
+                round(float(ges["Longitude"].values[idx] - 360), 5),
+                round(float(ges["Latitude"].values[idx]), 5),
+            ),
+        )
+        for idx, stationId in enumerate(ges["Station_ID"].values)
+    ]

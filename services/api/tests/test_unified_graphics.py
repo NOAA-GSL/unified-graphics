@@ -164,7 +164,7 @@ def test_vector_magnitude(vector_data, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "WV270",
-                    "type": "vector",
+                    "type": "scalar",
                     "variable": "wind",
                     "guess": 0.5,
                     "analysis": -0.41421,
@@ -176,7 +176,7 @@ def test_vector_magnitude(vector_data, client):
                 "type": "Feature",
                 "properties": {
                     "stationId": "E4294",
-                    "type": "vector",
+                    "type": "scalar",
                     "variable": "wind",
                     "guess": -1.0,
                     "analysis": 0.0,
@@ -220,3 +220,13 @@ def test_unknown_variable(client):
 
     assert response.status_code == 404
     assert response.json == {"msg": "Variable not found: 'not_a_variable'"}
+
+
+@pytest.mark.parametrize("variable_name", ["temperature", "moisture", "pressure"])
+def test_unknown_transform(variable_name, client):
+    response = client.get(f"/diag/{variable_name}/magnitude/")
+
+    assert response.status_code == 404
+    assert response.json == {
+        "msg": f"'magnitude' is not available for variable '{variable_name}'"
+    }
