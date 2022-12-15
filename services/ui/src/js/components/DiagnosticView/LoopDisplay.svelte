@@ -99,10 +99,7 @@
     ),
   };
 
-  $: mapRadius =
-    variableType === "vector"
-      ? (d) => d.properties[loop].magnitude
-      : (d) => d.properties[loop];
+  $: mapRadius = (d) => d.properties[loop];
 
   $: mapLegendTitle = variableName === "wind" ? `${variableName} speed` : variableName;
 </script>
