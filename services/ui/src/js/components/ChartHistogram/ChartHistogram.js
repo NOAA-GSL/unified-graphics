@@ -85,6 +85,7 @@ class ChartHistogram extends ChartElement {
   /** @type {number | undefined} */
   #deviation = 0;
 
+  /** @type {?[number, number]} */
   #selection = null;
 
   #xScale = scaleLinear();
@@ -119,7 +120,6 @@ class ChartHistogram extends ChartElement {
 
     if (!svg) return;
 
-    this.#selection = select(svg).select("#selection").datum([0, 0]);
     svg.addEventListener("mousedown", this.onMouseDown);
   }
 
@@ -189,11 +189,13 @@ class ChartHistogram extends ChartElement {
   }
 
   get selection() {
-    return structuredClone(this.#selection.datum());
+    return structuredClone(this.#selection);
   }
 
   set selection(value) {
-    this.#selection.datum(value).call(this.#brush);
+    console.log(value);
+    this.#selection = structuredClone(value);
+    this.#brush();
   }
 
   get thresholds() {
@@ -218,9 +220,7 @@ class ChartHistogram extends ChartElement {
    */
   onMouseDown = (event) => {
     const svg = event.currentTarget;
-    this.#selection.datum(
-      [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d))
-    );
+    this.#selection = [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d));
 
     window.addEventListener("mouseup", this.onMouseUp, { once: true });
     svg.addEventListener("mousemove", this.onMouseMove);
@@ -236,8 +236,8 @@ class ChartHistogram extends ChartElement {
    * @param {MouseEvent} event
    */
   onMouseMove = (event) => {
-    this.#selection.datum()[1] = this.#xScale.invert(event.offsetX);
-    this.#selection.call(this.#brush);
+    this.#selection[1] = this.#xScale.invert(event.offsetX);
+    this.#brush();
   };
 
   /**
@@ -259,9 +259,9 @@ class ChartHistogram extends ChartElement {
     // Update the brush one last time because, in the event of a click with no
     // mousemove, this will never be called, leaving the old selection still
     // visible despite having updated the actual range.
-    this.#selection.call(this.#brush);
+    this.#brush();
 
-    const [lower, upper] = this.#selection.datum();
+    const [lower, upper] = this.#selection;
 
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
@@ -396,9 +396,11 @@ class ChartHistogram extends ChartElement {
         g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
       });
 
-    this.#selection
-      .attr("transform", `translate(${margin.left}, ${margin.top})`)
-      .call(this.#brush);
+    svg
+      .select("#selection")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    this.#brush();
   }
 
   /**
@@ -406,15 +408,18 @@ class ChartHistogram extends ChartElement {
    *
    * @param {object} g - The D3 selection of the brush <rect>
    */
-  #brush = (g) => {
+  #brush() {
+    const [x0, x1] = this.#selection ?? [0, 0];
     const y = Math.min(...this.#yScale.range());
     const height = Math.max(...this.#yScale.range()) - y;
 
-    g.attr("x", (d) => this.#xScale(Math.min(...d)))
+    select(this.shadowRoot.querySelector("svg"))
+      .select("#selection")
+      .attr("x", this.#xScale(Math.min(x0, x1)))
       .attr("y", y)
-      .attr("width", (d) => Math.abs(this.#xScale(d[1]) - this.#xScale(d[0])))
+      .attr("width", Math.abs(this.#xScale(x1) - this.#xScale(x0)))
       .attr("height", height);
-  };
+  }
 }
 
 export default ChartHistogram;
