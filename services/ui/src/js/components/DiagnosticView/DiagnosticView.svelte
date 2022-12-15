@@ -5,7 +5,8 @@
   let currentVariable = null;
   let variableName = "";
   let variableType = "scalar";
-  let variableData = { features: [] };
+  let distribution = { features: [] };
+  let observations = { features: [] };
 
   $: {
     // Clear the filters when currentVariable changes
@@ -38,12 +39,18 @@
     }
   }
 
-  $: {
-    featureCollection.then((data) => {
-      variableType = data.features[0].properties.type;
-      variableData = data;
-    });
-  }
+  $: featureCollection.then(async (data) => {
+    variableType = data.features[0].properties.type;
+    distribution = data;
+
+    if (variableType === "scalar") {
+      observations = data;
+    } else {
+      observations = await fetch(`/api${currentVariable}/magnitude/`).then((response) =>
+        response.json()
+      );
+    }
+  });
 </script>
 
 <!--
@@ -62,10 +69,22 @@ observations side-by-side for both the guess and analysis loops.
 
 <div class="container flex-1" data-layout="stack">
   <div class="scroll-container flex-1" data-layout="stack">
-    <LoopDisplay data={variableData} loop="guess" {variableType} {variableName}>
+    <LoopDisplay
+      {distribution}
+      {observations}
+      loop="guess"
+      {variableType}
+      {variableName}
+    >
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
     </LoopDisplay>
-    <LoopDisplay data={variableData} loop="analysis" {variableType} {variableName}>
+    <LoopDisplay
+      {distribution}
+      {observations}
+      loop="analysis"
+      {variableType}
+      {variableName}
+    >
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     </LoopDisplay>
   </div>

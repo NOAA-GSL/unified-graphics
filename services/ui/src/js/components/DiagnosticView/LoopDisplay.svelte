@@ -1,9 +1,10 @@
 <script>
   import { containedIn, geoFilter } from "./DiagnosticView.helpers.js";
-  import { range, region } from "./DiagnosticView.stores.js";
+  import { filteredObservations, range, region } from "./DiagnosticView.stores.js";
 
   /** GeoJSON data for this loop */
-  export let data = {};
+  export let distribution = { features: [] };
+  export let observations = { features: [] };
 
   // FIXME: Should be an enum;
   /**
@@ -33,7 +34,19 @@
    */
   const onBrushHistogram = (event) => {
     event.stopImmediatePropagation();
+
     range.set(event.detail);
+
+    if (event.detail === null) {
+      filteredObservations.set(new Set());
+      return;
+    }
+
+    const filtered = distribution.features
+      .filter(containedIn(event.detail, loop))
+      .map((feature) => feature.properties.stationId);
+
+    filteredObservations.set(new Set(filtered));
   };
 
   /**
@@ -41,14 +54,30 @@
    */
   const onBrushMap = (event) => {
     event.stopImmediatePropagation();
+
     region.set(event.detail);
+
+    if (event.detail === null) {
+      filteredObservations.set(new Set());
+      return;
+    }
+
+    const filtered = observations.features
+      .filter(geoFilter(event.detail))
+      .map((feature) => feature.properties.stationId);
+
+    filteredObservations.set(new Set(filtered));
   };
 
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
 
-  $: distributionData = data.features
-    .filter(geoFilter($region))
+  $: distributionData = distribution.features
+    .filter(
+      (feature) =>
+        $filteredObservations.size < 1 ||
+        $filteredObservations.has(feature.properties.stationId)
+    )
     .map((d) => d.properties[loop]);
 
   $: xTitle =
@@ -61,25 +90,13 @@
       ? "Magnitude (Observation − Forecast)"
       : "Observation count";
 
-  $: mapFilter = containedIn(
-    variableType === "scalar" || $range === null
-      ? $range
-      : {
-          direction: [
-            Math.min($range[0][0], $range[1][0]),
-            Math.max($range[0][0], $range[1][0]),
-          ],
-          magnitude: [
-            Math.min($range[0][1], $range[1][1]),
-            Math.max($range[0][1], $range[1][1]),
-          ],
-        },
-    loop
-  );
-
   $: mapData = {
     type: "FeatureCollection",
-    features: data.features.filter(mapFilter),
+    features: observations.features.filter(
+      (feature) =>
+        $filteredObservations.size < 1 ||
+        $filteredObservations.has(feature.properties.stationId)
+    ),
   };
 
   $: mapRadius =
