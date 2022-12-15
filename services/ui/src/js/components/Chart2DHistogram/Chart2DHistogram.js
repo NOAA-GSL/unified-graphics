@@ -245,9 +245,17 @@ export default class Chart2DHistogram extends ChartElement {
 
     this.#brush();
 
+    const [[x0, y0], [x1, y1]] = this.#selection;
+
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: this.selection,
+      detail:
+        x0 === x1 || y0 === y1
+          ? null
+          : [
+              [x0, y0],
+              [x1, y1],
+            ],
     });
     this.dispatchEvent(brush);
   };

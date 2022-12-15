@@ -261,9 +261,11 @@ class ChartHistogram extends ChartElement {
     // visible despite having updated the actual range.
     this.#selection.call(this.#brush);
 
+    const [lower, upper] = this.#selection.datum();
+
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: structuredClone(this.#selection.datum()),
+      detail: lower === upper ? null : [lower, upper],
     });
     this.dispatchEvent(brush);
   };
