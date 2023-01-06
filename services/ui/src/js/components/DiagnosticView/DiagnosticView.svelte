@@ -11,8 +11,11 @@
   $: {
     // Clear the filters when currentVariable changes
     currentVariable;
-    range.set(null);
-    region.set(null);
+    range.set([0, 0]);
+    region.set([
+      [0, 0],
+      [0, 0],
+    ]);
   }
 
   $: variables = fetch("/api/diag/")
