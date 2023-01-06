@@ -249,7 +249,6 @@ export default class ChartMap extends ChartElement {
     const [[x0, y0], [x1, y1]] = this.#selection;
 
     if (x0 === x1 || y0 === y1) {
-      this.#selection = null;
       this.#brush();
     }
 
@@ -294,6 +293,9 @@ export default class ChartMap extends ChartElement {
     if (!this.#selection) return;
 
     const [[x0, y0], [x1, y1]] = this.#selection;
+
+    if (x0 === x1 || y0 === y1) return;
+
     let left, right, top, bottom;
 
     if (x0 < x1) {
