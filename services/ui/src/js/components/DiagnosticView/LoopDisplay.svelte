@@ -57,7 +57,7 @@
 
     region.set(event.detail);
 
-    if (event.detail === null) {
+    if (event.detail === null || event.detail[0] === event.detail[1]) {
       filteredObservations.set(new Set());
       return;
     }

@@ -193,7 +193,6 @@ class ChartHistogram extends ChartElement {
   }
 
   set selection(value) {
-    console.log(value);
     this.#selection = structuredClone(value);
     this.#brush();
   }
@@ -265,7 +264,7 @@ class ChartHistogram extends ChartElement {
 
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: lower === upper ? null : [lower, upper],
+      detail: lower === upper ? [0, 0] : [lower, upper],
     });
     this.dispatchEvent(brush);
   };
