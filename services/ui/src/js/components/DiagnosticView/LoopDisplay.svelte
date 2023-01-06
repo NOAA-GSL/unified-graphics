@@ -36,6 +36,10 @@
     event.stopImmediatePropagation();
 
     range.set(event.detail);
+    region.set([
+      [0, 0],
+      [0, 0],
+    ]);
 
     if (event.detail === null) {
       filteredObservations.set(new Set());
@@ -56,8 +60,13 @@
     event.stopImmediatePropagation();
 
     region.set(event.detail);
+    range.set([0, 0]);
 
-    if (event.detail === null || event.detail[0] === event.detail[1]) {
+    if (
+      event.detail === null ||
+      event.detail[0][0] === event.detail[1][0] ||
+      event.detail[0][1] === event.detail[1][1]
+    ) {
       filteredObservations.set(new Set());
       return;
     }
