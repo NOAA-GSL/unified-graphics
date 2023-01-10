@@ -35,6 +35,17 @@
   const onBrushHistogram = (event) => {
     event.stopImmediatePropagation();
 
+    let distRange = event.detail;
+
+    if (variableType === "vector") {
+      let [[x0, y0], [x1, y1]] = event.detail;
+
+      distRange = {
+        u: [x0, x1].sort(),
+        v: [y0, y1].sort(),
+      };
+    }
+
     range.set(event.detail);
     region.set([
       [0, 0],
@@ -47,7 +58,7 @@
     }
 
     const filtered = distribution.features
-      .filter(containedIn(event.detail, loop))
+      .filter(containedIn(distRange, loop))
       .map((feature) => feature.properties.stationId);
 
     filteredObservations.set(new Set(filtered));

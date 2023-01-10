@@ -76,7 +76,10 @@ export default class Chart2DHistogram extends ChartElement {
   /** @type {DiagVector[]} */
   #data = [];
 
-  #selection = null;
+  #selection = [
+    [0, 0],
+    [0, 0],
+  ];
 
   #xScale = scaleLinear();
   #yScale = scaleLinear();
@@ -143,7 +146,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get domain() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.v);
+    return extent(this.#data, (d) => d.u);
   }
 
   get formatX() {
@@ -174,7 +177,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get range() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.u);
+    return extent(this.#data, (d) => d.v);
   }
 
   get margin() {
@@ -214,8 +217,8 @@ export default class Chart2DHistogram extends ChartElement {
 
   onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
     const { left, top } = this.margin;
-    const x = this.#xScale.invert(offsetX - left);
-    const y = this.#yScale.invert(offsetY - top);
+    const x = this.xScale.invert(offsetX - left);
+    const y = this.yScale.invert(offsetY - top);
 
     this.#selection = [
       [x, y],
@@ -230,8 +233,8 @@ export default class Chart2DHistogram extends ChartElement {
     const { left, top } = this.margin;
 
     this.#selection[1] = [
-      this.#xScale.invert(offsetX - left),
-      this.#yScale.invert(offsetY - top),
+      this.xScale.invert(offsetX - left),
+      this.yScale.invert(offsetY - top),
     ];
 
     this.#brush();
@@ -250,7 +253,10 @@ export default class Chart2DHistogram extends ChartElement {
       bubbles: true,
       detail:
         x0 === x1 || y0 === y1
-          ? null
+          ? [
+              [0, 0],
+              [0, 0],
+            ]
           : [
               [x0, y0],
               [x1, y1],
@@ -330,11 +336,14 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   #brush() {
-    if (this.#selection === null) return;
+    let x0, y0, x1, y1;
+    x0 = y0 = x1 = y1 = 0;
 
-    const [x0, y0, x1, y1] = this.#selection
-      .flat()
-      .map((val, idx) => (idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)));
+    if (Array.isArray(this.#selection) && Array.isArray(this.#selection[0])) {
+      [x0, y0, x1, y1] = this.#selection
+        .flat()
+        .map((val, idx) => (idx % 2 === 0 ? this.xScale(val) : this.yScale(val)));
+    }
 
     select(this.shadowRoot.querySelector("svg"))
       .select("#selection")
