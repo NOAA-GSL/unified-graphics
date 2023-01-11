@@ -71,6 +71,11 @@ class ChartHistogram extends ChartElement {
 
   .annotation line {
     stroke: currentColor;
+  }
+
+  .annotation text {
+    font-weight: bold;
+    text-shadow: 1px 1px 1px white;
   }`;
 
   /** @type {?number[]} **/
