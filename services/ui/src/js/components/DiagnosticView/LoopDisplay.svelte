@@ -122,6 +122,7 @@ Usage:
       id="distribution-{loop}"
       data={distributionData}
       selection={$range}
+      format-x=".3e"
       on:chart-brush={onBrushHistogram}
     />
     <span class="axis-x title" slot="title-x">{xTitle}</span>
