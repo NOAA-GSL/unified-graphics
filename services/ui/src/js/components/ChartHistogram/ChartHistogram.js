@@ -326,26 +326,29 @@ class ChartHistogram extends ChartElement {
       .attr("transform", `translate(${xScale(this.mean - this.deviation)},1)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
+        const y = fontSize * 3;
+        const width =
+          xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation);
 
         g.selectAll("rect")
           .data([null])
           .join("rect")
-          .attr(
-            "width",
-            xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation)
-          )
+          .attr("width", width)
           .attr("height", height - margin.top - margin.bottom);
 
         g.selectAll("line")
           .data([null])
           .join("line")
-          .attr("x2", -0.75 * fontSize);
+          .attr("x1", width)
+          .attr("y1", y)
+          .attr("x2", width + 0.75 * fontSize)
+          .attr("y2", y);
 
         g.selectAll("text")
           .data([null])
           .join("text")
-          .attr("x", -fontSize)
-          .attr("text-anchor", "end")
+          .attr("x", width + fontSize)
+          .attr("y", y)
           .attr("dominant-baseline", "middle")
           .text(`σ = ${fmt(this.deviation)}`);
       });
@@ -368,6 +371,7 @@ class ChartHistogram extends ChartElement {
           .join("text")
           .attr("dominant-baseline", "middle")
           .attr("x", fontSize * 0.25)
+          .attr("y", fontSize * 1.5)
           .text(`mean = ${fmt(this.mean)}`);
       });
 
