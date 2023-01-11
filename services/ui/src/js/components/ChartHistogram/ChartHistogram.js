@@ -315,6 +315,10 @@ class ChartHistogram extends ChartElement {
       .attr("width", (d) => xScale(d.x1) - xScale(d.x0))
       .attr("height", (d) => yScale(0) - yScale(d.length));
 
+    // Left-align the annotations if the mean of the distribution is to the
+    // left of center in the chart, otherwise we'll right-align the text.
+    const leftAligned = xScale(this.mean) <= width / 2;
+
     const annotation = svg
       .select(".annotation")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
@@ -329,6 +333,17 @@ class ChartHistogram extends ChartElement {
         const y = fontSize * 3;
         const width =
           xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation);
+        let x1 = width;
+        let x2 = width + 0.75 * fontSize;
+        let x = width + fontSize;
+        let anchor = "start";
+
+        if (!leftAligned) {
+          x1 = 0;
+          x2 = -0.75 * fontSize;
+          x = -fontSize;
+          anchor = "end";
+        }
 
         g.selectAll("rect")
           .data([null])
@@ -339,17 +354,18 @@ class ChartHistogram extends ChartElement {
         g.selectAll("line")
           .data([null])
           .join("line")
-          .attr("x1", width)
+          .attr("x1", x1)
           .attr("y1", y)
-          .attr("x2", width + 0.75 * fontSize)
+          .attr("x2", x2)
           .attr("y2", y);
 
         g.selectAll("text")
           .data([null])
           .join("text")
-          .attr("x", width + fontSize)
+          .attr("x", x)
           .attr("y", y)
           .attr("dominant-baseline", "middle")
+          .attr("text-anchor", anchor)
           .text(`σ = ${fmt(this.deviation)}`);
       });
 
@@ -360,6 +376,13 @@ class ChartHistogram extends ChartElement {
       .attr("transform", `translate(${xScale(this.mean)},0)`)
       .call((g) => {
         const fmt = xAxis.tickFormat();
+        let x = fontSize * 0.25;
+        let anchor = "start";
+
+        if (!leftAligned) {
+          x *= -1;
+          anchor = "end";
+        }
 
         g.selectAll("line")
           .data([null])
@@ -370,8 +393,9 @@ class ChartHistogram extends ChartElement {
           .data([null])
           .join("text")
           .attr("dominant-baseline", "middle")
-          .attr("x", fontSize * 0.25)
+          .attr("x", x)
           .attr("y", fontSize * 1.5)
+          .attr("text-anchor", anchor)
           .text(`mean = ${fmt(this.mean)}`);
       });
 
