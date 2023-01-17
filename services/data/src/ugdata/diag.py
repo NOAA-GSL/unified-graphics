@@ -1,11 +1,20 @@
-def to_zarr(path: str, upload_bucket: str):
-    """Convert the NetCDF4 file at `path` to a Zarr array in `upload_bucket`
+import xarray as xr
+
+
+def load(path: str) -> xr.Dataset:
+    """Load the diagnostic file at `path` into an xarray DataSet
+
+    Load the diagnostic file and convert the fields to the format used by the
+    Unified Graphics backend.
 
     Parameters
     ----------
     path : str
         The path to a NetCDF4 file on the filesystem
-    upload_bucket : str
-        The name of an S3 bucket to which the Zarr will be written
+
+    Returns
+    -------
+    xarray.Dataset
+        The diagnostic data converted to an xarray Dataset
     """
     ...
