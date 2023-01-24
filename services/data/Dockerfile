@@ -1,6 +1,9 @@
 FROM public.ecr.aws/lambda/python:3.9
 
-RUN pip3 install --no-cache-dir poetry
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip3 install --no-cache-dir poetry
+
+RUN yum -y --setopt=tsflags=nodocs update && yum -y clean all && rm -rf rm -rf /var/cache
 
 COPY pyproject.toml .
 COPY poetry.lock .
