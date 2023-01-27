@@ -8,6 +8,7 @@ authors = ["W. Evan Sheehan <evan.sheehan@noaa.gov>"]
 python = "~3.9"
 xarray = "2022.10.0"
 netCDF4 = "1.6.1"
+zarr = "^2.13.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.1"
