@@ -74,3 +74,30 @@ def test_add_loop(diag_zarr, diag_dataset):
     xr.testing.assert_equal(
         xr.open_zarr(zarr_file, group=f"observations/{init_time}/{loop}"), observations
     )
+
+
+def test_add_variable(diag_zarr, diag_dataset):
+    """diag.save should insert new variables into existing groups"""
+
+    init_time = "2022-05-05T14"
+    loop = "anl"
+    zarr_file = diag_zarr(["ps"], init_time, loop)
+
+    difference = diag_dataset("difference", ["t"], init_time, loop, is_adjusted=[0, 1])
+    forecast = diag_dataset("forecast", ["t"], init_time, loop, is_adjusted=[0, 1])
+    observations = diag_dataset("observations", ["t"], init_time, loop)
+
+    diag.save(zarr_file, observations, forecast, difference)
+
+    xr.testing.assert_equal(
+        xr.open_zarr(zarr_file, group=f"/difference/{init_time}/{loop}"),
+        diag_dataset("difference", ["ps", "t"], init_time, loop, is_adjusted=[0, 1]),
+    )
+    xr.testing.assert_equal(
+        xr.open_zarr(zarr_file, group=f"/forecast/{init_time}/{loop}"),
+        diag_dataset("forecast", ["ps", "t"], init_time, loop, is_adjusted=[0, 1]),
+    )
+    xr.testing.assert_equal(
+        xr.open_zarr(zarr_file, group=f"/observations/{init_time}/{loop}"),
+        diag_dataset("observations", ["ps", "t"], init_time, loop),
+    )

@@ -17,4 +17,4 @@ def save(path: Path, *args: xr.Dataset):
     """
     for ds in args:
         group = f"{ds.name}/{ds.initialization_time}/{ds.loop}"
-        ds.to_zarr(path, group=group)
+        ds.to_zarr(path, group=group, mode="a")
