@@ -1,13 +1,20 @@
+import pytest
 import xarray as xr
 from ugdata import diag
 
 
-def test_load(diag_file, diag_dataset):
+@pytest.mark.parametrize(
+    "variable,loop,init_time",
+    [
+        ("ps", "anl", "2022050514"),
+        ("q", "anl", "2022050514"),
+        ("t", "anl", "2022050514"),
+        ("uv", "anl", "2022050514"),
+    ],
+)
+def test_load(variable, loop, init_time, diag_file, diag_dataset):
     """diag.load should return datasets for observations, forecasts, and results"""
 
-    variable = "ps"
-    loop = "anl"
-    init_time = "2022050514"
     test_file = diag_file(variable, loop, init_time)
 
     result = diag.load(test_file)
