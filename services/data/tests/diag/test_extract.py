@@ -4,6 +4,38 @@ from ugdata import diag
 
 
 @pytest.mark.parametrize(
+    "filename,variable,loop,init_time",
+    [
+        ("ncdiag_conv_ps_anl.nc4.2022050514", "ps", "anl", "2022-05-05T14"),
+        ("ncdiag_conv_uv_ges.nc4.2023010204", "uv", "ges", "2023-01-02T04"),
+    ],
+)
+def test_parse_diag_filename(filename, variable, loop, init_time):
+    """diag.parse_diag_filename should return the variable, loop, and
+    initialization time from a diag filename
+    """
+    result = diag.parse_diag_filename(filename)
+    assert result == (variable, loop, init_time)
+
+
+@pytest.mark.parametrize(
+    "filename,errmsg",
+    [
+        ("ncdiag_ps_anl.nc4.2022050514", "Invalid diagnostics filename"),
+        ("ncdiag_conv_ps_anl.nc4.202205051400", "Unrecognized date format in filename"),
+    ],
+)
+def test_parse_diag_filename_invalid(filename, errmsg):
+    """diag.parse_diag_filename should raise a ValueError if the filename can't
+    be parsed
+    """
+    with pytest.raises(ValueError) as excinfo:
+        diag.parse_diag_filename(filename)
+
+    assert errmsg in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
     "variable,loop,init_time",
     [
         ("ps", "anl", "2022050514"),

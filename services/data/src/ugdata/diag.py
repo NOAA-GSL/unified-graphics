@@ -9,10 +9,38 @@ DiagMeta = namedtuple("DiagMeta", "variable loop initialization_time")
 
 
 def parse_diag_filename(filename: str) -> DiagMeta:
-    name, _, init_time = filename.split(".")
-    variable, loop = name.split("_")[2:]
+    """Parse the variable, loop, and initialization time from a diag file name
 
-    return DiagMeta(variable, loop, init_time)
+    The filename is expected to be of the form
+    X_Y_VARIABLE_LOOP.EXT.YYYYMMDDHH. `X`, `Y`, and `EXT` aren't used, so it
+    doesn't really matter what those are, as long as they're present in the
+    file name.
+
+    Parameters
+    ----------
+    filename : str
+        The filename for a NetCDF diagnostics file
+
+    Returns
+    -------
+    DiagMeta
+        A DiagMeta named tuple containing the variable, loop, and initialization time
+    """
+    try:
+        name, _, init_time = filename.split(".")
+        variable, loop = name.split("_")[2:]
+    except ValueError:
+        raise ValueError(f"Invalid diagnostics filename: '{filename}'")
+
+    if len(init_time) != 10:
+        raise ValueError(f"Unrecognized date format in filename: {filename}")
+
+    year = init_time[:4]
+    month = init_time[4:6]
+    day = init_time[6:8]
+    hour = init_time[8:10]
+
+    return DiagMeta(variable, loop, f"{year}-{month}-{day}T{hour}")
 
 
 def load(path: Union[Path, str]) -> DiagData:
