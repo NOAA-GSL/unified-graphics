@@ -34,8 +34,5 @@ def lambda_handler(event, context):
 
         tmp_file = fetch_record(bucket, key)
 
-        ds = diag.load(tmp_file)
-
-        # FIXME: Build the location for the zarr from the upload bucket and...
-        store = upload_bucket
-        ds.to_zarr(store=store, group=...)
+        data = diag.load(tmp_file)
+        diag.save(upload_bucket, *data)
