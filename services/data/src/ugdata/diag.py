@@ -5,7 +5,7 @@ from typing import Union
 import xarray as xr
 
 DiagData = namedtuple("DiagData", "observations forecast difference")
-DiagMeta = namedtuple("DiagMeta", "variable loop initialization_time")
+DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
 
 
 def parse_diag_filename(filename: str) -> DiagMeta:
@@ -40,7 +40,9 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     day = init_time[6:8]
     hour = init_time[8:10]
 
-    return DiagMeta(variable, loop, f"{year}-{month}-{day}T{hour}")
+    variables = list(variable) if variable == "uv" else [variable]
+
+    return DiagMeta(variables, loop, f"{year}-{month}-{day}T{hour}")
 
 
 def load(path: Union[Path, str]) -> DiagData:

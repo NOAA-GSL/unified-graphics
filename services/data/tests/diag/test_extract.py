@@ -4,18 +4,18 @@ from ugdata import diag
 
 
 @pytest.mark.parametrize(
-    "filename,variable,loop,init_time",
+    "filename,variables,loop,init_time",
     [
-        ("ncdiag_conv_ps_anl.nc4.2022050514", "ps", "anl", "2022-05-05T14"),
-        ("ncdiag_conv_uv_ges.nc4.2023010204", "uv", "ges", "2023-01-02T04"),
+        ("ncdiag_conv_ps_anl.nc4.2022050514", ["ps"], "anl", "2022-05-05T14"),
+        ("ncdiag_conv_uv_ges.nc4.2023010204", ["u", "v"], "ges", "2023-01-02T04"),
     ],
 )
-def test_parse_diag_filename(filename, variable, loop, init_time):
+def test_parse_diag_filename(filename, variables, loop, init_time):
     """diag.parse_diag_filename should return the variable, loop, and
     initialization time from a diag filename
     """
     result = diag.parse_diag_filename(filename)
-    assert result == (variable, loop, init_time)
+    assert result == (variables, loop, init_time)
 
 
 @pytest.mark.parametrize(
