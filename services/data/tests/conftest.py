@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -38,5 +40,31 @@ def diag_zarr(tmp_path, diag_dataset):
             ds.to_zarr(zarr_file, group=f"/{name}/{initialization_time}/{loop}")
 
         return zarr_file
+
+    return factory
+
+
+@pytest.fixture
+def diag_file(tmp_path):
+    def factory(variable: str, loop: str, init_time: str) -> Path:
+        filename = f"ncdiag_conv_{variable}_{loop}.nc4.{init_time}"
+        diag_file = tmp_path / filename
+
+        ds = xr.Dataset(
+            {
+                "Forecast_adjusted": (["nobs"], [0]),
+                "Forecast_unadjusted": (["nobs"], [0]),
+                "Obs_minus_Forecast_adjusted": (["nobs"], [0]),
+                "Obs_minus_Forecast_unadjusted": (["nobs"], [0]),
+                "Observations": (["nobs"], [0]),
+                "Analysis_Use_flag": (["nobs"], [1]),
+                "Latitude": (["nobs"], [0]),
+                "Longitude": (["nobs"], [0]),
+            }
+        )
+
+        ds.to_netcdf(diag_file)
+
+        return diag_file
 
     return factory
