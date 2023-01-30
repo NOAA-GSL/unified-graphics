@@ -36,15 +36,15 @@ def test_parse_diag_filename_invalid(filename, errmsg):
 
 
 @pytest.mark.parametrize(
-    "variable,loop,init_time",
+    "variable,loop,init_time,expected_variables",
     [
-        ("ps", "anl", "2022050514"),
-        ("q", "anl", "2022050514"),
-        ("t", "anl", "2022050514"),
-        ("uv", "anl", "2022050514"),
+        ("ps", "anl", "2022050514", ["ps"]),
+        ("q", "anl", "2022050514", ["q"]),
+        ("t", "anl", "2022050514", ["t"]),
+        ("uv", "anl", "2022050514", ["u", "v"]),
     ],
 )
-def test_load(variable, loop, init_time, diag_file, diag_dataset):
+def test_load(variable, loop, init_time, expected_variables, diag_file, diag_dataset):
     """diag.load should return datasets for observations, forecasts, and results"""
 
     test_file = diag_file(variable, loop, init_time)
@@ -55,12 +55,17 @@ def test_load(variable, loop, init_time, diag_file, diag_dataset):
     result_observations, result_forecast, result_difference = result
     xr.testing.assert_equal(
         result_difference,
-        diag_dataset("difference", [variable], init_time, loop, is_adjusted=[0, 1]),
+        diag_dataset(
+            "difference", expected_variables, init_time, loop, is_adjusted=[0, 1]
+        ),
     )
     xr.testing.assert_equal(
         result_forecast,
-        diag_dataset("forecast", [variable], init_time, loop, is_adjusted=[0, 1]),
+        diag_dataset(
+            "forecast", expected_variables, init_time, loop, is_adjusted=[0, 1]
+        ),
     )
     xr.testing.assert_equal(
-        result_observations, diag_dataset("observations", [variable], init_time, loop)
+        result_observations,
+        diag_dataset("observations", expected_variables, init_time, loop),
     )
