@@ -142,6 +142,7 @@ def load(path: Union[Path, str]) -> DiagData:
                 ds["Longitude"] > 180, ds["Longitude"] - 360, ds["Longitude"]
             ).data,
         ),
+        "is_used": (["nobs"], (ds["Analysis_Use_Flag"] == 1).data),
     }
 
     observations = xr.Dataset(
