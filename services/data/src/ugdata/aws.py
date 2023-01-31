@@ -1,6 +1,7 @@
 import os
 import uuid
 from pathlib import Path
+from urllib.parse import unquote_plus
 
 import boto3  # type: ignore
 
@@ -39,7 +40,7 @@ def lambda_handler(event, context):
 
     for record in event["Records"]:
         bucket = record["s3"]["bucket"]["name"]
-        key = record["s3"]["object"]["key"]
+        key = unquote_plus(record["s3"]["object"]["key"])
 
         tmp_file = fetch_record(bucket, key)
 
