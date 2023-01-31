@@ -134,16 +134,29 @@ def load(path: Union[Path, str]) -> DiagData:
 
     ds = xr.open_dataset(path)
 
+    coords = {
+        "latitude": (["nobs"], ds["Latitude"].data),
+        "longitude": (
+            ["nobs"],
+            xr.where(
+                ds["Longitude"] > 180, ds["Longitude"] - 360, ds["Longitude"]
+            ).data,
+        ),
+    }
+
     observations = xr.Dataset(
         {variable: get_observations(ds, variable) for variable in variables},
+        coords=coords,
         attrs={"name": "observations", "loop": loop, "initialization_time": init_time},
     )
     forecast = xr.Dataset(
         {variable: get_forecast(ds, variable) for variable in variables},
+        coords=coords,
         attrs={"name": "forecast", "loop": loop, "initialization_time": init_time},
     )
     difference = xr.Dataset(
         {variable: get_difference(ds, variable) for variable in variables},
+        coords=coords,
         attrs={"name": "difference", "loop": loop, "initialization_time": init_time},
     )
 
