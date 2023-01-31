@@ -1,9 +1,15 @@
 import os
+import uuid
+from pathlib import Path
+
+import boto3
 
 from . import diag
 
+s3_client = boto3.client("s3")
 
-def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> str:
+
+def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
     """Download a NetCDF file from S3
 
     Parameters
@@ -17,13 +23,16 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> str:
 
     Returns
     -------
-    str
+    pathlib.Path
         The path to the downloaded file
     """
-    ...
+    tmp_key = key.replace("/", "_")
+    tmp_path = Path(download_path) / f"{uuid.uuid4()}-{tmp_key}"
+    s3_client.download_file(bucket, key, tmp_path)
+    return tmp_path
 
 
-def lambda_handler(event, context):
+def lambda_handler(event):
     """Handler for Lambda events."""
 
     upload_bucket = os.environ["UG_UPLOAD_BUCKET"]

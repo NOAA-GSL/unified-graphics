@@ -111,7 +111,7 @@ def get_difference(dataset: xr.Dataset, variable: str) -> xr.DataArray:
     return get_variable_with_adjustment(dataset, variable, "Obs_minus_Forecast")
 
 
-def load(path: Union[Path, str]) -> DiagData:
+def load(path: Path) -> DiagData:
     """Load a NetCDF diag file into xarray Datasets for observations,
     forecasts, and differences
 
@@ -130,7 +130,7 @@ def load(path: Union[Path, str]) -> DiagData:
         forecast, and difference (observation - forecast) in the diag file.
     """
 
-    variables, loop, init_time = parse_diag_filename(Path(path).name)
+    variables, loop, init_time = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 
