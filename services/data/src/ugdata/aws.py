@@ -29,7 +29,7 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
     """
     tmp_key = key.replace("/", "_")
     tmp_path = Path(download_path) / f"{uuid.uuid4()}-{tmp_key}"
-    s3_client.download_file(bucket, key, tmp_path)
+    s3_client.download_file(bucket, key, str(tmp_path))
     return tmp_path
 
 
