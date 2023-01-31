@@ -2,7 +2,7 @@ import os
 import uuid
 from pathlib import Path
 
-import boto3
+import boto3  # type: ignore
 
 from . import diag
 
