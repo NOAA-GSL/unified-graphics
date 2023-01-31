@@ -32,7 +32,7 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
     return tmp_path
 
 
-def lambda_handler(event):
+def lambda_handler(event, context):
     """Handler for Lambda events."""
 
     upload_bucket = os.environ["UG_UPLOAD_BUCKET"]
