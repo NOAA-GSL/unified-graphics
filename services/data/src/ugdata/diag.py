@@ -1,3 +1,4 @@
+import re
 from collections import namedtuple
 from pathlib import Path
 from typing import Union
@@ -6,6 +7,11 @@ import xarray as xr
 
 DiagData = namedtuple("DiagData", "observations forecast difference")
 DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
+
+diag_filename_regex = re.compile(
+    r"(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges)\..*?(\d{10,12}).*"
+)
+diag_timestamp_regex = re.compile(r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?")
 
 
 def parse_diag_filename(filename: str) -> DiagMeta:
@@ -26,23 +32,24 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     DiagMeta
         A DiagMeta named tuple containing the variable, loop, and initialization time
     """
-    try:
-        name, _, init_time = filename.split(".")
-        variable, loop = name.split("_")[2:]
-    except ValueError:
-        raise ValueError(f"Invalid diagnostics filename: '{filename}'")
+    filename_match = diag_filename_regex.match(filename)
 
-    if len(init_time) != 10:
-        raise ValueError(f"Unrecognized date format in filename: {filename}")
+    if not filename_match:
+        raise ValueError(f"Invalid diagnostics filename: {filename}")
 
-    year = init_time[:4]
-    month = init_time[4:6]
-    day = init_time[6:8]
-    hour = init_time[8:10]
+    variable, loop, timestamp = filename_match.groups()
+
+    timestamp_match = diag_timestamp_regex.match(timestamp)
+
+    year, month, day, hour, minute = timestamp_match.groups()
+
+    init_time = f"{year}-{month}-{day}T{hour}"
+    if minute:
+        init_time += ":" + minute
 
     variables = list(variable) if variable == "uv" else [variable]
 
-    return DiagMeta(variables, loop, f"{year}-{month}-{day}T{hour}")
+    return DiagMeta(variables, loop, init_time)
 
 
 def get_data_array(
@@ -129,7 +136,7 @@ def load(path: Path) -> DiagData:
         A named tuple containing an xarray Dataset for the observations,
         forecast, and difference (observation - forecast) in the diag file.
     """
-
+    print(path.name)
     variables, loop, init_time = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
