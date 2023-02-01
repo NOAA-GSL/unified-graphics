@@ -38,8 +38,8 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
 
     decompressed_path = tmp_path.with_name(tmp_path.stem)
 
-    with open(tmp_path, "rb") as f_in:
-        with gzip.open(decompressed_path, "wb") as f_out:
+    with gzip.open(tmp_path, "rb") as f_in:
+        with open(decompressed_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
 
     return decompressed_path
