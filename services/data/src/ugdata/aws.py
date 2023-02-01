@@ -48,7 +48,7 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
 def lambda_handler(event, context):
     """Handler for Lambda events."""
 
-    upload_bucket = os.environ["UG_UPLOAD_BUCKET"]
+    upload_bucket = os.environ["UG_DIAG_ZARR"]
 
     for record in event["Records"]:
         bucket = record["s3"]["bucket"]["name"]

@@ -48,11 +48,11 @@ def test_fetch_record(
 @mock.patch("ugdata.diag.load")
 @mock.patch("ugdata.aws.fetch_record")
 def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
-    ug_bucket = "s3://test-bucket"
+    ug_bucket = "s3://test-bucket/test.zarr"
     dl_bucket = "s3://test-diag-bucket"
     key = "diag_t_anl.202301300600.nc4.gz"
 
-    monkeypatch.setenv("UG_UPLOAD_BUCKET", ug_bucket)
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
 
     context = {}
     event = {
