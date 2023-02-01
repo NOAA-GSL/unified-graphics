@@ -10,7 +10,7 @@ DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
 
 diag_filename_regex = re.compile(
     (
-        r"(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges)\..*?"
+        r".*?(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges)\..*?"
         r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?.*"
     )
 )
