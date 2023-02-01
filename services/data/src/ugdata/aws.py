@@ -1,4 +1,6 @@
+import gzip
 import os
+import shutil
 import uuid
 from pathlib import Path
 from urllib.parse import unquote_plus
@@ -30,7 +32,17 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
     tmp_key = key.replace("/", "_")
     tmp_path = Path(download_path) / f"{uuid.uuid4()}-{tmp_key}"
     s3_client.download_file(bucket, key, str(tmp_path))
-    return tmp_path
+
+    if tmp_path.suffix != ".gz":
+        return tmp_path
+
+    decompressed_path = tmp_path.with_name(tmp_path.stem)
+
+    with open(tmp_path, "rb") as f_in:
+        with gzip.open(decompressed_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+    return decompressed_path
 
 
 def lambda_handler(event, context):
