@@ -61,7 +61,7 @@ def diag_file(tmp_path):
                 "Forecast_unadjusted": (["nobs"], np.zeros((2,))),
                 "Obs_minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
                 "Obs_minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
-                "Observations": (["nobs"], np.zeros((2,))),
+                "Observation": (["nobs"], np.zeros((2,))),
                 "Analysis_Use_Flag": (["nobs"], np.array([1, -1], dtype=np.int8)),
                 "Latitude": (["nobs"], np.array([22, 25], dtype=np.float64)),
                 "Longitude": (["nobs"], np.array([90, 200], dtype=np.float64)),

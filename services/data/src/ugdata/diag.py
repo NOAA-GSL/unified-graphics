@@ -55,8 +55,8 @@ def get_data_array(
     """Look for a variable in a dataset
 
     Vector variables (wind) have two separate variables in the NetCDF for any
-    given data type. Instead of Observations, for example, they have
-    Observations_u and Observations_v. This function tries two different
+    given data type. Instead of Observation, for example, they have
+    Observation_u and Observation_v. This function tries two different
     formulations of the Dataset variable name, first without the model
     variable, and then with. If neither is found, a `KeyError` is raised.
     """
@@ -92,8 +92,8 @@ def get_variable_with_adjustment(
 
 
 def get_observations(dataset: xr.Dataset, variable: str) -> xr.DataArray:
-    """Return the DataArray for this variable's Observations column"""
-    da = get_data_array(dataset, variable, "Observations")
+    """Return the DataArray for this variable's Observation column"""
+    da = get_data_array(dataset, variable, "Observation")
     return xr.DataArray(da.data, dims=["nobs"], attrs={"name": variable})
 
 
