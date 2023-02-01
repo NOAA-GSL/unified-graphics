@@ -107,12 +107,12 @@ def get_forecast(dataset: xr.Dataset, variable: str) -> xr.DataArray:
 
 
 def get_difference(dataset: xr.Dataset, variable: str) -> xr.DataArray:
-    """Return the DataArray for this variable's Obs_minus_Forecast column
+    """Return the DataArray for this variable's Obs_Minus_Forecast column
 
     Combines the _adjusted and _unadjusted variables into a single variable
     with a boolean `is_adjusted` dimension.
     """
-    return get_variable_with_adjustment(dataset, variable, "Obs_minus_Forecast")
+    return get_variable_with_adjustment(dataset, variable, "Obs_Minus_Forecast")
 
 
 def load(path: Path) -> DiagData:
