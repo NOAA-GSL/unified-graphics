@@ -57,4 +57,4 @@ def lambda_handler(event, context):
         tmp_file = fetch_record(bucket, key)
 
         data = diag.load(tmp_file)
-        diag.save(upload_bucket, *data)
+        diag.save(upload_bucket, data)
