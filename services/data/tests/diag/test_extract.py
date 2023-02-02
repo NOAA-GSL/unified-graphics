@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import xarray as xr
 from ugdata import diag
@@ -47,37 +48,59 @@ def test_parse_diag_filename_invalid(filename, errmsg):
     assert errmsg in str(excinfo.value)
 
 
+@pytest.mark.parametrize("variable", ["Observation", "Forecast_adjusted"])
+def test_get_data_array_scalar(variable):
+    ds = xr.Dataset(
+        {
+            "Observation": (["nobs"], np.zeros((1,))),
+            "Forecast_adjusted": (["nobs"], np.zeros((1,))),
+        }
+    )
+
+    result = diag.get_data_array(ds, variable)
+
+    xr.testing.assert_equal(result, ds[variable])
+
+
+@pytest.mark.parametrize("variable", ["Observation", "Forecast_adjusted"])
+def test_get_data_array_vector(variable):
+    ds = xr.Dataset(
+        {
+            "u_Observation": (["nobs"], np.zeros((1,))),
+            "v_Observation": (["nobs"], np.zeros((1,))),
+            "u_Forecast_adjusted": (["nobs"], np.zeros((1,))),
+            "v_Forecast_adjusted": (["nobs"], np.zeros((1,))),
+        }
+    )
+
+    result = diag.get_data_array(ds, variable, components=["u", "v"])
+
+    exp = xr.DataArray(
+        np.zeros((1, 2)),
+        coords={"component": ["u", "v"]},
+        dims=["nobs", "component"],
+        attrs={"name": variable},
+    )
+
+    xr.testing.assert_equal(result, exp)
+
+
 @pytest.mark.parametrize(
-    "variable,loop,init_time,expected_variables",
+    "variable,loop,init_time,coords",
     [
-        ("ps", "anl", "2022050514", ["ps"]),
-        ("q", "anl", "2022050514", ["q"]),
-        ("t", "anl", "2022050514", ["t"]),
-        ("uv", "anl", "2022050514", ["u", "v"]),
+        ("ps", "anl", "2022050514", {}),
+        ("q", "anl", "2022050514", {}),
+        ("t", "anl", "2022050514", {}),
     ],
 )
-def test_load(variable, loop, init_time, expected_variables, diag_file, diag_dataset):
+def test_load(variable, loop, init_time, coords, diag_file, diag_dataset):
     """diag.load should return datasets for observations, forecasts, and results"""
 
     test_file = diag_file(variable, loop, init_time)
 
     result = diag.load(test_file)
 
-    assert result
-    result_observations, result_forecast, result_difference = result
     xr.testing.assert_equal(
-        result_difference,
-        diag_dataset(
-            "difference", expected_variables, init_time, loop, is_adjusted=[0, 1]
-        ),
-    )
-    xr.testing.assert_equal(
-        result_forecast,
-        diag_dataset(
-            "forecast", expected_variables, init_time, loop, is_adjusted=[0, 1]
-        ),
-    )
-    xr.testing.assert_equal(
-        result_observations,
-        diag_dataset("observations", expected_variables, init_time, loop),
+        result,
+        diag_dataset(variable, init_time, loop, **coords),
     )

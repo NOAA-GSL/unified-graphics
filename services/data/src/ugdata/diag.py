@@ -5,7 +5,6 @@ from typing import Union
 
 import xarray as xr
 
-DiagData = namedtuple("DiagData", "observations forecast difference")
 DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
 
 diag_filename_regex = re.compile(
@@ -49,73 +48,38 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     return DiagMeta(variables, loop, init_time)
 
 
+def get_adjusted(ds: xr.Dataset):
+    def fn(variable: str) -> list[str]:
+        if variable in ds:
+            return [variable]
+
+        return [f"{variable}_adjusted", f"{variable}_unadjusted"]
+
+    return fn
+
+
 def get_data_array(
-    dataset: xr.Dataset, variable: str, variable_type: str, *args: str
+    dataset: xr.Dataset, variable: str, components: list[str] = []
 ) -> xr.DataArray:
-    """Look for a variable in a dataset
+    if not components:
+        return dataset[variable]
 
-    Vector variables (wind) have two separate variables in the NetCDF for any
-    given data type. Instead of Observation, for example, they have
-    Observation_u and Observation_v. This function tries two different
-    formulations of the Dataset variable name, first without the model
-    variable, and then with. If neither is found, a `KeyError` is raised.
-    """
-    name = "_".join([variable_type, *args])
-    if name in dataset:
-        return dataset[name]
+    key = f"{components[0]}_{variable}"
+    da = dataset[key].expand_dims({"component": [components[0]]}, axis=1)
+    for c in components[1:]:
+        key = f"{c}_{variable}"
+        da = xr.concat(
+            [
+                da,
+                dataset[key].expand_dims({"component": [c]}, axis=1),
+            ],
+            dim="component",
+        )
 
-    name = "_".join([variable_type, variable, *args])
-    if name in dataset:
-        return dataset[name]
-
-    raise KeyError(f"Variable for '{name}' not found")
-
-
-def get_variable_with_adjustment(
-    dataset: xr.Dataset, variable: str, variable_type: str
-) -> xr.DataArray:
-    """Combine _adjusted and _unadjusted variables into a single DataArray"""
-    adjusted = get_data_array(dataset, variable, variable_type, "adjusted")
-    adjusted = adjusted.expand_dims({"is_adjusted": [1]})
-
-    unadjusted = get_data_array(dataset, variable, variable_type, "unadjusted")
-    unadjusted = unadjusted.expand_dims({"is_adjusted": [0]})
-
-    da = xr.concat([unadjusted, adjusted], dim="is_adjusted")
-
-    return xr.DataArray(
-        da.data,
-        dims=["is_adjusted", "nobs"],
-        coords={"is_adjusted": [0, 1]},
-        attrs={"name": variable},
-    )
+    return da
 
 
-def get_observations(dataset: xr.Dataset, variable: str) -> xr.DataArray:
-    """Return the DataArray for this variable's Observation column"""
-    da = get_data_array(dataset, variable, "Observation")
-    return xr.DataArray(da.data, dims=["nobs"], attrs={"name": variable})
-
-
-def get_forecast(dataset: xr.Dataset, variable: str) -> xr.DataArray:
-    """Return the DataArray for this variable's Forecast column
-
-    Combines the _adjusted and _unadjusted variables into a single variable
-    with a boolean `is_adjusted` dimension.
-    """
-    return get_variable_with_adjustment(dataset, variable, "Forecast")
-
-
-def get_difference(dataset: xr.Dataset, variable: str) -> xr.DataArray:
-    """Return the DataArray for this variable's Obs_Minus_Forecast column
-
-    Combines the _adjusted and _unadjusted variables into a single variable
-    with a boolean `is_adjusted` dimension.
-    """
-    return get_variable_with_adjustment(dataset, variable, "Obs_Minus_Forecast")
-
-
-def load(path: Path) -> DiagData:
+def load(path: Path) -> xr.Dataset:
     """Load a NetCDF diag file into xarray Datasets for observations,
     forecasts, and differences
 
@@ -129,12 +93,12 @@ def load(path: Path) -> DiagData:
 
     Returns
     -------
-    DiagData
-        A named tuple containing an xarray Dataset for the observations,
-        forecast, and difference (observation - forecast) in the diag file.
+    xarray.Dataset
+        A transformed xarray Dataset containing the observation, forecast
+        adjusted/unadjusted, and difference adjusted/unadjusted variables from
+        the diag file.
     """
-    print(path.name)
-    variables, loop, init_time = parse_diag_filename(path.name)
+    diag_variables, loop, init_time = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 
@@ -149,23 +113,30 @@ def load(path: Path) -> DiagData:
         "is_used": (["nobs"], (ds["Analysis_Use_Flag"] == 1).data),
     }
 
-    observations = xr.Dataset(
-        {variable: get_observations(ds, variable) for variable in variables},
+    components = []
+    if len(diag_variables) > 1:
+        coords["component"] = diag_variables
+        components = diag_variables
+
+    variables = [
+        "Observation",
+        "Forecast_unadjusted",
+        "Forecast_adjusted",
+        "Obs_Minus_Forecast_unadjusted",
+        "Obs_Minus_Forecast_adjusted",
+    ]
+
+    transformed = xr.Dataset(
+        {name.lower(): get_data_array(ds, name, components) for name in variables},
         coords=coords,
-        attrs={"name": "observations", "loop": loop, "initialization_time": init_time},
-    )
-    forecast = xr.Dataset(
-        {variable: get_forecast(ds, variable) for variable in variables},
-        coords=coords,
-        attrs={"name": "forecast", "loop": loop, "initialization_time": init_time},
-    )
-    difference = xr.Dataset(
-        {variable: get_difference(ds, variable) for variable in variables},
-        coords=coords,
-        attrs={"name": "difference", "loop": loop, "initialization_time": init_time},
+        attrs={
+            "name": "".join(diag_variables),
+            "loop": loop,
+            "initialization_time": init_time,
+        },
     )
 
-    return DiagData(observations, forecast, difference)
+    return transformed
 
 
 def save(path: Union[Path, str], *args: xr.Dataset):

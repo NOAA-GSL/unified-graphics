@@ -7,11 +7,16 @@ import xarray as xr
 
 @pytest.fixture
 def diag_dataset():
-    def factory(
-        name: str, variables: list[str], initialization_time: str, loop: str, **kwargs
-    ):
+    def factory(variable: str, initialization_time: str, loop: str, **kwargs):
         dims = [*kwargs.keys(), "nobs"]
         shape = [*map(len, kwargs.values()), 2]
+        variables = [
+            "observation",
+            "forecast_adjusted",
+            "obs_minus_forecast_adjusted",
+            "forecast_unadjusted",
+            "obs_minus_forecast_unadjusted",
+        ]
 
         ds = xr.Dataset(
             {var: (dims, np.zeros(shape)) for var in variables},
@@ -22,7 +27,7 @@ def diag_dataset():
                 **kwargs,
             ),
             attrs={
-                "name": name,
+                "name": variable,
                 "loop": loop,
                 "initialization_time": initialization_time,
             },
@@ -38,11 +43,11 @@ def diag_zarr(tmp_path, diag_dataset):
     def factory(variables: list[str], initialization_time: str, loop: str):
         zarr_file = tmp_path / "test.zarr"
 
-        for name in ["difference", "forecast", "observations"]:
-            coords = {} if name == "observations" else {"is_adjusted": [0, 1]}
+        for variable in variables:
+            coords = {"component": ["u", "v"]} if variable == "uv" else {}
 
-            ds = diag_dataset(name, variables, initialization_time, loop, **coords)
-            ds.to_zarr(zarr_file, group=f"/{name}/{initialization_time}/{loop}")
+            ds = diag_dataset(variable, initialization_time, loop, **coords)
+            ds.to_zarr(zarr_file, group=f"/{variable}/{initialization_time}/{loop}")
 
         return zarr_file
 

@@ -10,33 +10,19 @@ def test_save_new(tmp_path, diag_dataset):
     init_time = "2022-05-05T14"
     loop = "anl"
 
-    difference = diag_dataset("difference", ["ps"], init_time, loop, is_adjusted=[0, 1])
-    forecast = diag_dataset("forecast", ["ps"], init_time, loop, is_adjusted=[0, 1])
-    observations = diag_dataset("observations", ["ps"], init_time, loop)
+    ps = diag_dataset("ps", init_time, loop)
 
     zarr_file = tmp_path / "unified_graphics.zarr"
-    diag.save(zarr_file, difference, forecast, observations)
+    diag.save(zarr_file, ps)
 
     assert zarr_file.exists(), "Zarr file not created"
+    assert (zarr_file / "ps").exists(), "variable group is missing"
     assert (
-        zarr_file / "difference" / init_time / loop
-    ).exists(), "Difference group is missing"
-    assert (
-        zarr_file / "forecast" / init_time / loop
-    ).exists(), "Forecast group is missing"
-    assert (
-        zarr_file / "observations" / init_time / loop
-    ).exists(), "Observations group is missing"
+        zarr_file / "ps" / init_time
+    ).exists(), "initialization time group is missing"
+    assert (zarr_file / "ps" / init_time / loop).exists(), "loop group is missing"
 
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"difference/{init_time}/{loop}"), difference
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"forecast/{init_time}/{loop}"), forecast
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"observations/{init_time}/{loop}"), observations
-    )
+    xr.testing.assert_equal(xr.open_zarr(zarr_file, group=f"ps/{init_time}/{loop}"), ps)
 
 
 def test_add_loop(diag_zarr, diag_dataset):
@@ -47,32 +33,14 @@ def test_add_loop(diag_zarr, diag_dataset):
     zarr_file = diag_zarr(variables, "anl", init_time)
 
     loop = "ges"
-    difference = diag_dataset(
-        "difference", variables, init_time, loop, is_adjusted=[0, 1]
-    )
-    forecast = diag_dataset("forecast", variables, init_time, loop, is_adjusted=[0, 1])
-    observations = diag_dataset("observations", variables, init_time, loop)
+    ps = diag_dataset(variables[0], init_time, loop)
 
-    diag.save(zarr_file, observations, forecast, difference)
+    diag.save(zarr_file, ps)
 
-    assert (
-        zarr_file / "difference" / init_time / loop
-    ).exists(), "Difference group is missing"
-    assert (
-        zarr_file / "forecast" / init_time / loop
-    ).exists(), "Forecast group is missing"
-    assert (
-        zarr_file / "observations" / init_time / loop
-    ).exists(), "Observations group is missing"
+    assert (zarr_file / "ps" / init_time / loop).exists(), "Loop group is missing"
 
     xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"difference/{init_time}/{loop}"), difference
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"forecast/{init_time}/{loop}"), forecast
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"observations/{init_time}/{loop}"), observations
+        xr.open_zarr(zarr_file, group=f"{variables[0]}/{init_time}/{loop}"), ps
     )
 
 
@@ -83,21 +51,11 @@ def test_add_variable(diag_zarr, diag_dataset):
     loop = "anl"
     zarr_file = diag_zarr(["ps"], init_time, loop)
 
-    difference = diag_dataset("difference", ["t"], init_time, loop, is_adjusted=[0, 1])
-    forecast = diag_dataset("forecast", ["t"], init_time, loop, is_adjusted=[0, 1])
-    observations = diag_dataset("observations", ["t"], init_time, loop)
+    t = diag_dataset("t", init_time, loop)
 
-    diag.save(zarr_file, observations, forecast, difference)
+    diag.save(zarr_file, t)
 
     xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"/difference/{init_time}/{loop}"),
-        diag_dataset("difference", ["ps", "t"], init_time, loop, is_adjusted=[0, 1]),
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"/forecast/{init_time}/{loop}"),
-        diag_dataset("forecast", ["ps", "t"], init_time, loop, is_adjusted=[0, 1]),
-    )
-    xr.testing.assert_equal(
-        xr.open_zarr(zarr_file, group=f"/observations/{init_time}/{loop}"),
-        diag_dataset("observations", ["ps", "t"], init_time, loop),
+        xr.open_zarr(zarr_file, group=f"/t/{init_time}/{loop}"),
+        diag_dataset("t", init_time, loop),
     )
