@@ -74,4 +74,4 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
 
     mock_fetch_record.assert_called_once_with(dl_bucket, key)
     mock_load.assert_called_once_with(mock_fetch_record.return_value)
-    mock_save.assert_called_once_with(ug_bucket, *mock_load.return_value)
+    mock_save.assert_called_once_with(ug_bucket, mock_load.return_value)
