@@ -57,7 +57,7 @@ def lambda_handler(event, context):
         # Only fetch the first (ges) and last (anl) minimization loops, ignore
         # all intermediate loops.
         if diag.parse_diag_filename(key).loop not in ["anl", "ges"]:
-            return
+            continue
 
         tmp_file = fetch_record(bucket, key)
 
