@@ -8,6 +8,7 @@ from ugdata import diag
     "filename,variables,loop,init_time",
     [
         ("diag_ps_anl.202205051400.nc4", ["ps"], "anl", "2022-05-05T14:00"),
+        ("diag_ps_02.202205051400.nc4", ["ps"], "02", "2022-05-05T14:00"),
         ("diag_uv_ges.202301020400.nc4", ["u", "v"], "ges", "2023-01-02T04:00"),
         ("ncdiag_conv_ps_anl.nc4.2022050514", ["ps"], "anl", "2022-05-05T14"),
         ("ncdiag_conv_uv_ges.nc4.2023010204", ["u", "v"], "ges", "2023-01-02T04"),
