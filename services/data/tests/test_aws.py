@@ -75,3 +75,36 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
     mock_fetch_record.assert_called_once_with(dl_bucket, key)
     mock_load.assert_called_once_with(mock_fetch_record.return_value)
     mock_save.assert_called_once_with(ug_bucket, mock_load.return_value)
+
+
+@mock.patch("ugdata.diag.save")
+@mock.patch("ugdata.diag.load")
+@mock.patch("ugdata.aws.fetch_record")
+def test_handler_skip_second_loop(mock_fetch_record, mock_load, mock_save, monkeypatch):
+    ug_bucket = "s3://test-bucket/test.zarr"
+    dl_bucket = "s3://test-diag-bucket"
+    key = "diag_t_02.202301300600.nc4.gz"
+
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+
+    context = {}
+    event = {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {
+                        "name": dl_bucket,
+                    },
+                    "object": {
+                        "key": key,
+                    },
+                }
+            }
+        ]
+    }
+
+    aws.lambda_handler(event, context)
+
+    mock_fetch_record.assert_not_called()
+    mock_load.assert_not_called()
+    mock_save.assert_not_called()
