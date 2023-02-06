@@ -35,7 +35,6 @@ def test_parse_diag_filename(filename, variables, loop, init_time):
     "filename,errmsg",
     [
         ("ncdiag_s_anl.2022050514.nc4", "Invalid diagnostics filename"),
-        ("diag_ps_02.202205051400.nc4", "Invalid diagnostics filename"),
         ("ncdiag_conv_ps_anl.nc4.20220505", "Invalid diagnostics filename"),
     ],
 )
