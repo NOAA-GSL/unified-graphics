@@ -99,6 +99,19 @@ def make_scalar_diag():
     return _make_scalar_diag
 
 
+def test_open_diagnostic(app, diag_dataset, diag_zarr):
+    variable = diag.Variable.PRESSURE
+    init_time = "2022-05-13T06:00"
+    loop = diag.MinimLoop.ANALYSIS
+
+    diag_zarr([variable.value], init_time, loop.value)
+
+    with app.app_context():
+        result = diag.open_diagnostic(variable, init_time, loop)
+
+    xr.testing.assert_equal(result, diag_dataset(str(variable), init_time, str(loop)))
+
+
 @pytest.mark.parametrize(
     "variable,loop,filename",
     [

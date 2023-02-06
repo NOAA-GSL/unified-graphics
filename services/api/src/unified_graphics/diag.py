@@ -69,16 +69,11 @@ class Observation:
         }
 
 
-def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
-    filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
-    diag_uri = current_app.config["DIAG_DIR"]
-
-    if diag_uri.startswith("file://"):
-        return open_local_diagnostic(diag_uri, filename)
-    elif diag_uri.startswith("s3://"):
-        return open_s3_diagnostic(diag_uri, filename)
-    else:
-        raise FileNotFoundError(f"Unknown file URI: '{str(diag_uri)}'")
+def open_diagnostic(
+    variable: Variable, initialization_time: str, loop: MinimLoop
+) -> xr.Dataset:
+    group = f"/{variable.value}/{initialization_time}/{loop.value}"
+    return xr.open_zarr(current_app.config["DIAG_ZARR"], group=group)
 
 
 def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
