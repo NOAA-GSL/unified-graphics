@@ -26,33 +26,12 @@ def test_list_variables(client):
     "variable_name,variable_code",
     [("temperature", "t"), ("moisture", "q"), ("pressure", "ps")],
 )
-def test_scalar_diag(variable_name, variable_code, diag_file, client):
-    diag_file(
-        f"ncdiag_conv_{variable_code}_ges.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "Observation": xr.DataArray([0, 0]),
-                "Obs_Minus_Forecast_adjusted": xr.DataArray([0, 0]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
-    diag_file(
-        f"ncdiag_conv_{variable_code}_anl.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "Observation": xr.DataArray([0, 0]),
-                "Obs_Minus_Forecast_adjusted": xr.DataArray([10, 10]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
+def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    diag_zarr(variable_code, init_time, "ges")
+    diag_zarr(variable_code, init_time, "anl")
 
-    response = client.get(f"/diag/{variable_name}/")
+    response = client.get(f"/diag/{variable_name}/{init_time}")
 
     assert response.status_code == 200
     assert response.json == {
@@ -61,26 +40,24 @@ def test_scalar_diag(variable_name, variable_code, diag_file, client):
             {
                 "type": "Feature",
                 "properties": {
-                    "stationId": "WV270",
                     "type": "scalar",
                     "variable": variable_name,
                     "guess": 0,
-                    "analysis": 10,
+                    "analysis": 0,
                     "observed": 0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-120, 40]},
+                "geometry": {"type": "Point", "coordinates": [90, 22]},
             },
             {
                 "type": "Feature",
                 "properties": {
-                    "stationId": "E4294",
                     "type": "scalar",
                     "variable": variable_name,
                     "guess": 0,
-                    "analysis": 10,
+                    "analysis": 0,
                     "observed": 0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-88, 30]},
+                "geometry": {"type": "Point", "coordinates": [-160, 25]},
             },
         ],
     }

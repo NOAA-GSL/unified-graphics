@@ -38,7 +38,6 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
 @dataclass
 class Observation:
-    stationId: str
     variable: str
     variable_type: VariableType
     guess: Union[float, PolarCoordinate]
@@ -48,7 +47,6 @@ class Observation:
 
     def to_geojson(self):
         properties = {
-            "stationId": self.stationId,
             "type": self.variable_type.value,
             "variable": self.variable,
         }
@@ -147,37 +145,36 @@ def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
     return ds_contents
 
 
-def scalar(variable: Variable) -> List[Observation]:
-    ges = open_diagnostic(variable, MinimLoop.GUESS)
-    anl = open_diagnostic(variable, MinimLoop.ANALYSIS)
+def scalar(variable: Variable, initialization_time: str) -> List[Observation]:
+    ges = open_diagnostic(variable, initialization_time, MinimLoop.GUESS)
+    anl = open_diagnostic(variable, initialization_time, MinimLoop.ANALYSIS)
 
     return [
         Observation(
-            stationId.decode("utf-8").strip(),
             variable.name.lower(),
             VariableType.SCALAR,
-            guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
-            analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
-            observed=float(ges["Observation"].values[idx]),
+            guess=float(ges["obs_minus_forecast_adjusted"].values[idx]),
+            analysis=float(anl["obs_minus_forecast_adjusted"].values[idx]),
+            observed=float(ges["observation"].values[idx]),
             position=Coordinate(
-                float(ges["Longitude"].values[idx] - 360),
-                float(ges["Latitude"].values[idx]),
+                float(ges["longitude"].values[idx]),
+                float(ges["latitude"].values[idx]),
             ),
         )
-        for idx, stationId in enumerate(ges["Station_ID"].values)
+        for idx in range(len(ges["observation"]))
     ]
 
 
-def temperature() -> List[Observation]:
-    return scalar(Variable.TEMPERATURE)
+def temperature(initialization_time) -> List[Observation]:
+    return scalar(Variable.TEMPERATURE, initialization_time)
 
 
-def moisture() -> List[Observation]:
-    return scalar(Variable.MOISTURE)
+def moisture(initialization_time) -> List[Observation]:
+    return scalar(Variable.MOISTURE, initialization_time)
 
 
-def pressure() -> List[Observation]:
-    return scalar(Variable.PRESSURE)
+def pressure(initialization_time) -> List[Observation]:
+    return scalar(Variable.PRESSURE, initialization_time)
 
 
 def vector_direction(u, v):

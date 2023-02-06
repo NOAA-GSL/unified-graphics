@@ -27,13 +27,13 @@ def list_variables():
     return jsonify({v: url_for(".diagnostics", variable=v) for v in variables})
 
 
-@bp.route("/diag/<variable>/")
-def diagnostics(variable):
+@bp.route("/diag/<variable>/<initialization_time>")
+def diagnostics(variable, initialization_time):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics()
+    data = variable_diagnostics(initialization_time)
 
     response = jsonify(
         {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
