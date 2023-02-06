@@ -28,8 +28,8 @@ def test_list_variables(client):
 )
 def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
     init_time = "2022-05-16T04:00"
-    diag_zarr(variable_code, init_time, "ges")
-    diag_zarr(variable_code, init_time, "anl")
+    diag_zarr([variable_code], init_time, "ges")
+    diag_zarr([variable_code], init_time, "anl")
 
     response = client.get(f"/diag/{variable_name}/{init_time}")
 
