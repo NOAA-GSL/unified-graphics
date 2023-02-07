@@ -199,15 +199,23 @@ def vector_magnitude(u, v):
     return np.sqrt(u**2 + v**2)
 
 
-def wind() -> List[Observation]:
-    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
-    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
+def wind(initialization_time: str) -> List[Observation]:
+    ges = open_diagnostic(Variable.WIND, initialization_time, MinimLoop.GUESS)
+    anl = open_diagnostic(Variable.WIND, initialization_time, MinimLoop.ANALYSIS)
 
-    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
-    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
+    ges_forecast_u = ges["observation"].sel(component="u") - ges[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="u")
+    ges_forecast_v = ges["observation"].sel(component="v") - ges[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="v")
 
-    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
-    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
+    anl_forecast_u = anl["observation"].sel(component="u") - anl[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="u")
+    anl_forecast_v = anl["observation"].sel(component="v") - anl[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="v")
 
     ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
     ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
@@ -215,8 +223,14 @@ def wind() -> List[Observation]:
     anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
     anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
 
-    obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
-    obs_dir = vector_direction(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_mag = vector_magnitude(
+        ges["observation"].sel(component="u").values,
+        ges["observation"].sel(component="v").values,
+    )
+    obs_dir = vector_direction(
+        ges["observation"].sel(component="u").values,
+        ges["observation"].sel(component="v").values,
+    )
 
     ges_mag = obs_mag - ges_forecast_mag
     ges_dir = obs_dir - ges_forecast_dir
@@ -226,7 +240,6 @@ def wind() -> List[Observation]:
 
     return [
         Observation(
-            stationId.decode("utf-8").strip(),
             "wind",
             VariableType.VECTOR,
             guess=PolarCoordinate(
@@ -239,9 +252,9 @@ def wind() -> List[Observation]:
                 round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
             ),
             position=Coordinate(
-                round(float(ges["Longitude"].values[idx] - 360), 5),
-                round(float(ges["Latitude"].values[idx]), 5),
+                round(float(ges["longitude"].values[idx]), 5),
+                round(float(ges["latitude"].values[idx]), 5),
             ),
         )
-        for idx, stationId in enumerate(ges["Station_ID"].values)
+        for idx in range(len(ges["observation"].values))
     ]

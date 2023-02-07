@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest  # noqa: F401
-import xarray as xr
 
 
 def test_root_endpoint(client):
@@ -63,37 +62,12 @@ def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
     }
 
 
-def test_wind_diag(diag_file, client):
-    diag_file(
-        "ncdiag_conv_uv_ges.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "u_Observation": xr.DataArray([1, 0]),
-                "v_Observation": xr.DataArray([0, 1]),
-                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0.5, -2]),
-                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([0, 1]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
-    diag_file(
-        "ncdiag_conv_uv_anl.nc4.2022050514",
-        xr.Dataset(
-            {
-                "Station_ID": xr.DataArray([b"WV270   ", b"E4294   "]),
-                "u_Observation": xr.DataArray([1, 0]),
-                "v_Observation": xr.DataArray([0, 1]),
-                "u_Obs_Minus_Forecast_adjusted": xr.DataArray([0, -1.0]),
-                "v_Obs_Minus_Forecast_adjusted": xr.DataArray([-1, 1.0]),
-                "Longitude": xr.DataArray([240, 272]),
-                "Latitude": xr.DataArray([40, 30]),
-            }
-        ),
-    )
+def test_wind_diag(diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    diag_zarr(["uv"], init_time, "ges")
+    diag_zarr(["uv"], init_time, "anl")
 
-    response = client.get("/diag/wind/")
+    response = client.get(f"/diag/wind/{init_time}")
 
     assert response.status_code == 200
     assert response.json == {
@@ -102,26 +76,24 @@ def test_wind_diag(diag_file, client):
             {
                 "type": "Feature",
                 "properties": {
-                    "stationId": "WV270",
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": 0.5, "direction": 0.0},
-                    "analysis": {"magnitude": -0.41421, "direction": 45.0},
-                    "observed": {"magnitude": 1.0, "direction": 270.0},
+                    "guess": {"magnitude": 0.0, "direction": 0.0},
+                    "analysis": {"magnitude": 0.0, "direction": 0.0},
+                    "observed": {"magnitude": 0.0, "direction": 0.0},
                 },
-                "geometry": {"type": "Point", "coordinates": [-120.0, 40.0]},
+                "geometry": {"type": "Point", "coordinates": [90, 22]},
             },
             {
                 "type": "Feature",
                 "properties": {
-                    "stationId": "E4294",
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": -1.0, "direction": -90.0},
-                    "analysis": {"magnitude": 0.0, "direction": -90.0},
-                    "observed": {"magnitude": 1.0, "direction": 180.0},
+                    "guess": {"magnitude": 0.0, "direction": 0.0},
+                    "analysis": {"magnitude": 0.0, "direction": 0.0},
+                    "observed": {"magnitude": 0.0, "direction": 0.0},
                 },
-                "geometry": {"type": "Point", "coordinates": [-88.0, 30.0]},
+                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
             },
         ],
     }
