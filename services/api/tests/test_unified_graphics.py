@@ -114,13 +114,9 @@ def test_diag_not_found(variable_name, client):
     [("temperature", "t"), ("moisture", "q"), ("pressure", "ps"), ("wind", "uv")],
 )
 def test_diag_read_error(variable_name, variable_code, app, client):
-    empty = (
-        Path(app.config["DIAG_DIR"].removeprefix("file://"))
-        / f"ncdiag_conv_{variable_code}_ges.nc4.2022050514"
-    )
-    empty.touch()
+    Path(app.config["DIAG_ZARR"]).touch()
 
-    response = client.get(f"/diag/{variable_name}/")
+    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00")
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
