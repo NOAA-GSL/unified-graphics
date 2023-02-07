@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -103,6 +104,43 @@ def make_scalar_diag():
         )
 
     return _make_scalar_diag
+
+
+@pytest.mark.parametrize(
+    "uri,expected",
+    [
+        ("file:///tmp/diag.zarr", "/tmp/diag.zarr"),
+        ("/tmp/diag.zarr", "/tmp/diag.zarr"),
+    ],
+)
+def test_get_store_file(uri, expected):
+    result = diag.get_store(uri)
+
+    assert result == expected
+
+
+@mock.patch("unified_graphics.diag.S3Map", autospec=True)
+@mock.patch("unified_graphics.diag.S3FileSystem", autospec=True)
+def test_get_store_s3(mock_s3filesystem, mock_s3map):
+    key = "test-key"
+    token = "test-token"
+    secret = "test-secret"
+    client = {"region_name": "us-east-1"}
+    uri = "s3://bucket/prefix/diag.zarr"
+
+    os.environ["AWS_ACCESS_KEY_ID"] = key
+    os.environ["AWS_SECRET_ACCESS_KEY"] = secret
+    os.environ["AWS_SESSION_TOKEN"] = token
+
+    result = diag.get_store(uri)
+
+    assert result == mock_s3map.return_value
+    mock_s3filesystem.assert_called_once_with(
+        key=key, secret=secret, token=token, client_kwargs=client
+    )
+    mock_s3map.assert_called_once_with(
+        root="bucket/prefix/diag.zarr", s3=mock_s3filesystem.return_value, check=False
+    )
 
 
 def test_open_diagnostic(app, diag_dataset, diag_zarr):
