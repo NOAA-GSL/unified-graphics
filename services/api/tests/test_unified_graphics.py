@@ -126,8 +126,15 @@ def test_diag_read_error(variable_name, variable_code, app, client):
     assert response.json == {"msg": "Unable to read diagnostic file"}
 
 
-def test_unknown_variable(client):
-    response = client.get("/diag/not_a_variable/")
+@pytest.mark.parametrize(
+    "url",
+    [
+        "not_a_variable/",
+        "not_a_variable/2022-05-05T14:00",  # BUG: No trailing slash
+    ],
+)
+def test_unknown_variable(url, client):
+    response = client.get(f"/diag/{url}")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Variable not found: 'not_a_variable'"}

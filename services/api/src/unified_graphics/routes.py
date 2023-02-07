@@ -29,9 +29,13 @@ def list_variables():
 
 @bp.route("/diag/<variable>/")
 def list_model_runs(variable):
+    if not hasattr(diag, variable):
+        return jsonify(msg=f"Variable not found: '{variable}'"), 404
+
     return jsonify({})
 
 
+# BUG: No trailing slash
 @bp.route("/diag/<variable>/<initialization_time>")
 def diagnostics(variable, initialization_time):
     if not hasattr(diag, variable):
