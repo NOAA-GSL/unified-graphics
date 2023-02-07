@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -10,9 +11,14 @@ import xarray as xr
 from unified_graphics import create_app, diag
 
 # Global resources for s3
-test_bucket_name = "test"
+test_bucket_name = "osti-modeling-dev-rtma-vis"
 port = 5555
 endpoint_uri = f"http://127.0.0.1:{port}/"
+
+
+@pytest.fixture
+def test_key_prefix():
+    return f"/test/{uuid.uuid4()}/"
 
 
 # Fixture taken from fsspec/s3fs's test suite at
@@ -227,48 +233,28 @@ def test_open_diagnostic_s3_unknown_backend(s3_app, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "variable,loop,filename",
+    "variable,loop,coords",
     [
-        (
-            diag.Variable.MOISTURE,
-            diag.MinimLoop.GUESS,
-            "ncdiag_conv_q_ges.nc4.2022050514",
-        ),
-        (
-            diag.Variable.PRESSURE,
-            diag.MinimLoop.ANALYSIS,
-            "ncdiag_conv_ps_anl.nc4.2022050514",
-        ),
-        (
-            diag.Variable.TEMPERATURE,
-            diag.MinimLoop.ANALYSIS,
-            "ncdiag_conv_t_anl.nc4.2022050514",
-        ),
-        (diag.Variable.WIND, diag.MinimLoop.GUESS, "ncdiag_conv_uv_ges.nc4.2022050514"),
+        (diag.Variable.MOISTURE, diag.MinimLoop.GUESS, {}),
+        (diag.Variable.PRESSURE, diag.MinimLoop.ANALYSIS, {}),
+        (diag.Variable.TEMPERATURE, diag.MinimLoop.ANALYSIS, {}),
+        (diag.Variable.WIND, diag.MinimLoop.GUESS, {"component": ["u", "v"]}),
     ],
 )
 def test_open_diagnostic_s3(
-    variable, loop, filename, s3_app, make_scalar_diag, tmp_path
+    variable, loop, coords, app, test_key_prefix, diag_zarr, diag_dataset
 ):
-    # Write the netcdf file to disk before uploading
-    # Using a fileobj instead of writing to disk would be cleaner but requires using
-    # the scipy engine
-    expected = make_scalar_diag(omf=[0, -1, 2])
-    expected.to_netcdf(tmp_path / filename)
+    init_time = "2022-05-05T14:00"
+    zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
+    diag_zarr([variable.value], init_time, loop.value, zarr_file)
 
-    client = get_boto3_client()
-    client.upload_file(
-        Bucket=test_bucket_name,
-        Filename=str(tmp_path / filename),
-        Key=f"pytest/{filename}",
+    with app.app_context():
+        app.config["DIAG_ZARR"] = zarr_file
+        result = diag.open_diagnostic(variable, init_time, loop)
+
+    xr.testing.assert_equal(
+        result, diag_dataset(variable.value, init_time, loop.value, **coords)
     )
-
-    s3_app.config["DIAG_DIR"] = f"s3://{test_bucket_name}/pytest/"
-
-    with s3_app.app_context():
-        result = diag.open_diagnostic(variable, loop)
-
-    xr.testing.assert_equal(result, expected)
 
 
 # Test cases taken from the examples at

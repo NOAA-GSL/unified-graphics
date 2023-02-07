@@ -1,25 +1,13 @@
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
 import xarray as xr
+from s3fs import S3FileSystem, S3Map
 
 from unified_graphics import create_app
-
-
-@pytest.fixture(autouse=True)
-def clear_aws_credentials():
-    """Mocked AWS Credentials for moto
-
-    Run this before every test to make sure we don't push to an actual S3
-    instance when running tests.
-    """
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
 @pytest.fixture
@@ -29,7 +17,7 @@ def app(tmp_path):
 
     app = create_app()
     app.config["DIAG_DIR"] = str(diag_dir.as_uri())
-    app.config["DIAG_ZARR"] = tmp_path / "test_diag.zarr"
+    app.config["DIAG_ZARR"] = str(tmp_path / "test_diag.zarr")
 
     yield app
 
@@ -87,15 +75,40 @@ def diag_dataset():
 
 @pytest.fixture
 def diag_zarr(app, diag_dataset):
-    def factory(variables: list[str], initialization_time: str, loop: str):
-        with app.app_context():
-            zarr_file = app.config["DIAG_ZARR"]
+    def factory(
+        variables: list[str],
+        initialization_time: str,
+        loop: str,
+        zarr_file: str = "",
+    ):
+        if not zarr_file:
+            with app.app_context():
+                zarr_file = app.config["DIAG_ZARR"]
+
+        result = urlparse(zarr_file)
+
+        if result.scheme == "s3":
+            region = os.environ.get("AWS_REGION", "us-east-1")
+            s3 = S3FileSystem(
+                key=os.environ["AWS_ACCESS_KEY_ID"],
+                secret=os.environ["AWS_SECRET_ACCESS_KEY"],
+                token=os.environ["AWS_SESSION_TOKEN"],
+                client_kwargs={"region_name": region},
+            )
+
+            store = S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
+        else:
+            store = result.path
 
         for variable in variables:
             coords = {"component": ["u", "v"]} if variable == "uv" else {}
 
             ds = diag_dataset(variable, initialization_time, loop, **coords)
-            ds.to_zarr(zarr_file, group=f"/{variable}/{initialization_time}/{loop}")
+            try:
+                ds.to_zarr(store, group=f"/{variable}/{initialization_time}/{loop}")
+            except Exception as e:
+                print(e)
+                raise e
 
         return zarr_file
 

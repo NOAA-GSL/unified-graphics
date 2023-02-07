@@ -1,13 +1,16 @@
+import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import List, Union
+from urllib.parse import urlparse
 
 import fsspec  # type: ignore
 import numpy as np
 import xarray as xr
 from flask import current_app
+from s3fs import S3FileSystem, S3Map
 
 
 class MinimLoop(Enum):
@@ -67,11 +70,28 @@ class Observation:
         }
 
 
+def get_store(url: str) -> Union[str, S3Map]:
+    result = urlparse(url)
+    if result.scheme != "s3":
+        return url
+
+    region = os.environ.get("AWS_REGION", "us-east-1")
+    s3 = S3FileSystem(
+        key=os.environ["AWS_ACCESS_KEY_ID"],
+        secret=os.environ["AWS_SECRET_ACCESS_KEY"],
+        token=os.environ["AWS_SESSION_TOKEN"],
+        client_kwargs={"region_name": region},
+    )
+
+    return S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
+
+
 def open_diagnostic(
     variable: Variable, initialization_time: str, loop: MinimLoop
 ) -> xr.Dataset:
+    store = get_store(current_app.config["DIAG_ZARR"])
     group = f"/{variable.value}/{initialization_time}/{loop.value}"
-    return xr.open_zarr(current_app.config["DIAG_ZARR"], group=group)
+    return xr.open_zarr(store, group=group)
 
 
 def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
