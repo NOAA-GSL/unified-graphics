@@ -182,22 +182,25 @@ def test_open_diagnostic_unknown_uri(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
-def test_open_diagnostic_s3_nonexistent_bucket(s3_app):
-    s3_app.config["DIAG_DIR"] = "s3://foo/"
+def test_open_diagnostic_s3_nonexistent_bucket(app):
+    init_time = "2022-05-05T14:00"
+    app.config["DIAG_ZARR"] = "s3://foo/test.zarr"
 
-    expected = r"The specified bucket does not exist"
+    expected = r"Forbidden"
 
-    with s3_app.app_context():
+    with app.app_context():
+        with pytest.raises(PermissionError, match=expected):
+            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+
+
+def test_open_diagnostic_s3_nonexistent_key(app):
+    init_time = "2022-05-16T04:00"
+    app.config["DIAG_ZARR"] = "s3://osti-modeling-dev-rtma-vis/test/no_such.zarr"
+    expected = r"No such file or directory.*"
+
+    with app.app_context():
         with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
-
-
-def test_open_diagnostic_s3_nonexistent_key(s3_app):
-    expected = r"The specified key does not exist"
-
-    with s3_app.app_context():
-        with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
 @pytest.mark.skip(reason="Moto doesn't check authentication by default")
