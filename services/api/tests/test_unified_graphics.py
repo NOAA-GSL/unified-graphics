@@ -103,7 +103,7 @@ def test_wind_diag(diag_zarr, client):
     "variable_name", ["temperature", "moisture", "pressure", "wind"]
 )
 def test_diag_not_found(variable_name, client):
-    response = client.get(f"/diag/{variable_name}/")
+    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
