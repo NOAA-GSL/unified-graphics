@@ -24,7 +24,12 @@ def index():
 def list_variables():
     variables = [v.name.lower() for v in diag.Variable]
 
-    return jsonify({v: url_for(".diagnostics", variable=v) for v in variables})
+    return jsonify({v: url_for(".list_model_runs", variable=v) for v in variables})
+
+
+@bp.route("/diag/<variable>/")
+def list_model_runs(variable):
+    return jsonify({})
 
 
 @bp.route("/diag/<variable>/<initialization_time>")
