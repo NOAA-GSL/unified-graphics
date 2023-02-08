@@ -151,11 +151,12 @@ def test_open_diagnostic_local(variable, loop, filename, app, make_scalar_diag):
 
 
 def test_open_diagnostic_local_does_not_exist(app):
-    expected = r"No such file: '.*ncdiag_conv_uv_ges.nc4.2022050514'$"
+    init_time = "2022-05-16T04:00"
+    expected = r"No such file or directory: '.*test_diag.zarr'$"
 
     with app.app_context():
         with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
 def test_open_diagnostic_local_unknown_backend(app):
