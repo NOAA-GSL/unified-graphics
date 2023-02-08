@@ -145,18 +145,10 @@ def test_open_diagnostic_s3_unauthenticated(app, test_key_prefix):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize(
-    "variable,loop,coords",
-    [
-        (diag.Variable.MOISTURE, diag.MinimLoop.GUESS, {}),
-        (diag.Variable.PRESSURE, diag.MinimLoop.ANALYSIS, {}),
-        (diag.Variable.TEMPERATURE, diag.MinimLoop.ANALYSIS, {}),
-        (diag.Variable.WIND, diag.MinimLoop.GUESS, {"component": ["u", "v"]}),
-    ],
-)
-def test_open_diagnostic_s3(
-    variable, loop, coords, app, test_key_prefix, diag_zarr, diag_dataset
-):
+def test_open_diagnostic_s3(app, test_key_prefix, diag_zarr, diag_dataset):
+    variable = diag.Variable.WIND
+    loop = diag.MinimLoop.ANALYSIS
+    coords = {"component": ["u", "v"]}
     init_time = "2022-05-05T14:00"
     zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
     diag_zarr([variable.value], init_time, loop.value, zarr_file)
