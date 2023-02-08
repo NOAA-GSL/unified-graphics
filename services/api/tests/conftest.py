@@ -10,6 +10,34 @@ from s3fs import S3FileSystem, S3Map
 from unified_graphics import create_app
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runaws",
+        action="store_true",
+        default=False,
+        help="run tests that require authentication to AWS",
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "aws: mark test as requiring an authenticated connection to AWS"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runaws"):
+        # If --runaws is set, there's no need to modify any of the tests
+        # to mark them skipped.
+        return
+
+    # Mark any test with the aws mark as skipped because --runaws is off
+    skip_aws = pytest.mark.skip(reason="use --runaws to run")
+    for item in items:
+        if "aws" in item.keywords:
+            item.add_marker(skip_aws)
+
+
 @pytest.fixture
 def app(tmp_path):
     diag_dir = tmp_path / "data"

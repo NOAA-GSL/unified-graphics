@@ -195,6 +195,7 @@ def test_open_diagnostic_unknown_uri(uri, expected, app):
             diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
+@pytest.mark.aws
 def test_open_diagnostic_s3_nonexistent_bucket(app):
     init_time = "2022-05-05T14:00"
     app.config["DIAG_ZARR"] = "s3://foo/test.zarr"
@@ -206,6 +207,7 @@ def test_open_diagnostic_s3_nonexistent_bucket(app):
             diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
+@pytest.mark.aws
 def test_open_diagnostic_s3_nonexistent_key(app):
     init_time = "2022-05-16T04:00"
     app.config["DIAG_ZARR"] = "s3://osti-modeling-dev-rtma-vis/test/no_such.zarr"
@@ -217,6 +219,7 @@ def test_open_diagnostic_s3_nonexistent_key(app):
 
 
 @pytest.mark.skip(reason="Moto doesn't check authentication by default")
+@pytest.mark.aws
 def test_open_diagnostic_s3_unauthenticated(s3_app):
     os.unsetenv("AWS_ACCESS_KEY_ID")
     os.unsetenv("AWS_SECRET_ACCESS_KEY")
@@ -248,6 +251,7 @@ def test_open_diagnostic_s3_unknown_backend(s3_app, tmp_path):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize(
     "variable,loop,coords",
     [
