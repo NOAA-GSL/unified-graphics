@@ -5,13 +5,20 @@ from unified_graphics import diag
 bp = Blueprint("api", __name__)
 
 
+# TODO: Don't hardcode the error message
+# Instead of hard-coding the error message, we should read e.args[0] to allow different
+# types of 404s, such as a missing variable, init time, or zarr
 @bp.errorhandler(FileNotFoundError)
 def handle_diag_file_not_found(e):
     return jsonify(msg="Diagnostic file not found"), 404
 
 
+# TODO: Don't hardcode the error message
+# Instead of hard-coding the error message, we should read e.args[0] to allow different
+# types of 500s, such as an unknown variable
 @bp.errorhandler(ValueError)
 def handle_diag_file_read_error(e):
+    # FIXME: Some ValueErrors should be 400s
     return jsonify(msg="Unable to read diagnostic file"), 500
 
 
@@ -32,7 +39,14 @@ def list_model_runs(variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    return jsonify({})
+    init_times = diag.initialization_times(variable)
+
+    return jsonify(
+        {
+            t: url_for(".diagnostics", variable=variable, initialization_time=t)
+            for t in init_times
+        }
+    )
 
 
 # BUG: No trailing slash

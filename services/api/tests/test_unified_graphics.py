@@ -21,6 +21,33 @@ def test_list_variables(client):
     }
 
 
+def test_list_init_times(diag_zarr, client):
+    init_times = [
+        "2022-05-05T14:00",
+        "2022-05-05T15:00",
+        "2022-05-05T16:00",
+        "2022-05-05T17:00",
+        "2022-05-05T18:00",
+    ]
+
+    for t in init_times:
+        diag_zarr(["q"], t, "anl")
+
+    response = client.get("/diag/moisture/")
+
+    assert response.status_code == 200
+    assert response.json == {t: f"/diag/moisture/{t}" for t in init_times}
+
+
+def test_list_init_times_missing(diag_zarr, client):
+    diag_zarr(["ps"], "2022-05-05T15:00", "anl")
+
+    response = client.get("/diag/moisture/")
+
+    assert response.status_code == 404
+    assert response.json == {"msg": "Diagnostic file not found"}
+
+
 @pytest.mark.parametrize(
     "variable_name,variable_code",
     [("temperature", "t"), ("moisture", "q"), ("pressure", "ps")],

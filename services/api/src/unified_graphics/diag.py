@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import numpy as np
 import xarray as xr
+import zarr
 from flask import current_app
 from s3fs import S3FileSystem, S3Map
 
@@ -66,6 +67,18 @@ class Observation:
             "properties": properties,
             "geometry": {"type": "Point", "coordinates": list(self.position)},
         }
+
+
+def initialization_times(variable: str) -> list[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    v = getattr(Variable, variable.upper())
+
+    if v.value not in z:
+        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
+
+    return z[v.value].group_keys()
 
 
 def get_store(url: str) -> Union[str, S3Map]:
