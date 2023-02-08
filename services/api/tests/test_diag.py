@@ -33,6 +33,7 @@ def test_get_store_file(uri, expected):
 @mock.patch("unified_graphics.diag.S3Map", autospec=True)
 @mock.patch("unified_graphics.diag.S3FileSystem", autospec=True)
 def test_get_store_s3(mock_s3filesystem, mock_s3map):
+    prev_env = dict(**os.environ)
     key = "test-key"
     token = "test-token"
     secret = "test-secret"
@@ -52,6 +53,8 @@ def test_get_store_s3(mock_s3filesystem, mock_s3map):
     mock_s3map.assert_called_once_with(
         root="bucket/prefix/diag.zarr", s3=mock_s3filesystem.return_value, check=False
     )
+
+    os.environ = prev_env
 
 
 def test_open_diagnostic(app, diag_dataset, diag_zarr):
