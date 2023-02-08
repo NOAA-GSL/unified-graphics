@@ -80,9 +80,9 @@ def get_store(url: str) -> Union[str, S3Map]:
 
     region = os.environ.get("AWS_REGION", "us-east-1")
     s3 = S3FileSystem(
-        key=os.environ["AWS_ACCESS_KEY_ID"],
-        secret=os.environ["AWS_SECRET_ACCESS_KEY"],
-        token=os.environ["AWS_SESSION_TOKEN"],
+        key=os.environ.get("AWS_ACCESS_KEY_ID"),
+        secret=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        token=os.environ.get("AWS_SESSION_TOKEN"),
         client_kwargs={"region_name": region},
     )
 

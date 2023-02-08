@@ -256,15 +256,24 @@ def test_open_diagnostic_s3_nonexistent_key(app):
             diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
-@pytest.mark.skip(reason="Moto doesn't check authentication by default")
 @pytest.mark.aws
-def test_open_diagnostic_s3_unauthenticated(s3_app):
-    os.unsetenv("AWS_ACCESS_KEY_ID")
-    os.unsetenv("AWS_SECRET_ACCESS_KEY")
+def test_open_diagnostic_s3_unauthenticated(app, test_key_prefix):
+    # Back up the current environment so we don't break anything
+    prev_env = dict(**os.environ)
 
-    with s3_app.app_context():
+    init_time = "2022-05-16T04:00"
+    app.config["DIAG_ZARR"] = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
+
+    del os.environ["AWS_ACCESS_KEY_ID"]
+    del os.environ["AWS_SECRET_ACCESS_KEY"]
+    del os.environ["AWS_SESSION_TOKEN"]
+
+    with app.app_context():
         with pytest.raises(PermissionError):
-            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+
+    # Restore environment
+    os.environ = prev_env
 
 
 def test_open_diagnostic_s3_unknown_backend(s3_app, tmp_path):
