@@ -172,14 +172,26 @@ def test_open_diagnostic_local_unknown_backend(app):
             diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
 
 
-def test_open_diagnostic_unknown_uri(app):
-    app.config["DIAG_DIR"] = "foo://an/unknown/uri"
-
-    expected = r"Unknown file URI: 'foo://an/unknown/uri'"
+@pytest.mark.parametrize(
+    "uri,expected",
+    [
+        (
+            "foo://an/unknown/uri.zarr",
+            "Unsupported protocol 'foo' for URI: 'foo://an/unknown/uri.zarr'",
+        ),
+        (
+            "ftp://an/unsupported/uri.zarr",
+            "Unsupported protocol 'ftp' for URI: 'ftp://an/unsupported/uri.zarr'",
+        ),
+    ],
+)
+def test_open_diagnostic_unknown_uri(uri, expected, app):
+    init_time = "2022-05-16T04:00"
+    app.config["DIAG_ZARR"] = uri
 
     with app.app_context():
-        with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, diag.MinimLoop.GUESS)
+        with pytest.raises(ValueError, match=expected):
+            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
 
 
 def test_open_diagnostic_s3_nonexistent_bucket(app):

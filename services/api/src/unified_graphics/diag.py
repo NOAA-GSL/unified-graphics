@@ -72,8 +72,11 @@ class Observation:
 
 def get_store(url: str) -> Union[str, S3Map]:
     result = urlparse(url)
-    if result.scheme != "s3":
+    if result.scheme in ["", "file"]:
         return url
+
+    if result.scheme != "s3":
+        raise ValueError(f"Unsupported protocol '{result.scheme}' for URI: '{url}'")
 
     region = os.environ.get("AWS_REGION", "us-east-1")
     s3 = S3FileSystem(
