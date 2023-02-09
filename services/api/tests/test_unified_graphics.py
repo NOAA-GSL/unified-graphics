@@ -39,6 +39,27 @@ def test_list_init_times(diag_zarr, client):
     assert response.json == {t: f"/diag/moisture/{t}" for t in init_times}
 
 
+@pytest.mark.parametrize(
+    "loops",
+    [
+        ["ges"],
+        ["ges", "anl"],
+    ],
+)
+def test_list_loops(loops, diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    for loop in loops:
+        diag_zarr(["q"], init_time, loop)
+
+    response = client.get(f"/diag/moisture/{init_time}/")
+
+    assert response.status_code == 200
+    assert response.json == {
+        loop: f"/diag/moisture/{init_time}/{loop}/" for loop in loops
+    }
+
+
+# TODO: modify this to test all 404s for all endpoints
 def test_list_init_times_missing(diag_zarr, client):
     diag_zarr(["ps"], "2022-05-05T15:00", "anl")
 
