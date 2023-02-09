@@ -10,9 +10,6 @@ The site header for the application.
   <h1 class="text-bold">Unified Graphics</h1>
   <form data-layout="cluster">
     <select class="usa-select">
-      <option>RRFS</option>
-    </select>
-    <select class="usa-select">
       <option>05 May 2022 14:00</option>
     </select>
   </form>
