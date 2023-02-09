@@ -43,15 +43,31 @@ def list_model_runs(variable):
 
     return jsonify(
         {
-            t: url_for(".diagnostics", variable=variable, initialization_time=t)
+            t: url_for(".list_loops", variable=variable, initialization_time=t)
             for t in init_times
         }
     )
 
 
-# BUG: No trailing slash
-@bp.route("/diag/<variable>/<initialization_time>")
-def diagnostics(variable, initialization_time):
+@bp.route("/diag/<variable>/<initialization_time>/")
+def list_loops(variable, initialization_time):
+    loops = diag.loops(variable, initialization_time)
+
+    return jsonify(
+        {
+            loop: url_for(
+                ".diagnostics",
+                variable=variable,
+                initialization_time=initialization_time,
+                loop=loop,
+            )
+            for loop in loops
+        }
+    )
+
+
+@bp.route("/diag/<variable>/<initialization_time>/<loop>/")
+def diagnostics(variable, initialization_time, loop):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 

@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union
+from typing import Iterator, List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -79,6 +79,22 @@ def initialization_times(variable: str) -> list[str]:
         raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
 
     return z[v.value].group_keys()
+
+
+def loops(variable: str, initialization_time: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+    v = getattr(Variable, variable.upper())
+
+    if v.value not in z:
+        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
+
+    if initialization_time not in z[v.value]:
+        raise FileNotFoundError(
+            f"Initialization time '{initialization_time}' not found in diagnostic file"
+        )
+
+    return z[v.value][initialization_time].group_keys()
 
 
 def get_store(url: str) -> Union[str, S3Map]:

@@ -36,7 +36,7 @@ def test_list_init_times(diag_zarr, client):
     response = client.get("/diag/moisture/")
 
     assert response.status_code == 200
-    assert response.json == {t: f"/diag/moisture/{t}" for t in init_times}
+    assert response.json == {t: f"/diag/moisture/{t}/" for t in init_times}
 
 
 @pytest.mark.parametrize(
@@ -174,7 +174,7 @@ def test_diag_read_error(variable_name, variable_code, app, client):
     "url",
     [
         "not_a_variable/",
-        "not_a_variable/2022-05-05T14:00",  # BUG: No trailing slash
+        "not_a_variable/2022-05-05T14:00/ges/",
     ],
 )
 def test_unknown_variable(url, client):
