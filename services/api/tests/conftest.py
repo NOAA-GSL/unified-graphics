@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 import numpy as np
@@ -70,7 +71,13 @@ def diag_file(app):
 
 @pytest.fixture
 def diag_dataset():
-    def factory(variable: str, initialization_time: str, loop: str, **kwargs):
+    def factory(
+        variable: str,
+        initialization_time: str,
+        loop: str,
+        data: Optional[xr.Dataset] = None,
+        **kwargs,
+    ):
         dims = [*kwargs.keys(), "nobs"]
         shape = [*map(len, kwargs.values()), 2]
         variables = [
@@ -81,20 +88,26 @@ def diag_dataset():
             "obs_minus_forecast_unadjusted",
         ]
 
-        ds = xr.Dataset(
-            {var: (dims, np.zeros(shape)) for var in variables},
-            coords=dict(
-                longitude=(["nobs"], np.array([90, -160], dtype=np.float64)),
-                latitude=(["nobs"], np.array([22, 25], dtype=np.float64)),
-                is_used=(["nobs"], np.array([1, 0], dtype=np.int8)),
-                **kwargs,
-            ),
-            attrs={
-                "name": variable,
-                "loop": loop,
-                "initialization_time": initialization_time,
-            },
-        )
+        if data:
+            ds = data
+            ds.attrs.update(
+                name=variable, loop=loop, initialization_time=initialization_time
+            )
+        else:
+            ds = xr.Dataset(
+                {var: (dims, np.zeros(shape)) for var in variables},
+                coords=dict(
+                    longitude=(["nobs"], np.array([90, -160], dtype=np.float64)),
+                    latitude=(["nobs"], np.array([22, 25], dtype=np.float64)),
+                    is_used=(["nobs"], np.array([1, 0], dtype=np.int8)),
+                    **kwargs,
+                ),
+                attrs={
+                    "name": variable,
+                    "loop": loop,
+                    "initialization_time": initialization_time,
+                },
+            )
 
         return ds
 
@@ -108,6 +121,7 @@ def diag_zarr(app, diag_dataset):
         initialization_time: str,
         loop: str,
         zarr_file: str = "",
+        data: Optional[xr.Dataset] = None,
     ):
         if not zarr_file:
             with app.app_context():
@@ -127,6 +141,12 @@ def diag_zarr(app, diag_dataset):
             store = S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
         else:
             store = result.path
+
+        if data:
+            data.to_zarr(
+                store, group=f"/{data.attrs['name']}/{initialization_time}/{loop}"
+            )
+            return zarr_file
 
         for variable in variables:
             coords = {"component": ["u", "v"]} if variable == "uv" else {}

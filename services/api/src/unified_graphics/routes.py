@@ -72,7 +72,7 @@ def diagnostics(variable, initialization_time, loop):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics(initialization_time)
+    data = variable_diagnostics(initialization_time, diag.MinimLoop(loop))
 
     response = jsonify(
         {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}

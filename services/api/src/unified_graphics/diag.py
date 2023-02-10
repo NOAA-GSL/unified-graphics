@@ -42,8 +42,9 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 class Observation:
     variable: str
     variable_type: VariableType
-    guess: Union[float, PolarCoordinate]
-    analysis: Union[float, PolarCoordinate]
+    loop: MinimLoop
+    adjusted: Union[float, PolarCoordinate]
+    unadjusted: Union[float, PolarCoordinate]
     observed: Union[float, PolarCoordinate]
     position: Coordinate
 
@@ -51,15 +52,16 @@ class Observation:
         properties = {
             "type": self.variable_type.value,
             "variable": self.variable,
+            "loop": self.loop.value,
         }
 
-        if isinstance(self.guess, float):
-            properties["guess"] = self.guess
-            properties["analysis"] = self.analysis
+        if isinstance(self.adjusted, float):
+            properties["adjusted"] = self.adjusted
+            properties["unadjusted"] = self.unadjusted
             properties["observed"] = self.observed
         else:
-            properties["guess"] = self.guess._asdict()
-            properties["analysis"] = self.analysis._asdict()
+            properties["adjusted"] = self.adjusted._asdict()
+            properties["unadjusted"] = self.unadjusted._asdict()
             properties["observed"] = self.observed._asdict()
 
         return {
@@ -69,7 +71,7 @@ class Observation:
         }
 
 
-def initialization_times(variable: str) -> list[str]:
+def initialization_times(variable: str) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
@@ -124,36 +126,38 @@ def open_diagnostic(
     return xr.open_zarr(store, group=group)
 
 
-def scalar(variable: Variable, initialization_time: str) -> List[Observation]:
-    ges = open_diagnostic(variable, initialization_time, MinimLoop.GUESS)
-    anl = open_diagnostic(variable, initialization_time, MinimLoop.ANALYSIS)
+def scalar(
+    variable: Variable, initialization_time: str, loop: MinimLoop
+) -> List[Observation]:
+    data = open_diagnostic(variable, initialization_time, loop)
 
     return [
         Observation(
             variable.name.lower(),
             VariableType.SCALAR,
-            guess=float(ges["obs_minus_forecast_adjusted"].values[idx]),
-            analysis=float(anl["obs_minus_forecast_adjusted"].values[idx]),
-            observed=float(ges["observation"].values[idx]),
+            loop,
+            adjusted=float(data["obs_minus_forecast_adjusted"].values[idx]),
+            unadjusted=float(data["obs_minus_forecast_unadjusted"].values[idx]),
+            observed=float(data["observation"].values[idx]),
             position=Coordinate(
-                float(ges["longitude"].values[idx]),
-                float(ges["latitude"].values[idx]),
+                float(data["longitude"].values[idx]),
+                float(data["latitude"].values[idx]),
             ),
         )
-        for idx in range(len(ges["observation"]))
+        for idx in range(len(data["observation"]))
     ]
 
 
-def temperature(initialization_time) -> List[Observation]:
-    return scalar(Variable.TEMPERATURE, initialization_time)
+def temperature(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.TEMPERATURE, initialization_time, loop)
 
 
-def moisture(initialization_time) -> List[Observation]:
-    return scalar(Variable.MOISTURE, initialization_time)
+def moisture(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.MOISTURE, initialization_time, loop)
 
 
-def pressure(initialization_time) -> List[Observation]:
-    return scalar(Variable.PRESSURE, initialization_time)
+def pressure(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.PRESSURE, initialization_time, loop)
 
 
 def vector_direction(u, v):
@@ -178,62 +182,71 @@ def vector_magnitude(u, v):
     return np.sqrt(u**2 + v**2)
 
 
-def wind(initialization_time: str) -> List[Observation]:
-    ges = open_diagnostic(Variable.WIND, initialization_time, MinimLoop.GUESS)
-    anl = open_diagnostic(Variable.WIND, initialization_time, MinimLoop.ANALYSIS)
+def wind(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    data = open_diagnostic(Variable.WIND, initialization_time, loop)
 
-    ges_forecast_u = ges["observation"].sel(component="u") - ges[
+    forecast_u_adjusted = data["observation"].sel(component="u") - data[
         "obs_minus_forecast_adjusted"
     ].sel(component="u")
-    ges_forecast_v = ges["observation"].sel(component="v") - ges[
+    forecast_v_adjusted = data["observation"].sel(component="v") - data[
         "obs_minus_forecast_adjusted"
     ].sel(component="v")
 
-    anl_forecast_u = anl["observation"].sel(component="u") - anl[
-        "obs_minus_forecast_adjusted"
+    forecast_u_unadjusted = data["observation"].sel(component="u") - data[
+        "obs_minus_forecast_unadjusted"
     ].sel(component="u")
-    anl_forecast_v = anl["observation"].sel(component="v") - anl[
-        "obs_minus_forecast_adjusted"
+    forecast_v_unadjusted = data["observation"].sel(component="v") - data[
+        "obs_minus_forecast_unadjusted"
     ].sel(component="v")
 
-    ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
-    ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
+    adjusted_mag = vector_magnitude(
+        forecast_u_adjusted.values, forecast_v_adjusted.values
+    )
+    adjusted_dir = vector_direction(
+        forecast_u_adjusted.values, forecast_v_adjusted.values
+    )
 
-    anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
-    anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
+    unadjusted_mag = vector_magnitude(
+        forecast_u_unadjusted.values, forecast_v_unadjusted.values
+    )
+    unadjusted_dir = vector_direction(
+        forecast_u_unadjusted.values, forecast_v_unadjusted.values
+    )
 
     obs_mag = vector_magnitude(
-        ges["observation"].sel(component="u").values,
-        ges["observation"].sel(component="v").values,
+        data["observation"].sel(component="u").values,
+        data["observation"].sel(component="v").values,
     )
     obs_dir = vector_direction(
-        ges["observation"].sel(component="u").values,
-        ges["observation"].sel(component="v").values,
+        data["observation"].sel(component="u").values,
+        data["observation"].sel(component="v").values,
     )
 
-    ges_mag = obs_mag - ges_forecast_mag
-    ges_dir = obs_dir - ges_forecast_dir
+    adjusted_mag = obs_mag - adjusted_mag
+    adjusted_dir = obs_dir - adjusted_dir
 
-    anl_mag = obs_mag - anl_forecast_mag
-    anl_dir = obs_dir - anl_forecast_dir
+    unadjusted_mag = obs_mag - unadjusted_mag
+    unadjusted_dir = obs_dir - unadjusted_dir
 
     return [
         Observation(
             "wind",
             VariableType.VECTOR,
-            guess=PolarCoordinate(
-                round(float(ges_mag[idx]), 5), round(float(ges_dir[idx]), 5)
+            loop,
+            adjusted=PolarCoordinate(
+                round(float(adjusted_mag[idx]), 5), round(float(adjusted_dir[idx]), 5)
             ),
-            analysis=PolarCoordinate(
-                round(float(anl_mag[idx]), 5), round(float(anl_dir[idx]), 5)
+            unadjusted=PolarCoordinate(
+                round(float(unadjusted_mag[idx]), 5),
+                round(float(unadjusted_dir[idx]), 5),
             ),
             observed=PolarCoordinate(
                 round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
             ),
             position=Coordinate(
-                round(float(ges["longitude"].values[idx]), 5),
-                round(float(ges["latitude"].values[idx]), 5),
+                round(float(data["longitude"].values[idx]), 5),
+                round(float(data["latitude"].values[idx]), 5),
             ),
         )
-        for idx in range(len(ges["observation"].values))
+        for idx in range(len(data["observation"].values))
     ]

@@ -70,15 +70,14 @@ def test_list_init_times_missing(diag_zarr, client):
 
 
 @pytest.mark.parametrize(
-    "variable_name,variable_code",
-    [("temperature", "t"), ("moisture", "q"), ("pressure", "ps")],
+    "variable_name,variable_code,loop",
+    [("temperature", "t", "anl"), ("moisture", "q", "ges")],
 )
-def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
+def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
     init_time = "2022-05-16T04:00"
-    diag_zarr([variable_code], init_time, "ges")
-    diag_zarr([variable_code], init_time, "anl")
+    diag_zarr([variable_code], init_time, loop)
 
-    response = client.get(f"/diag/{variable_name}/{init_time}")
+    response = client.get(f"/diag/{variable_name}/{init_time}/{loop}/")
 
     assert response.status_code == 200
     assert response.json == {
@@ -88,9 +87,10 @@ def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
+                    "loop": loop,
                     "variable": variable_name,
-                    "guess": 0,
-                    "analysis": 0,
+                    "adjusted": 0,
+                    "unadjusted": 0,
                     "observed": 0,
                 },
                 "geometry": {"type": "Point", "coordinates": [90, 22]},
@@ -99,9 +99,10 @@ def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
+                    "loop": loop,
                     "variable": variable_name,
-                    "guess": 0,
-                    "analysis": 0,
+                    "adjusted": 0,
+                    "unadjusted": 0,
                     "observed": 0,
                 },
                 "geometry": {"type": "Point", "coordinates": [-160, 25]},
@@ -112,10 +113,10 @@ def test_scalar_diag(variable_name, variable_code, diag_zarr, client):
 
 def test_wind_diag(diag_zarr, client):
     init_time = "2022-05-16T04:00"
-    diag_zarr(["uv"], init_time, "ges")
-    diag_zarr(["uv"], init_time, "anl")
+    loop = "ges"
+    diag_zarr(["uv"], init_time, loop)
 
-    response = client.get(f"/diag/wind/{init_time}")
+    response = client.get(f"/diag/wind/{init_time}/{loop}/")
 
     assert response.status_code == 200
     assert response.json == {
@@ -126,8 +127,9 @@ def test_wind_diag(diag_zarr, client):
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": 0.0, "direction": 0.0},
-                    "analysis": {"magnitude": 0.0, "direction": 0.0},
+                    "loop": loop,
+                    "adjusted": {"magnitude": 0.0, "direction": 0.0},
+                    "unadjusted": {"magnitude": 0.0, "direction": 0.0},
                     "observed": {"magnitude": 0.0, "direction": 0.0},
                 },
                 "geometry": {"type": "Point", "coordinates": [90, 22]},
@@ -137,8 +139,9 @@ def test_wind_diag(diag_zarr, client):
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "guess": {"magnitude": 0.0, "direction": 0.0},
-                    "analysis": {"magnitude": 0.0, "direction": 0.0},
+                    "loop": loop,
+                    "adjusted": {"magnitude": 0.0, "direction": 0.0},
+                    "unadjusted": {"magnitude": 0.0, "direction": 0.0},
                     "observed": {"magnitude": 0.0, "direction": 0.0},
                 },
                 "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
@@ -151,7 +154,7 @@ def test_wind_diag(diag_zarr, client):
     "variable_name", ["temperature", "moisture", "pressure", "wind"]
 )
 def test_diag_not_found(variable_name, client):
-    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00")
+    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00/ges/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
@@ -164,7 +167,7 @@ def test_diag_not_found(variable_name, client):
 def test_diag_read_error(variable_name, variable_code, app, client):
     Path(app.config["DIAG_ZARR"]).touch()
 
-    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00")
+    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00/ges/")
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
