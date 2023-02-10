@@ -53,7 +53,7 @@ The site header for the application.
       {/await}
     </select>
 
-    <select class="usa-select">
+    <select class="usa-select" bind:value={diag_data}>
       {#await init_times then times}
         {#each times as time}
           <option value={time.url}>{time.name}</option>
