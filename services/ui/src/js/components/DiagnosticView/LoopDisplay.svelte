@@ -101,14 +101,10 @@
     .map((d) => d.properties[loop]);
 
   $: xTitle =
-    variableType === "vector"
-      ? "Direction (Observation − Forecast)"
-      : "Observation − Forecast";
+    variableType === "vector" ? "u (Observation − Forecast)" : "Observation − Forecast";
 
   $: yTitle =
-    variableType === "vector"
-      ? "Magnitude (Observation − Forecast)"
-      : "Observation count";
+    variableType === "vector" ? "v (Observation − Forecast)" : "Observation count";
 
   $: mapData = {
     type: "FeatureCollection",
