@@ -31,7 +31,17 @@ def index():
 def list_variables():
     variables = [v.name.lower() for v in diag.Variable]
 
-    return jsonify({v: url_for(".list_model_runs", variable=v) for v in variables})
+    return jsonify(
+        [
+            {
+                "name": v,
+                "url": url_for(".list_model_runs", variable=v),
+                # FIXME: We need to be able to look up variable types
+                "type": "vector" if v == "wind" else "scalar",
+            }
+            for v in variables
+        ]
+    )
 
 
 @bp.route("/diag/<variable>/")

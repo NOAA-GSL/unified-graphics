@@ -13,12 +13,12 @@ def test_list_variables(client):
     response = client.get("/diag/")
 
     assert response.status_code == 200
-    assert response.json == {
-        "moisture": "/diag/moisture/",
-        "pressure": "/diag/pressure/",
-        "temperature": "/diag/temperature/",
-        "wind": "/diag/wind/",
-    }
+    assert response.json == [
+        {"name": "moisture", "url": "/diag/moisture/", "type": "scalar"},
+        {"name": "pressure", "url": "/diag/pressure/", "type": "scalar"},
+        {"name": "temperature", "url": "/diag/temperature/", "type": "scalar"},
+        {"name": "wind", "url": "/diag/wind/", "type": "vector"},
+    ]
 
 
 def test_list_init_times(diag_zarr, client):
