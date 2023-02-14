@@ -8,7 +8,6 @@
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
     .then((json) => {
-      console.log(json);
       currentVariable = json[0].url;
       return json;
     });
