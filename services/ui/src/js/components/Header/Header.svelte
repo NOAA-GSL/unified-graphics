@@ -28,7 +28,7 @@
     // needed for display in the LoopDisplay components.
     if (currentVariable) {
       variables.then((data) => {
-        const variable = data.find(({ url }) => url === currentVariable)?.name ?? "";
+        const variable = data.find(({ url }) => url === currentVariable);
         variableName = variable.name;
         variableType = variable.type;
       });

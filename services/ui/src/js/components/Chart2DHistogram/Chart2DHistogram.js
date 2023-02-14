@@ -141,7 +141,11 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   set data(value) {
-    this.#data = value;
+    if (Array.isArray(value)) {
+      this.#data = value;
+    } else {
+      this.#data = value.features.map((d) => d.properties.adjusted);
+    }
 
     // FIXME: This is duplicated across all charts to ensure that they fire
     // this event. This event is used by the ColorRamp component so that it
