@@ -48,6 +48,9 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
 def lambda_handler(event, context):
     """Handler for Lambda events."""
 
+    if "Event" in event and event["Event"] == "s3:TestEvent":
+        return "Test event received"
+
     upload_bucket = os.environ["UG_DIAG_ZARR"]
 
     for record in event["Records"]:

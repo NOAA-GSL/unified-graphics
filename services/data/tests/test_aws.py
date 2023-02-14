@@ -44,6 +44,15 @@ def test_fetch_record(
     assert result == Path(expected_path)
 
 
+def test_handler_test_event():
+    context = {}
+    event = {"Event": "s3:TestEvent"}
+
+    result = aws.lambda_handler(event, context)
+
+    assert result == "Test event received"
+
+
 @mock.patch("ugdata.diag.save")
 @mock.patch("ugdata.diag.load")
 @mock.patch("ugdata.aws.fetch_record")
