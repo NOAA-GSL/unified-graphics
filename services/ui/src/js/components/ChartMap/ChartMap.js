@@ -73,6 +73,10 @@ export default class ChartMap extends ChartElement {
   /** @type radiusAccessor */
   #radiusAccessor = (d) => d;
 
+  static get observedAttributes() {
+    return ["src"];
+  }
+
   constructor() {
     super();
 
@@ -93,6 +97,18 @@ export default class ChartMap extends ChartElement {
 
     if (canvas) {
       canvas.addEventListener("mousedown", this.mousedownCallback);
+    }
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "src":
+        fetch(newValue)
+          .then((response) => response.json())
+          .then((data) => (this.data = data));
+        break;
+      default:
+        super.attributeChangedCallback(name, oldValue, newValue);
     }
   }
 
@@ -152,6 +168,19 @@ export default class ChartMap extends ChartElement {
   set selection(value) {
     this.#selection = value;
     this.#brush();
+  }
+
+  get src() {
+    return this.getAttribute("src");
+  }
+
+  set src(value) {
+    if (!value) {
+      this.removeAttribute("src");
+      return;
+    }
+
+    this.setAttribute("src", value);
   }
 
   render() {

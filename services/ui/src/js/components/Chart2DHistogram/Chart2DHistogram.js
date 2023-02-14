@@ -83,7 +83,7 @@ export default class Chart2DHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -100,6 +100,19 @@ export default class Chart2DHistogram extends ChartElement {
     if (!svg) return;
 
     svg.addEventListener("mousedown", this.onMouseDown);
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "src":
+        fetch(newValue)
+          .then((response) => response.json())
+          .then((data) => (this.data = data));
+        break;
+      default:
+        super.attributeChangedCallback(name, oldValue, newValue);
+        break;
+    }
   }
 
   get bins() {
@@ -203,6 +216,19 @@ export default class Chart2DHistogram extends ChartElement {
   set selection(value) {
     this.#selection = structuredClone(value);
     this.#brush();
+  }
+
+  get src() {
+    return this.getAttribute("src");
+  }
+
+  set src(value) {
+    if (!value) {
+      this.removeAttribute("src");
+      return;
+    }
+
+    this.setAttribute("src", value);
   }
 
   get xScale() {

@@ -96,7 +96,7 @@ class ChartHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -112,6 +112,12 @@ class ChartHistogram extends ChartElement {
       case "format-x":
       case "format-y":
         this.update();
+        break;
+      case "src":
+        fetch(newValue)
+          .then((response) => response.json())
+          .then((data) => data.features.map((d) => d.properties.adjusted))
+          .then((data) => (this.data = data));
         break;
       default:
         super.attributeChangedCallback(name, oldValue, newValue);
@@ -199,6 +205,19 @@ class ChartHistogram extends ChartElement {
 
   set selection(value) {
     this.#selection.datum(value).call(this.#brush);
+  }
+
+  get src() {
+    return this.getAttribute("src");
+  }
+
+  set src(value) {
+    if (!value) {
+      this.removeAttribute("src");
+      return;
+    }
+
+    this.setAttribute("src", value);
   }
 
   get thresholds() {

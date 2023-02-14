@@ -1,9 +1,7 @@
 <script>
-  import { containedIn, geoFilter } from "./DiagnosticView.helpers.js";
   import { range, region } from "./DiagnosticView.stores.js";
 
-  /** GeoJSON data for this loop */
-  export let data = {};
+  export let src = null;
 
   export let loop = "ges";
 
@@ -46,10 +44,6 @@
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
 
-  $: distributionData = data.features
-    .filter(geoFilter($region))
-    .map((d) => d.properties["adjusted"]);
-
   $: xTitle =
     variableType === "vector"
       ? "Direction (Observation − Forecast)"
@@ -59,27 +53,6 @@
     variableType === "vector"
       ? "Magnitude (Observation − Forecast)"
       : "Observation count";
-
-  $: mapFilter = containedIn(
-    variableType === "scalar" || $range === null
-      ? $range
-      : {
-          direction: [
-            Math.min($range[0][0], $range[1][0]),
-            Math.max($range[0][0], $range[1][0]),
-          ],
-          magnitude: [
-            Math.min($range[0][1], $range[1][1]),
-            Math.max($range[0][1], $range[1][1]),
-          ],
-        },
-    "adjusted"
-  );
-
-  $: mapData = {
-    type: "FeatureCollection",
-    features: data.features.filter(mapFilter),
-  };
 
   $: mapRadius =
     variableType === "vector"
@@ -114,7 +87,7 @@ Usage:
     <svelte:element
       this={distributionEl}
       id="distribution-{loop}"
-      data={distributionData}
+      {src}
       selection={$range}
       format-x=".3e"
       on:chart-brush={onBrushHistogram}
@@ -129,7 +102,7 @@ Usage:
   <chart-container>
     <chart-map
       id="observations-{loop}"
-      data={mapData}
+      {src}
       selection={$region}
       radius={mapRadius}
       on:chart-brush={onBrushMap}

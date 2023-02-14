@@ -4,9 +4,7 @@
 
   export let currentVariable = null;
   export let variableName = "";
-  let variableType = "scalar";
-  let guess = { features: [] };
-  let analysis = { features: [] };
+  export let variableType = "scalar";
 
   $: {
     // Clear the filters when currentVariable changes
@@ -15,20 +13,8 @@
     region.set(null);
   }
 
-  $: featureCollection = currentVariable
-    ? Promise.all([
-        fetch(`/api${currentVariable}ges/`).then((response) => response.json()),
-        fetch(`/api${currentVariable}anl/`).then((response) => response.json()),
-      ])
-    : new Promise(() => [{}, {}]);
-
-  $: {
-    featureCollection.then(([ges, anl]) => {
-      variableType = ges.features[0].properties.type;
-      guess = ges;
-      analysis = anl;
-    });
-  }
+  $: guessURL = `/api${currentVariable}ges/`;
+  $: analysisURL = `/api${currentVariable}anl/`;
 </script>
 
 <!--
@@ -39,19 +25,13 @@ observations side-by-side for both the guess and analysis loops.
 
 <div class="container flex-1" data-layout="stack">
   <div class="scroll-container flex-1" data-layout="stack">
-    <LoopDisplay data={guess} loop="guess" {variableType} {variableName}>
+    <LoopDisplay src={guessURL} loop="guess" {variableName} {variableType}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
     </LoopDisplay>
-    <LoopDisplay data={analysis} loop="analysis" {variableType} {variableName}>
+    <LoopDisplay src={analysisURL} loop="analysis" {variableName} {variableType}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     </LoopDisplay>
   </div>
-
-  {#await featureCollection}
-    <div class="overlay">
-      <loading-spinner class="text-accent-cool-darker" />
-    </div>
-  {/await}
 </div>
 
 <style>
