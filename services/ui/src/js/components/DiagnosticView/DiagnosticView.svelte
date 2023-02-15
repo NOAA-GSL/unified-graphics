@@ -6,6 +6,9 @@
   export let variableName = "";
   export let variableType = "scalar";
 
+  let guessURL = "";
+  let analysisURL = "";
+
   $: {
     // Clear the filters when currentVariable changes
     currentVariable;
@@ -13,8 +16,22 @@
     region.set(null);
   }
 
-  $: guessURL = `/api${currentVariable}ges/`;
-  $: analysisURL = `/api${currentVariable}anl/`;
+  $: if (currentVariable) {
+    let base = `/api${currentVariable}`;
+    let params = [];
+
+    if ($region) {
+      let lng = $region.map((d) => d[0]).join(",");
+      let lat = $region.map((d) => d[1]).join(",");
+
+      params.push(`longitude=${lng}`);
+      params.push(`latitude=${lat}`);
+    }
+
+    const query = params.join("&");
+    guessURL = [`${base}ges/`, query].join("?");
+    analysisURL = [`${base}anl/`, query].join("?");
+  }
 </script>
 
 <!--
