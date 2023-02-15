@@ -150,6 +150,37 @@ def test_wind_diag(diag_zarr, client):
     }
 
 
+def test_region_filter(diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    loop = "ges"
+    variable = "t"
+    variable_name = "temperature"
+    diag_zarr([variable], init_time, loop)
+
+    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    query = "longitude=-160.1,-159.9&latitude=22,27"
+    response = client.get(f"{url}?{query}")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "scalar",
+                    "loop": loop,
+                    "variable": variable_name,
+                    "adjusted": 0,
+                    "unadjusted": 0,
+                    "observed": 0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+            },
+        ],
+    }
+
+
 @pytest.mark.parametrize(
     "variable_name", ["temperature", "moisture", "pressure", "wind"]
 )

@@ -10,6 +10,7 @@ import xarray as xr
 import zarr  # type: ignore
 from flask import current_app
 from s3fs import S3FileSystem, S3Map  # type: ignore
+from werkzeug.datastructures import MultiDict
 
 
 class MinimLoop(Enum):
@@ -127,9 +128,13 @@ def open_diagnostic(
 
 
 def scalar(
-    variable: Variable, initialization_time: str, loop: MinimLoop
+    variable: Variable, initialization_time: str, loop: MinimLoop, filters: MultiDict
 ) -> List[Observation]:
     data = open_diagnostic(variable, initialization_time, loop)
+
+    for coord, value in filters.items():
+        lower, upper = map(float, value.split(","))
+        data = data.where((data[coord] >= lower) & (data[coord] <= upper), drop=True)
 
     return [
         Observation(
@@ -148,16 +153,22 @@ def scalar(
     ]
 
 
-def temperature(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.TEMPERATURE, initialization_time, loop)
+def temperature(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.TEMPERATURE, initialization_time, loop, filters)
 
 
-def moisture(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.MOISTURE, initialization_time, loop)
+def moisture(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.MOISTURE, initialization_time, loop, filters)
 
 
-def pressure(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.PRESSURE, initialization_time, loop)
+def pressure(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.PRESSURE, initialization_time, loop, filters)
 
 
 def vector_direction(u, v):
@@ -182,7 +193,9 @@ def vector_magnitude(u, v):
     return np.sqrt(u**2 + v**2)
 
 
-def wind(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+def wind(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
     data = open_diagnostic(Variable.WIND, initialization_time, loop)
 
     forecast_u_adjusted = data["observation"].sel(component="u") - data[
