@@ -130,7 +130,7 @@ def open_diagnostic(
 
 def apply_filters(ds: xr.Dataset, filters: MultiDict) -> Dataset:
     for coord, value in filters.items():
-        lower, upper = map(float, value.split(","))
+        lower, upper = sorted(map(float, value.split(",")))
         ds = ds.where((ds[coord] >= lower) & (ds[coord] <= upper), drop=True)
 
     return ds

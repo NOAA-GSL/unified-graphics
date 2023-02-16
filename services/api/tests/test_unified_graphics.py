@@ -158,7 +158,7 @@ def test_region_filter_scalar(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "longitude=-160.1,-159.9&latitude=22,27"
+    query = "longitude=-160.1,-159.9&latitude=27,22"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
@@ -189,7 +189,7 @@ def test_region_filter_vector(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "longitude=-160.1,-159.9&latitude=22,27"
+    query = "longitude=-160.1,-159.9&latitude=27,22"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
