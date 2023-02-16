@@ -155,7 +155,7 @@ def scalar(
                 float(data["latitude"].values[idx]),
             ),
         )
-        for idx in range(len(data["observation"]))
+        for idx in range(data.dims["nobs"])
     ]
 
 
