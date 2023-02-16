@@ -1,13 +1,15 @@
+import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import List, Union
+from typing import Iterator, List, Union
+from urllib.parse import urlparse
 
-import fsspec  # type: ignore
 import numpy as np
 import xarray as xr
+import zarr
 from flask import current_app
+from s3fs import S3FileSystem, S3Map
 
 
 class MinimLoop(Enum):
@@ -38,28 +40,28 @@ PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
 
 @dataclass
 class Observation:
-    stationId: str
     variable: str
     variable_type: VariableType
-    guess: Union[float, PolarCoordinate]
-    analysis: Union[float, PolarCoordinate]
+    loop: MinimLoop
+    adjusted: Union[float, PolarCoordinate]
+    unadjusted: Union[float, PolarCoordinate]
     observed: Union[float, PolarCoordinate]
     position: Coordinate
 
     def to_geojson(self):
         properties = {
-            "stationId": self.stationId,
             "type": self.variable_type.value,
             "variable": self.variable,
+            "loop": self.loop.value,
         }
 
-        if isinstance(self.guess, float):
-            properties["guess"] = self.guess
-            properties["analysis"] = self.analysis
+        if isinstance(self.adjusted, float):
+            properties["adjusted"] = self.adjusted
+            properties["unadjusted"] = self.unadjusted
             properties["observed"] = self.observed
         else:
-            properties["guess"] = self.guess._asdict()
-            properties["analysis"] = self.analysis._asdict()
+            properties["adjusted"] = self.adjusted._asdict()
+            properties["unadjusted"] = self.unadjusted._asdict()
             properties["observed"] = self.observed._asdict()
 
         return {
@@ -69,120 +71,93 @@ class Observation:
         }
 
 
-def open_diagnostic(variable: Variable, loop: MinimLoop) -> xr.Dataset:
-    filename = f"ncdiag_conv_{variable.value}_{loop.value}.nc4.2022050514"
-    diag_uri = current_app.config["DIAG_DIR"]
+def initialization_times(variable: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
 
-    if diag_uri.startswith("file://"):
-        return open_local_diagnostic(diag_uri, filename)
-    elif diag_uri.startswith("s3://"):
-        return open_s3_diagnostic(diag_uri, filename)
-    else:
-        raise FileNotFoundError(f"Unknown file URI: '{str(diag_uri)}'")
+    v = getattr(Variable, variable.upper())
 
+    if v.value not in z:
+        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
 
-def open_local_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
-    """Opens a local diag file"""
-    diag_uri = diag_uri.removeprefix("file://")  # Path doesn't support file URIs
-    diag_file = Path(diag_uri) / filename
-
-    # xarray.open_dataset doesn't distinguish between a file it can't understand
-    # and a file that's not there. It raises a ValueError even for missing
-    # files. We raise a FileNotFoundError to make debugging easier.
-    if not diag_file.exists():
-        current_app.logger.error(f"No such file: '{str(diag_file)}'")
-        raise FileNotFoundError(f"No such file: '{str(diag_file)}'")
-
-    return xr.open_dataset(diag_file)
+    return z[v.value].group_keys()
 
 
-# TODO - logger statements don't appear to be printing - at least in pytests
-def open_s3_diagnostic(diag_uri: str, filename: str) -> xr.Dataset:
-    """Opens a diag file stored in S3
+def loops(variable: str, initialization_time: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+    v = getattr(Variable, variable.upper())
 
-    Assumes AWS S3, and grabs credentials via Boto3 defaults.
+    if v.value not in z:
+        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
 
-    If FLASK_ENDPOINT_URL is set in the environment, it will attempt to access
-    an S3-like server at the URL provided. This is mostly useful for testing.
-    """
-    try:
-        endpoint_url = current_app.config["ENDPOINT_URL"]
-    except KeyError:
-        endpoint_url = None
-    cache = current_app.config["LOCAL_CACHE_PATH"]
-    current_app.logger.info(f"Endpoint url set to: {endpoint_url}")
-    diag_file = diag_uri + filename  # Path doesn't support file URIs
-
-    # xarray.open_dataset can't open netcdf datasets natively - only
-    # Zarr datasets. We'll use fsspec to cache the file locally so xarray
-    # can access it from disk.
-    try:
-        # TODO - if statement is a workaround
-        # TODO - for: https://github.com/fsspec/s3fs/issues/400
-        if endpoint_url:
-            with fsspec.open(
-                f"simplecache::{diag_file}",
-                s3={"anon": False, "client_kwargs": {"endpoint_url": endpoint_url}},
-                simplecache={"cache_storage": cache},
-            ) as f:
-                ds_contents = xr.open_dataset(f.name)
-        else:
-            with fsspec.open(
-                f"simplecache::{diag_file}",
-                s3={"anon": False},
-                simplecache={"cache_storage": cache},
-            ) as f:
-                ds_contents = xr.open_dataset(f.name)
-    except FileNotFoundError as e:
-        current_app.logger.error(
-            f"The following bucket or key don't exist: '{str(diag_file)}'",
-            exc_info=True,
+    if initialization_time not in z[v.value]:
+        raise FileNotFoundError(
+            f"Initialization time '{initialization_time}' not found in diagnostic file"
         )
-        raise e
-    except PermissionError as e:
-        current_app.logger.error(
-            f"Permissions issue accessing: '{str(diag_file)}'", exc_info=True
-        )
-        raise e
-    except ValueError as e:
-        current_app.logger.error(
-            f"Unknown file type: '{str(diag_file)}'", exc_info=True
-        )
-        raise e
-    return ds_contents
+
+    return z[v.value][initialization_time].group_keys()
 
 
-def scalar(variable: Variable) -> List[Observation]:
-    ges = open_diagnostic(variable, MinimLoop.GUESS)
-    anl = open_diagnostic(variable, MinimLoop.ANALYSIS)
+def get_store(url: str) -> Union[str, S3Map]:
+    result = urlparse(url)
+    if result.scheme in ["", "file"]:
+        return result.path
+
+    if result.scheme != "s3":
+        raise ValueError(f"Unsupported protocol '{result.scheme}' for URI: '{url}'")
+
+    region = os.environ.get("AWS_REGION", "us-east-1")
+    s3 = S3FileSystem(
+        key=os.environ.get("AWS_ACCESS_KEY_ID"),
+        secret=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        token=os.environ.get("AWS_SESSION_TOKEN"),
+        client_kwargs={"region_name": region},
+    )
+
+    return S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
+
+
+def open_diagnostic(
+    variable: Variable, initialization_time: str, loop: MinimLoop
+) -> xr.Dataset:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    group = f"/{variable.value}/{initialization_time}/{loop.value}"
+    return xr.open_zarr(store, group=group)
+
+
+def scalar(
+    variable: Variable, initialization_time: str, loop: MinimLoop
+) -> List[Observation]:
+    data = open_diagnostic(variable, initialization_time, loop)
 
     return [
         Observation(
-            stationId.decode("utf-8").strip(),
             variable.name.lower(),
             VariableType.SCALAR,
-            guess=float(ges["Obs_Minus_Forecast_adjusted"].values[idx]),
-            analysis=float(anl["Obs_Minus_Forecast_adjusted"].values[idx]),
-            observed=float(ges["Observation"].values[idx]),
+            loop,
+            adjusted=float(data["obs_minus_forecast_adjusted"].values[idx]),
+            unadjusted=float(data["obs_minus_forecast_unadjusted"].values[idx]),
+            observed=float(data["observation"].values[idx]),
             position=Coordinate(
-                float(ges["Longitude"].values[idx] - 360),
-                float(ges["Latitude"].values[idx]),
+                float(data["longitude"].values[idx]),
+                float(data["latitude"].values[idx]),
             ),
         )
-        for idx, stationId in enumerate(ges["Station_ID"].values)
+        for idx in range(len(data["observation"]))
     ]
 
 
-def temperature() -> List[Observation]:
-    return scalar(Variable.TEMPERATURE)
+def temperature(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.TEMPERATURE, initialization_time, loop)
 
 
-def moisture() -> List[Observation]:
-    return scalar(Variable.MOISTURE)
+def moisture(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.MOISTURE, initialization_time, loop)
 
 
-def pressure() -> List[Observation]:
-    return scalar(Variable.PRESSURE)
+def pressure(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    return scalar(Variable.PRESSURE, initialization_time, loop)
 
 
 def vector_direction(u, v):
@@ -207,49 +182,71 @@ def vector_magnitude(u, v):
     return np.sqrt(u**2 + v**2)
 
 
-def wind() -> List[Observation]:
-    ges = open_diagnostic(Variable.WIND, MinimLoop.GUESS)
-    anl = open_diagnostic(Variable.WIND, MinimLoop.ANALYSIS)
+def wind(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+    data = open_diagnostic(Variable.WIND, initialization_time, loop)
 
-    ges_forecast_u = ges["u_Observation"] - ges["u_Obs_Minus_Forecast_adjusted"]
-    ges_forecast_v = ges["v_Observation"] - ges["v_Obs_Minus_Forecast_adjusted"]
+    forecast_u_adjusted = data["observation"].sel(component="u") - data[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="u")
+    forecast_v_adjusted = data["observation"].sel(component="v") - data[
+        "obs_minus_forecast_adjusted"
+    ].sel(component="v")
 
-    anl_forecast_u = anl["u_Observation"] - anl["u_Obs_Minus_Forecast_adjusted"]
-    anl_forecast_v = anl["v_Observation"] - anl["v_Obs_Minus_Forecast_adjusted"]
+    forecast_u_unadjusted = data["observation"].sel(component="u") - data[
+        "obs_minus_forecast_unadjusted"
+    ].sel(component="u")
+    forecast_v_unadjusted = data["observation"].sel(component="v") - data[
+        "obs_minus_forecast_unadjusted"
+    ].sel(component="v")
 
-    ges_forecast_mag = vector_magnitude(ges_forecast_u.values, ges_forecast_v.values)
-    ges_forecast_dir = vector_direction(ges_forecast_u.values, ges_forecast_v.values)
+    adjusted_mag = vector_magnitude(
+        forecast_u_adjusted.values, forecast_v_adjusted.values
+    )
+    adjusted_dir = vector_direction(
+        forecast_u_adjusted.values, forecast_v_adjusted.values
+    )
 
-    anl_forecast_mag = vector_magnitude(anl_forecast_u.values, anl_forecast_v.values)
-    anl_forecast_dir = vector_direction(anl_forecast_u.values, anl_forecast_v.values)
+    unadjusted_mag = vector_magnitude(
+        forecast_u_unadjusted.values, forecast_v_unadjusted.values
+    )
+    unadjusted_dir = vector_direction(
+        forecast_u_unadjusted.values, forecast_v_unadjusted.values
+    )
 
-    obs_mag = vector_magnitude(ges["u_Observation"].values, ges["v_Observation"].values)
-    obs_dir = vector_direction(ges["u_Observation"].values, ges["v_Observation"].values)
+    obs_mag = vector_magnitude(
+        data["observation"].sel(component="u").values,
+        data["observation"].sel(component="v").values,
+    )
+    obs_dir = vector_direction(
+        data["observation"].sel(component="u").values,
+        data["observation"].sel(component="v").values,
+    )
 
-    ges_mag = obs_mag - ges_forecast_mag
-    ges_dir = obs_dir - ges_forecast_dir
+    adjusted_mag = obs_mag - adjusted_mag
+    adjusted_dir = obs_dir - adjusted_dir
 
-    anl_mag = obs_mag - anl_forecast_mag
-    anl_dir = obs_dir - anl_forecast_dir
+    unadjusted_mag = obs_mag - unadjusted_mag
+    unadjusted_dir = obs_dir - unadjusted_dir
 
     return [
         Observation(
-            stationId.decode("utf-8").strip(),
             "wind",
             VariableType.VECTOR,
-            guess=PolarCoordinate(
-                round(float(ges_mag[idx]), 5), round(float(ges_dir[idx]), 5)
+            loop,
+            adjusted=PolarCoordinate(
+                round(float(adjusted_mag[idx]), 5), round(float(adjusted_dir[idx]), 5)
             ),
-            analysis=PolarCoordinate(
-                round(float(anl_mag[idx]), 5), round(float(anl_dir[idx]), 5)
+            unadjusted=PolarCoordinate(
+                round(float(unadjusted_mag[idx]), 5),
+                round(float(unadjusted_dir[idx]), 5),
             ),
             observed=PolarCoordinate(
                 round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
             ),
             position=Coordinate(
-                round(float(ges["Longitude"].values[idx] - 360), 5),
-                round(float(ges["Latitude"].values[idx]), 5),
+                round(float(data["longitude"].values[idx]), 5),
+                round(float(data["latitude"].values[idx]), 5),
             ),
         )
-        for idx, stationId in enumerate(ges["Station_ID"].values)
+        for idx in range(len(data["observation"].values))
     ]

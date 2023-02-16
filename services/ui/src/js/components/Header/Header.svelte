@@ -1,3 +1,39 @@
+<script>
+  export let diag_data = null;
+  export let variableName = "";
+
+  let currentVariable = null;
+
+  $: variables = fetch("/api/diag/")
+    .then((response) => response.json())
+    .then((json) => {
+      const response = Object.entries(json).map(([name, url]) => ({ name, url }));
+
+      currentVariable = response[0].url;
+      return response;
+    });
+
+  $: init_times = currentVariable
+    ? fetch(`/api${currentVariable}`)
+        .then((response) => response.json())
+        .then((json) => {
+          const response = Object.entries(json).map(([name, url]) => ({ name, url }));
+          diag_data = response[0].url;
+          return response;
+        })
+    : Promise.resolve([]);
+
+  $: {
+    // Look up the name of the current variable based on its URL. The name is
+    // needed for display in the LoopDisplay components.
+    if (currentVariable) {
+      variables.then((data) => {
+        variableName = data.find(({ url }) => url === currentVariable)?.name ?? "";
+      });
+    }
+  }
+</script>
+
 <!--
 @component
 The site header for the application.
@@ -9,11 +45,20 @@ The site header for the application.
 >
   <h1 class="text-bold">Unified Graphics</h1>
   <form data-layout="cluster">
-    <select class="usa-select">
-      <option>RRFS</option>
+    <select class="usa-select" bind:value={currentVariable}>
+      {#await variables then vars}
+        {#each vars as variable}
+          <option value={variable.url}>{variable.name}</option>
+        {/each}
+      {/await}
     </select>
-    <select class="usa-select">
-      <option>05 May 2022 14:00</option>
+
+    <select class="usa-select" bind:value={diag_data}>
+      {#await init_times then times}
+        {#each times as time}
+          <option value={time.url}>{time.name}</option>
+        {/each}
+      {/await}
     </select>
   </form>
   <nav>

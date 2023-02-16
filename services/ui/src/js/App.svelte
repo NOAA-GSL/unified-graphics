@@ -1,14 +1,17 @@
 <script>
   import DiagnosticView from "./components/DiagnosticView";
   import Header from "./components/Header";
+
+  let url = null;
+  let name = "";
 </script>
 
 <!--
 @component
 The root component for the application.
 -->
-<Header />
+<Header bind:diag_data={url} bind:variableName={name} />
 
 <main class="padding-x-3 padding-y-2" data-layout="stack">
-  <DiagnosticView />
+  <DiagnosticView currentVariable={url} variableName={name} />
 </main>
