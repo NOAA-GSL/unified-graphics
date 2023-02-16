@@ -150,7 +150,7 @@ def test_wind_diag(diag_zarr, client):
     }
 
 
-def test_region_filter(diag_zarr, client):
+def test_region_filter_scalar(diag_zarr, client):
     init_time = "2022-05-16T04:00"
     loop = "ges"
     variable = "t"
@@ -176,6 +176,37 @@ def test_region_filter(diag_zarr, client):
                     "observed": 0,
                 },
                 "geometry": {"type": "Point", "coordinates": [-160, 25]},
+            },
+        ],
+    }
+
+
+def test_region_filter_vector(diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    loop = "ges"
+    variable = "uv"
+    variable_name = "wind"
+    diag_zarr([variable], init_time, loop)
+
+    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    query = "longitude=-160.1,-159.9&latitude=22,27"
+    response = client.get(f"{url}?{query}")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "vector",
+                    "variable": "wind",
+                    "loop": loop,
+                    "adjusted": {"magnitude": 0.0, "direction": 0.0},
+                    "unadjusted": {"magnitude": 0.0, "direction": 0.0},
+                    "observed": {"magnitude": 0.0, "direction": 0.0},
+                },
+                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
             },
         ],
     }

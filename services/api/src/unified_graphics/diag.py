@@ -11,6 +11,7 @@ import zarr  # type: ignore
 from flask import current_app
 from s3fs import S3FileSystem, S3Map  # type: ignore
 from werkzeug.datastructures import MultiDict
+from xarray.core.dataset import Dataset
 
 
 class MinimLoop(Enum):
@@ -127,14 +128,19 @@ def open_diagnostic(
     return xr.open_zarr(store, group=group)
 
 
+def apply_filters(ds: xr.Dataset, filters: MultiDict) -> Dataset:
+    for coord, value in filters.items():
+        lower, upper = map(float, value.split(","))
+        ds = ds.where((ds[coord] >= lower) & (ds[coord] <= upper), drop=True)
+
+    return ds
+
+
 def scalar(
     variable: Variable, initialization_time: str, loop: MinimLoop, filters: MultiDict
 ) -> List[Observation]:
     data = open_diagnostic(variable, initialization_time, loop)
-
-    for coord, value in filters.items():
-        lower, upper = map(float, value.split(","))
-        data = data.where((data[coord] >= lower) & (data[coord] <= upper), drop=True)
+    data = apply_filters(data, filters)
 
     return [
         Observation(
@@ -197,6 +203,7 @@ def wind(
     initialization_time: str, loop: MinimLoop, filters: MultiDict
 ) -> List[Observation]:
     data = open_diagnostic(Variable.WIND, initialization_time, loop)
+    data = apply_filters(data, filters)
 
     forecast_u_adjusted = data["observation"].sel(component="u") - data[
         "obs_minus_forecast_adjusted"
@@ -261,5 +268,5 @@ def wind(
                 round(float(data["latitude"].values[idx]), 5),
             ),
         )
-        for idx in range(len(data["observation"].values))
+        for idx in range(data.dims["nobs"])
     ]
