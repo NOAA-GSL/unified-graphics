@@ -2,10 +2,11 @@
   import { range, region } from "./DiagnosticView.stores.js";
   import LoopDisplay from "./LoopDisplay.svelte";
 
-  let currentVariable = null;
-  let variableName = "";
+  export let currentVariable = null;
+  export let variableName = "";
   let variableType = "scalar";
-  let variableData = { features: [] };
+  let guess = { features: [] };
+  let analysis = { features: [] };
 
   $: {
     // Clear the filters when currentVariable changes
@@ -14,34 +15,18 @@
     region.set(null);
   }
 
-  $: variables = fetch("/api/diag/")
-    .then((response) => response.json())
-    .then((json) => {
-      const response = Object.entries(json).map(([name, url]) => ({ name, url }));
-
-      currentVariable = response[0].url;
-      return response;
-    });
-
   $: featureCollection = currentVariable
-    ? fetch(`/api${currentVariable}`).then((response) => response.json())
-    : new Promise(() => {});
+    ? Promise.all([
+        fetch(`/api${currentVariable}ges/`).then((response) => response.json()),
+        fetch(`/api${currentVariable}anl/`).then((response) => response.json()),
+      ])
+    : new Promise(() => [{}, {}]);
 
   $: {
-    if (currentVariable) {
-      variables.then((data) => {
-        variableName = data.reduce((name, variable) => {
-          if (variable.url === currentVariable) return variable.name;
-          return name;
-        }, "");
-      });
-    }
-  }
-
-  $: {
-    featureCollection.then((data) => {
-      variableType = data.features[0].properties.type;
-      variableData = data;
+    featureCollection.then(([ges, anl]) => {
+      variableType = ges.features[0].properties.type;
+      guess = ges;
+      analysis = anl;
     });
   }
 </script>
@@ -52,20 +37,12 @@ The DiagnosticView displays the distribution of values and location of
 observations side-by-side for both the guess and analysis loops.
 -->
 
-<select class="usa-select" bind:value={currentVariable}>
-  {#await variables then vars}
-    {#each vars as variable}
-      <option value={variable.url}>{variable.name}</option>
-    {/each}
-  {/await}
-</select>
-
 <div class="container flex-1" data-layout="stack">
   <div class="scroll-container flex-1" data-layout="stack">
-    <LoopDisplay data={variableData} loop="guess" {variableType} {variableName}>
+    <LoopDisplay data={guess} loop="guess" {variableType} {variableName}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Guess</h2>
     </LoopDisplay>
-    <LoopDisplay data={variableData} loop="analysis" {variableType} {variableName}>
+    <LoopDisplay data={analysis} loop="analysis" {variableType} {variableName}>
       <h2 slot="title" class="font-ui-lg text-bold grid-col-full">Analysis</h2>
     </LoopDisplay>
   </div>

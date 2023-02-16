@@ -1,0 +1,3 @@
+# We generate requirements.txt for the Docker image, but we don't use it for
+# dependency management, so we don't want to keep it in Git.
+requirements.txt
