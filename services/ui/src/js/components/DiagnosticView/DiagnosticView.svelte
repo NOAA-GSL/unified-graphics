@@ -28,6 +28,10 @@
       params.push(`latitude=${lat}`);
     }
 
+    if ($range) {
+      params.push(`obs_minus_forecast_adjusted=${$range.join(",")}`);
+    }
+
     const query = params.join("&");
     guessURL = [`${base}ges/`, query].join("?");
     analysisURL = [`${base}anl/`, query].join("?");

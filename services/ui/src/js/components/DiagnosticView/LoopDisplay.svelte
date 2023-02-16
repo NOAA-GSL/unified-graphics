@@ -34,7 +34,7 @@
    */
   const onBrushMap = (event) => {
     event.stopImmediatePropagation();
-    range.set([0, 0]);
+    range.set(null);
     region.set(event.detail);
   };
 

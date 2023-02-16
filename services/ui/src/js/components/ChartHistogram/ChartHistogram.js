@@ -242,6 +242,8 @@ class ChartHistogram extends ChartElement {
    */
   onMouseDown = (event) => {
     const svg = event.currentTarget;
+    // FIXME: Not sure I think persisting the selection in the DOM is wise
+    // Pretty sure we stopped doing this for other charts.
     this.#selection.datum(
       [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d))
     );
@@ -280,6 +282,13 @@ class ChartHistogram extends ChartElement {
     this.shadowRoot
       .querySelector("svg")
       .removeEventListener("mousemove", this.onMouseMove);
+
+    // Set the selection to null if this.#selection.datum()the range is 0.
+    let detail = structuredClone(this.#selection.datum());
+    if (detail && detail[0] === detail[1]) {
+      detail = null;
+    }
+
     // Update the brush one last time because, in the event of a click with no
     // mousemove, this will never be called, leaving the old selection still
     // visible despite having updated the actual range.
@@ -287,7 +296,7 @@ class ChartHistogram extends ChartElement {
 
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: structuredClone(this.#selection.datum()),
+      detail: detail,
     });
     this.dispatchEvent(brush);
   };
