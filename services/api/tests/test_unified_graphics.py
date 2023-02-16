@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest  # noqa: F401
+import xarray as xr
 
 
 def test_root_endpoint(client):
@@ -174,6 +175,56 @@ def test_region_filter_scalar(diag_zarr, client):
                     "adjusted": 0,
                     "unadjusted": 0,
                     "observed": 0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+            },
+        ],
+    }
+
+
+def test_range_filter_scalar(diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    loop = "ges"
+    variable = "t"
+    variable_name = "temperature"
+    data = xr.Dataset(
+        {
+            "obs_minus_forecast_adjusted": (["nobs"], [0, 1]),
+            "obs_minus_forecast_unadjusted": (["nobs"], [0, 2]),
+            "observation": (["nobs"], [0, 2]),
+            "forecast_adjusted": (["nobs"], [0, 1]),
+            "forecast_unadjusted": (["nobs"], [0, 0]),
+        },
+        coords=dict(
+            longitude=(["nobs"], [90, -160]),
+            latitude=(["nobs"], [22, 25]),
+            is_used=(["nobs"], [1, 0]),
+        ),
+        attrs={
+            "name": variable,
+            "loop": loop,
+            "initialization_time": init_time,
+        },
+    )
+    diag_zarr([variable], init_time, loop, data=data)
+
+    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    query = "obs_minus_forecast_adjusted=1.5,1"
+    response = client.get(f"{url}?{query}")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "scalar",
+                    "loop": loop,
+                    "variable": variable_name,
+                    "adjusted": 1,
+                    "unadjusted": 2,
+                    "observed": 2,
                 },
                 "geometry": {"type": "Point", "coordinates": [-160, 25]},
             },
