@@ -25,10 +25,7 @@
    */
   const onBrushHistogram = (event) => {
     event.stopImmediatePropagation();
-    region.set([
-      [0, 0],
-      [0, 0],
-    ]);
+    region.set(null);
     range.set(event.detail);
   };
 
