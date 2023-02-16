@@ -5,14 +5,8 @@
   /** GeoJSON data for this loop */
   export let data = {};
 
-  // FIXME: Should be an enum;
-  /**
-   * The loop to display.
-   *
-   * Should be either "guess" or "analysis" and should be a property present on
-   * the `properties` object of each GeoJSON Feature.
-   */
-  export let loop = "guess";
+  export let loop = "ges";
+
   // FIXME: Should be an enum;
   /**
    * The variable type to display.
@@ -54,7 +48,7 @@
 
   $: distributionData = data.features
     .filter(geoFilter($region))
-    .map((d) => d.properties[loop]);
+    .map((d) => d.properties["adjusted"]);
 
   $: xTitle =
     variableType === "vector"
@@ -79,7 +73,7 @@
             Math.max($range[0][1], $range[1][1]),
           ],
         },
-    loop
+    "adjusted"
   );
 
   $: mapData = {
@@ -89,8 +83,8 @@
 
   $: mapRadius =
     variableType === "vector"
-      ? (d) => d.properties[loop].magnitude
-      : (d) => d.properties[loop];
+      ? (d) => d.properties["adjusted"].magnitude
+      : (d) => d.properties["adjusted"];
 
   $: mapLegendTitle = variableName === "wind" ? `${variableName} speed` : variableName;
 </script>
