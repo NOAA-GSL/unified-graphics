@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import numpy as np
 import pytest
 import xarray as xr
-from s3fs import S3FileSystem, S3Map
+from s3fs import S3FileSystem, S3Map  # type: ignore
 
 from unified_graphics import create_app
 

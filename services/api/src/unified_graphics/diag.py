@@ -7,9 +7,9 @@ from urllib.parse import urlparse
 
 import numpy as np
 import xarray as xr
-import zarr
+import zarr  # type: ignore
 from flask import current_app
-from s3fs import S3FileSystem, S3Map
+from s3fs import S3FileSystem, S3Map  # type: ignore
 
 
 class MinimLoop(Enum):
