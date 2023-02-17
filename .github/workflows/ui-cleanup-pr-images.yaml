@@ -23,6 +23,7 @@ jobs:
   purge-ecr-images:
     name: Cleanup PR images from ECR
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }} # Dependabot changes aren't sent to VLab
     environment: vlab
     concurrency: vlab
     steps:
