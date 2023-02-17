@@ -5,8 +5,29 @@
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+
+  - package-ecosystem: "pip"
+    directory: "/services/api"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+
+  - package-ecosystem: "pip"
+    directory: "/services/data"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+
+  - package-ecosystem: "npm"
+    directory: "/services/ui"
     schedule:
       interval: "weekly"
     pull-request-branch-name:
