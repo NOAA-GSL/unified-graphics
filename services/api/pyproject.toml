@@ -20,7 +20,7 @@ zarr = "^2.13.6"
 pytest = "^7.2"
 mypy = "^1.0"
 black = "^23.1.0"
-flake8 = "^5.0.4"
+flake8 = "^6.0.0"
 coverage = "^6.4.4"
 isort = "^5.10.1"
 
