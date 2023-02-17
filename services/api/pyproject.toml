@@ -19,7 +19,7 @@ zarr = "^2.13.6"
 [tool.poetry.dev-dependencies]
 pytest = "^7.2"
 mypy = "^1.0"
-black = "^22.3.0"
+black = "^23.1.0"
 flake8 = "^5.0.4"
 coverage = "^6.4.4"
 isort = "^5.10.1"
