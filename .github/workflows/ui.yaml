@@ -123,6 +123,7 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
   deploy:
+    if: ${{ github.actor != "dependabot[bot]" }} # Don't deploy Dependabot changes
     runs-on: ubuntu-latest
     environment: vlab
     concurrency: vlab
