@@ -6,10 +6,10 @@ authors = ["W. Evan Sheehan <evan.sheehan@noaa.gov>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-xarray = "2022.10.0"
+xarray = "2022.10.0"  # Xarray > v2022.11 gives warnings about numpy array sizes changing. https://github.com/pydata/xarray/issues/7259
 netCDF4 = "1.6.1"
-zarr = "^2.13.6"
-boto3 = "^1.26.60"
+zarr = "^2.14.1"
+boto3 = "^1.26.74"
 h5netcdf = "^1.1.0"
 scipy = "^1.10.0"
 
@@ -18,7 +18,7 @@ pytest = "^7.2.1"
 mypy = "^1.0"
 black = "^23.1.0"
 flake8 = "^6.0.0"
-coverage = "^7.0.5"
+coverage = "^7.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.10.0"
