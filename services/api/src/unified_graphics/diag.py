@@ -37,7 +37,7 @@ class VariableType(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
-PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
+PolarCoordinate = namedtuple("PolarCoordinate", "u v")
 
 
 @dataclass
@@ -205,63 +205,38 @@ def wind(
     data = open_diagnostic(Variable.WIND, initialization_time, loop)
     data = apply_filters(data, filters)
 
-    forecast_u_adjusted = data["observation"].sel(component="u") - data[
-        "obs_minus_forecast_adjusted"
-    ].sel(component="u")
-    forecast_v_adjusted = data["observation"].sel(component="v") - data[
-        "obs_minus_forecast_adjusted"
-    ].sel(component="v")
-
-    forecast_u_unadjusted = data["observation"].sel(component="u") - data[
-        "obs_minus_forecast_unadjusted"
-    ].sel(component="u")
-    forecast_v_unadjusted = data["observation"].sel(component="v") - data[
-        "obs_minus_forecast_unadjusted"
-    ].sel(component="v")
-
-    adjusted_mag = vector_magnitude(
-        forecast_u_adjusted.values, forecast_v_adjusted.values
-    )
-    adjusted_dir = vector_direction(
-        forecast_u_adjusted.values, forecast_v_adjusted.values
-    )
-
-    unadjusted_mag = vector_magnitude(
-        forecast_u_unadjusted.values, forecast_v_unadjusted.values
-    )
-    unadjusted_dir = vector_direction(
-        forecast_u_unadjusted.values, forecast_v_unadjusted.values
-    )
-
-    obs_mag = vector_magnitude(
-        data["observation"].sel(component="u").values,
-        data["observation"].sel(component="v").values,
-    )
-    obs_dir = vector_direction(
-        data["observation"].sel(component="u").values,
-        data["observation"].sel(component="v").values,
-    )
-
-    adjusted_mag = obs_mag - adjusted_mag
-    adjusted_dir = obs_dir - adjusted_dir
-
-    unadjusted_mag = obs_mag - unadjusted_mag
-    unadjusted_dir = obs_dir - unadjusted_dir
-
     return [
         Observation(
             "wind",
             VariableType.VECTOR,
             loop,
             adjusted=PolarCoordinate(
-                round(float(adjusted_mag[idx]), 5), round(float(adjusted_dir[idx]), 5)
+                round(
+                    data["obs_minus_forecast_adjusted"].sel(component="u").values[idx],
+                    5,
+                ),
+                round(
+                    data["obs_minus_forecast_adjusted"].sel(component="v").values[idx],
+                    5,
+                ),
             ),
             unadjusted=PolarCoordinate(
-                round(float(unadjusted_mag[idx]), 5),
-                round(float(unadjusted_dir[idx]), 5),
+                round(
+                    data["obs_minus_forecast_unadjusted"]
+                    .sel(component="u")
+                    .values[idx],
+                    5,
+                ),
+                round(
+                    data["obs_minus_forecast_unadjusted"]
+                    .sel(component="v")
+                    .values[idx],
+                    5,
+                ),
             ),
             observed=PolarCoordinate(
-                round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
+                round(data["observation"].sel(component="u").values[idx], 5),
+                round(data["observation"].sel(component="v").values[idx], 5),
             ),
             position=Coordinate(
                 round(float(data["longitude"].values[idx]), 5),
