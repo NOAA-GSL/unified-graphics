@@ -6,7 +6,7 @@ authors = ["W. Evan Sheehan <evan.sheehan@noaa.gov>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-xarray = "2022.10.0"  # Xarray > v2022.11 gives warnings about numpy array sizes changing. https://github.com/pydata/xarray/issues/7259
+xarray = "2023.02.0"
 netCDF4 = "1.6.1"
 zarr = "^2.14.1"
 boto3 = "^1.26.74"

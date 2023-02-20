@@ -588,16 +588,16 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [[package]]
 name = "xarray"
-version = "2022.10.0"
+version = "2023.2.0"
 description = "N-D labeled arrays and datasets in Python"
 category = "main"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 
 [package.dependencies]
-numpy = ">=1.20"
-packaging = ">=21.0"
-pandas = ">=1.3"
+numpy = ">=1.21"
+packaging = ">=21.3"
+pandas = ">=1.4"
 
 [package.extras]
 accel = ["bottleneck", "flox", "numbagg", "scipy"]
@@ -639,7 +639,7 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "ba53397e660038f7e7182a23af42e91fbc63b66a749570b8f18847f80e85c294"
+content-hash = "a1106f0d691c39920cf210d72bf2ea3defaa8ea7022b274e645b6dfe6f497697"
 
 [metadata.files]
 aiobotocore = [
@@ -1469,8 +1469,8 @@ wrapt = [
     {file = "wrapt-1.14.1.tar.gz", hash = "sha256:380a85cf89e0e69b7cfbe2ea9f765f004ff419f34194018a6827ac0e3edfed4d"},
 ]
 xarray = [
-    {file = "xarray-2022.10.0-py3-none-any.whl", hash = "sha256:e4e574820ff8eb7dbc119c5089d30860b73160bd587cc045ae37a128b8eb4fc2"},
-    {file = "xarray-2022.10.0.tar.gz", hash = "sha256:b39ff3475f73eaacdf831b0ab7eb6930e7b5933e46dcf71b9327f4c4bb941793"},
+    {file = "xarray-2023.2.0-py3-none-any.whl", hash = "sha256:9fb925e47deb68e2486c8d80d13e3ad97ff6f0e02a26d622c0b6559be707c22e"},
+    {file = "xarray-2023.2.0.tar.gz", hash = "sha256:aa760500a2d8f8be8efd8f3b27a94b2af3b0a8c2c037347d595eaf6ff09d8a77"},
 ]
 yarl = [
     {file = "yarl-1.8.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:bb81f753c815f6b8e2ddd2eef3c855cf7da193b82396ac013c661aaa6cc6b0a5"},
