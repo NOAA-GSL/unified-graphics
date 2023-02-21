@@ -78,7 +78,7 @@ def diag_dataset():
         data: Optional[xr.Dataset] = None,
         **kwargs,
     ):
-        dims = [*kwargs.keys(), "nobs"]
+        dims = ["nobs", *kwargs.keys()]
         shape = [*map(len, kwargs.values()), 2]
         variables = [
             "observation",
