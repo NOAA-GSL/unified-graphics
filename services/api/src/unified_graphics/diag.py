@@ -128,12 +128,26 @@ def open_diagnostic(
     return xr.open_zarr(store, group=group)
 
 
-def apply_filters(ds: xr.Dataset, filters: MultiDict) -> Dataset:
+# TODO: Refactor to a class
+# I think this might belong in a different module. It could be a class or set of classes
+# that represent different filters that can be added together into a filtering pipeline
+def get_bounds(filters: MultiDict):
     for coord, value in filters.items():
-        lower, upper = sorted(map(float, value.split(",")))
-        ds = ds.where((ds[coord] >= lower) & (ds[coord] <= upper), drop=True)
+        extent = np.array(
+            [[float(digit) for digit in pair.split(",")] for pair in value.split("::")]
+        )
+        yield coord, extent.min(axis=0), extent.max(axis=0)
 
-    return ds
+
+def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
+    for coord, lower, upper in get_bounds(filters):
+        data_array = dataset[coord]
+        print(data_array >= lower)
+        dataset = dataset.where(
+            (data_array >= lower) & (data_array <= upper), drop=True
+        )
+
+    return dataset
 
 
 def scalar(

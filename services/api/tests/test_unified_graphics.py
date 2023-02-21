@@ -159,7 +159,7 @@ def test_region_filter_scalar(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "longitude=-160.1,-159.9&latitude=27,22"
+    query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
@@ -209,7 +209,7 @@ def test_range_filter_scalar(diag_zarr, client):
     diag_zarr([variable], init_time, loop, data=data)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "obs_minus_forecast_adjusted=1.5,1"
+    query = "obs_minus_forecast_adjusted=1.5::1"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
@@ -240,7 +240,7 @@ def test_region_filter_vector(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "longitude=-160.1,-159.9&latitude=27,22"
+    query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
@@ -263,7 +263,6 @@ def test_region_filter_vector(diag_zarr, client):
     }
 
 
-@pytest.mark.xfail
 def test_range_filter_vector(diag_zarr, client):
     init_time = "2022-05-16T04:00"
     loop = "ges"
@@ -281,6 +280,7 @@ def test_range_filter_vector(diag_zarr, client):
             "forecast_unadjusted": (["nobs", "component"], [[0, 0], [10, 25]]),
         },
         coords=dict(
+            component=["u", "v"],
             longitude=(["nobs"], [90, -160]),
             latitude=(["nobs"], [22, 25]),
             is_used=(["nobs"], [1, 0]),
@@ -294,7 +294,10 @@ def test_range_filter_vector(diag_zarr, client):
     diag_zarr([variable], init_time, loop, data=data)
 
     url = f"/diag/{variable_name}/{init_time}/{loop}/"
-    query = "obs_minus_forecast_adjusted:u=-1,1.1&obs_minus_forecast_adjusted:v=0,15"
+    # This query is designed so that both observations v components fall within the
+    # selected region, but only the first observation's u component does, so only the
+    # first observation should be returned
+    query = "obs_minus_forecast_adjusted=1::-1&obs_minus_forecast_adjusted=0::25"
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
