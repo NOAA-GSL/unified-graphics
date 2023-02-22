@@ -50,6 +50,7 @@ import { bin2d } from "../../helpers";
  * @property {[number, number]} range The min and max values for the y-axis
  * @readonly
  * @property {object} scale The color scale used for the bin counts
+ * @property {string} src The URL for fetching GeoJSON data for the chart
  * @readonly
  * @property {object} xScale The scale used for the x-axis
  * @readonly
