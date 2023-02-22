@@ -6,7 +6,7 @@ authors = ["W. Evan Sheehan <evan.sheehan@noaa.gov>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-xarray = "2022.10.0"
+xarray = "2023.2.0"
 netCDF4 = "1.6.1"
 zarr = "^2.14.1"
 boto3 = "^1.26.60"
