@@ -96,7 +96,7 @@ class ChartHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -112,6 +112,12 @@ class ChartHistogram extends ChartElement {
       case "format-x":
       case "format-y":
         this.update();
+        break;
+      case "src":
+        fetch(newValue)
+          .then((response) => response.json())
+          .then((data) => data.features.map((d) => d.properties.adjusted))
+          .then((data) => (this.data = data));
         break;
       default:
         super.attributeChangedCallback(name, oldValue, newValue);
@@ -201,6 +207,19 @@ class ChartHistogram extends ChartElement {
     this.#selection.datum(value).call(this.#brush);
   }
 
+  get src() {
+    return this.getAttribute("src");
+  }
+
+  set src(value) {
+    if (!value) {
+      this.removeAttribute("src");
+      return;
+    }
+
+    this.setAttribute("src", value);
+  }
+
   get thresholds() {
     return this.#thresholds;
   }
@@ -223,6 +242,8 @@ class ChartHistogram extends ChartElement {
    */
   onMouseDown = (event) => {
     const svg = event.currentTarget;
+    // FIXME: Not sure I think persisting the selection in the DOM is wise
+    // Pretty sure we stopped doing this for other charts.
     this.#selection.datum(
       [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d))
     );
@@ -261,6 +282,13 @@ class ChartHistogram extends ChartElement {
     this.shadowRoot
       .querySelector("svg")
       .removeEventListener("mousemove", this.onMouseMove);
+
+    // Set the selection to null if this.#selection.datum()the range is 0.
+    let detail = structuredClone(this.#selection.datum());
+    if (detail && detail[0] === detail[1]) {
+      detail = null;
+    }
+
     // Update the brush one last time because, in the event of a click with no
     // mousemove, this will never be called, leaving the old selection still
     // visible despite having updated the actual range.
@@ -268,7 +296,7 @@ class ChartHistogram extends ChartElement {
 
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: structuredClone(this.#selection.datum()),
+      detail: detail,
     });
     this.dispatchEvent(brush);
   };

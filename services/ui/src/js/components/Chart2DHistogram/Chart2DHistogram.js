@@ -16,9 +16,8 @@ import { bin2d } from "../../helpers";
 
 /**
  * @typedef {object} DiagVector
- * @property {number} direction
- *   A value between 0 and 360 representing the orientation of the vector.
- * @property {number} magnitude The length of the vector.
+ * @property {number} u
+ * @property {number} v
  */
 
 /**
@@ -51,6 +50,7 @@ import { bin2d } from "../../helpers";
  * @property {[number, number]} range The min and max values for the y-axis
  * @readonly
  * @property {object} scale The color scale used for the bin counts
+ * @property {string} src The URL for fetching GeoJSON data for the chart
  * @readonly
  * @property {object} xScale The scale used for the x-axis
  * @readonly
@@ -83,7 +83,7 @@ export default class Chart2DHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y"].concat(ChartElement.observedAttributes);
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -102,13 +102,26 @@ export default class Chart2DHistogram extends ChartElement {
     svg.addEventListener("mousedown", this.onMouseDown);
   }
 
+  attributeChangedCallback(name, oldValue, newValue) {
+    switch (name) {
+      case "src":
+        fetch(newValue)
+          .then((response) => response.json())
+          .then((data) => (this.data = data));
+        break;
+      default:
+        super.attributeChangedCallback(name, oldValue, newValue);
+        break;
+    }
+  }
+
   get bins() {
     const binner = bin2d(
       this.xScale.ticks(Math.floor(this.contentWidth / 10)),
       this.yScale.ticks(Math.floor(this.contentHeight / 10))
     )
-      .x((d) => d.direction)
-      .y((d) => d.magnitude);
+      .x((d) => d.u)
+      .y((d) => d.v);
 
     return binner(this.#data);
   }
@@ -128,7 +141,11 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   set data(value) {
-    this.#data = value;
+    if (Array.isArray(value)) {
+      this.#data = value;
+    } else {
+      this.#data = value.features.map((d) => d.properties.adjusted);
+    }
 
     // FIXME: This is duplicated across all charts to ensure that they fire
     // this event. This event is used by the ColorRamp component so that it
@@ -144,7 +161,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get domain() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.direction);
+    return extent(this.#data, (d) => d.u);
   }
 
   get formatX() {
@@ -175,7 +192,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get range() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.magnitude);
+    return extent(this.#data, (d) => d.v);
   }
 
   get margin() {
@@ -203,6 +220,19 @@ export default class Chart2DHistogram extends ChartElement {
   set selection(value) {
     this.#selection = structuredClone(value);
     this.#brush();
+  }
+
+  get src() {
+    return this.getAttribute("src");
+  }
+
+  set src(value) {
+    if (!value) {
+      this.removeAttribute("src");
+      return;
+    }
+
+    this.setAttribute("src", value);
   }
 
   get xScale() {

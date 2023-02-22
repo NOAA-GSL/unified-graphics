@@ -5,6 +5,7 @@ from unittest import mock
 import numpy as np
 import pytest
 import xarray as xr
+from werkzeug.datastructures import MultiDict
 
 from unified_graphics import diag
 
@@ -194,3 +195,24 @@ def test_vector_magnitude():
     np.testing.assert_array_almost_equal(
         result, np.array([1, 1, 1.41421, 0]), decimal=5
     )
+
+
+@pytest.mark.parametrize(
+    "mapping,expected",
+    [
+        ([("a", "1")], [("a", np.array([1.0]), np.array([1.0]))]),
+        ([("a", "1::2")], [("a", np.array([1.0]), np.array([2.0]))]),
+        ([("a", "2,4::3,1")], [("a", np.array([2.0, 1.0]), np.array([3.0, 4.0]))]),
+    ],
+)
+def test_get_bounds(mapping, expected):
+    filters = MultiDict(mapping)
+
+    result = list(diag.get_bounds(filters))
+
+    for (coord, lower, upper), (expected_coord, expected_lower, expected_upper) in zip(
+        result, expected
+    ):
+        assert coord == expected_coord
+        assert (lower == expected_lower).all()
+        assert (upper == expected_upper).all()

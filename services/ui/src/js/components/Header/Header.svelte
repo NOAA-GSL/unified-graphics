@@ -1,16 +1,15 @@
 <script>
   export let diag_data = null;
   export let variableName = "";
+  export let variableType = "scalar";
 
   let currentVariable = null;
 
   $: variables = fetch("/api/diag/")
     .then((response) => response.json())
     .then((json) => {
-      const response = Object.entries(json).map(([name, url]) => ({ name, url }));
-
-      currentVariable = response[0].url;
-      return response;
+      currentVariable = json[0].url;
+      return json;
     });
 
   $: init_times = currentVariable
@@ -28,7 +27,9 @@
     // needed for display in the LoopDisplay components.
     if (currentVariable) {
       variables.then((data) => {
-        variableName = data.find(({ url }) => url === currentVariable)?.name ?? "";
+        const variable = data.find(({ url }) => url === currentVariable);
+        variableName = variable.name;
+        variableType = variable.type;
       });
     }
   }
@@ -48,7 +49,8 @@ The site header for the application.
     <select class="usa-select" bind:value={currentVariable}>
       {#await variables then vars}
         {#each vars as variable}
-          <option value={variable.url}>{variable.name}</option>
+          <option value={variable.url} data-type={variable.type}>{variable.name}</option
+          >
         {/each}
       {/await}
     </select>

@@ -1,9 +1,8 @@
 <script>
-  import { containedIn, geoFilter } from "./DiagnosticView.helpers.js";
+  import { calculateMagnitude } from "./DiagnosticView.helpers.js";
   import { range, region } from "./DiagnosticView.stores.js";
 
-  /** GeoJSON data for this loop */
-  export let data = {};
+  export let src = null;
 
   export let loop = "ges";
 
@@ -27,10 +26,7 @@
    */
   const onBrushHistogram = (event) => {
     event.stopImmediatePropagation();
-    region.set([
-      [0, 0],
-      [0, 0],
-    ]);
+    region.set(null);
     range.set(event.detail);
   };
 
@@ -39,52 +35,21 @@
    */
   const onBrushMap = (event) => {
     event.stopImmediatePropagation();
-    range.set([0, 0]);
+    range.set(null);
     region.set(event.detail);
   };
 
   $: distributionEl =
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
 
-  $: distributionData = data.features
-    .filter(geoFilter($region))
-    .map((d) => d.properties["adjusted"]);
-
   $: xTitle =
-    variableType === "vector"
-      ? "Direction (Observation − Forecast)"
-      : "Observation − Forecast";
+    variableType === "vector" ? "u (Observation − Forecast)" : "Observation − Forecast";
 
   $: yTitle =
-    variableType === "vector"
-      ? "Magnitude (Observation − Forecast)"
-      : "Observation count";
-
-  $: mapFilter = containedIn(
-    variableType === "scalar" || $range === null
-      ? $range
-      : {
-          direction: [
-            Math.min($range[0][0], $range[1][0]),
-            Math.max($range[0][0], $range[1][0]),
-          ],
-          magnitude: [
-            Math.min($range[0][1], $range[1][1]),
-            Math.max($range[0][1], $range[1][1]),
-          ],
-        },
-    "adjusted"
-  );
-
-  $: mapData = {
-    type: "FeatureCollection",
-    features: data.features.filter(mapFilter),
-  };
+    variableType === "vector" ? "v (Observation − Forecast)" : "Observation count";
 
   $: mapRadius =
-    variableType === "vector"
-      ? (d) => d.properties["adjusted"].magnitude
-      : (d) => d.properties["adjusted"];
+    variableType === "vector" ? calculateMagnitude : (d) => d.properties["adjusted"];
 
   $: mapLegendTitle = variableName === "wind" ? `${variableName} speed` : variableName;
 </script>
@@ -114,7 +79,7 @@ Usage:
     <svelte:element
       this={distributionEl}
       id="distribution-{loop}"
-      data={distributionData}
+      {src}
       selection={$range}
       format-x=".3e"
       on:chart-brush={onBrushHistogram}
@@ -129,7 +94,7 @@ Usage:
   <chart-container>
     <chart-map
       id="observations-{loop}"
-      data={mapData}
+      {src}
       selection={$region}
       radius={mapRadius}
       on:chart-brush={onBrushMap}

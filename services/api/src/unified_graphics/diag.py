@@ -10,6 +10,8 @@ import xarray as xr
 import zarr  # type: ignore
 from flask import current_app
 from s3fs import S3FileSystem, S3Map  # type: ignore
+from werkzeug.datastructures import MultiDict
+from xarray.core.dataset import Dataset
 
 
 class MinimLoop(Enum):
@@ -35,7 +37,7 @@ class VariableType(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
-PolarCoordinate = namedtuple("PolarCoordinate", "magnitude direction")
+Vector = namedtuple("Vector", "u v")
 
 
 @dataclass
@@ -43,9 +45,9 @@ class Observation:
     variable: str
     variable_type: VariableType
     loop: MinimLoop
-    adjusted: Union[float, PolarCoordinate]
-    unadjusted: Union[float, PolarCoordinate]
-    observed: Union[float, PolarCoordinate]
+    adjusted: Union[float, Vector]
+    unadjusted: Union[float, Vector]
+    observed: Union[float, Vector]
     position: Coordinate
 
     def to_geojson(self):
@@ -126,10 +128,33 @@ def open_diagnostic(
     return xr.open_zarr(store, group=group)
 
 
+# TODO: Refactor to a class
+# I think this might belong in a different module. It could be a class or set of classes
+# that represent different filters that can be added together into a filtering pipeline
+def get_bounds(filters: MultiDict):
+    for coord, value in filters.items():
+        extent = np.array(
+            [[float(digit) for digit in pair.split(",")] for pair in value.split("::")]
+        )
+        yield coord, extent.min(axis=0), extent.max(axis=0)
+
+
+def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
+    for coord, lower, upper in get_bounds(filters):
+        data_array = dataset[coord]
+        print(data_array >= lower)
+        dataset = dataset.where(
+            (data_array >= lower) & (data_array <= upper), drop=True
+        )
+
+    return dataset
+
+
 def scalar(
-    variable: Variable, initialization_time: str, loop: MinimLoop
+    variable: Variable, initialization_time: str, loop: MinimLoop, filters: MultiDict
 ) -> List[Observation]:
     data = open_diagnostic(variable, initialization_time, loop)
+    data = apply_filters(data, filters)
 
     return [
         Observation(
@@ -144,20 +169,26 @@ def scalar(
                 float(data["latitude"].values[idx]),
             ),
         )
-        for idx in range(len(data["observation"]))
+        for idx in range(data.dims["nobs"])
     ]
 
 
-def temperature(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.TEMPERATURE, initialization_time, loop)
+def temperature(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.TEMPERATURE, initialization_time, loop, filters)
 
 
-def moisture(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.MOISTURE, initialization_time, loop)
+def moisture(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.MOISTURE, initialization_time, loop, filters)
 
 
-def pressure(initialization_time: str, loop: MinimLoop) -> List[Observation]:
-    return scalar(Variable.PRESSURE, initialization_time, loop)
+def pressure(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
+    return scalar(Variable.PRESSURE, initialization_time, loop, filters)
 
 
 def vector_direction(u, v):
@@ -182,71 +213,34 @@ def vector_magnitude(u, v):
     return np.sqrt(u**2 + v**2)
 
 
-def wind(initialization_time: str, loop: MinimLoop) -> List[Observation]:
+def wind(
+    initialization_time: str, loop: MinimLoop, filters: MultiDict
+) -> List[Observation]:
     data = open_diagnostic(Variable.WIND, initialization_time, loop)
+    data = apply_filters(data, filters)
 
-    forecast_u_adjusted = data["observation"].sel(component="u") - data[
-        "obs_minus_forecast_adjusted"
-    ].sel(component="u")
-    forecast_v_adjusted = data["observation"].sel(component="v") - data[
-        "obs_minus_forecast_adjusted"
-    ].sel(component="v")
-
-    forecast_u_unadjusted = data["observation"].sel(component="u") - data[
-        "obs_minus_forecast_unadjusted"
-    ].sel(component="u")
-    forecast_v_unadjusted = data["observation"].sel(component="v") - data[
-        "obs_minus_forecast_unadjusted"
-    ].sel(component="v")
-
-    adjusted_mag = vector_magnitude(
-        forecast_u_adjusted.values, forecast_v_adjusted.values
-    )
-    adjusted_dir = vector_direction(
-        forecast_u_adjusted.values, forecast_v_adjusted.values
-    )
-
-    unadjusted_mag = vector_magnitude(
-        forecast_u_unadjusted.values, forecast_v_unadjusted.values
-    )
-    unadjusted_dir = vector_direction(
-        forecast_u_unadjusted.values, forecast_v_unadjusted.values
-    )
-
-    obs_mag = vector_magnitude(
-        data["observation"].sel(component="u").values,
-        data["observation"].sel(component="v").values,
-    )
-    obs_dir = vector_direction(
-        data["observation"].sel(component="u").values,
-        data["observation"].sel(component="v").values,
-    )
-
-    adjusted_mag = obs_mag - adjusted_mag
-    adjusted_dir = obs_dir - adjusted_dir
-
-    unadjusted_mag = obs_mag - unadjusted_mag
-    unadjusted_dir = obs_dir - unadjusted_dir
+    omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values
+    omf_adj_v = data["obs_minus_forecast_adjusted"].sel(component="v").values
+    omf_una_u = data["obs_minus_forecast_unadjusted"].sel(component="u").values
+    omf_una_v = data["obs_minus_forecast_unadjusted"].sel(component="v").values
+    obs_u = data["observation"].sel(component="u").values
+    obs_v = data["observation"].sel(component="v").values
+    lng = data["longitude"].values
+    lat = data["latitude"].values
 
     return [
         Observation(
             "wind",
             VariableType.VECTOR,
             loop,
-            adjusted=PolarCoordinate(
-                round(float(adjusted_mag[idx]), 5), round(float(adjusted_dir[idx]), 5)
+            adjusted=Vector(
+                round(float(omf_adj_u[idx]), 5), round(float(omf_adj_v[idx]), 5)
             ),
-            unadjusted=PolarCoordinate(
-                round(float(unadjusted_mag[idx]), 5),
-                round(float(unadjusted_dir[idx]), 5),
+            unadjusted=Vector(
+                round(float(omf_una_u[idx]), 5), round(float(omf_una_v[idx]), 5)
             ),
-            observed=PolarCoordinate(
-                round(float(obs_mag[idx]), 5), round(float(obs_dir[idx]), 5)
-            ),
-            position=Coordinate(
-                round(float(data["longitude"].values[idx]), 5),
-                round(float(data["latitude"].values[idx]), 5),
-            ),
+            observed=Vector(round(float(obs_u[idx]), 5), round(float(obs_v[idx]), 5)),
+            position=Coordinate(round(float(lng[idx]), 5), round(float(lat[idx]), 5)),
         )
-        for idx in range(len(data["observation"].values))
+        for idx in range(data.dims["nobs"])
     ]
