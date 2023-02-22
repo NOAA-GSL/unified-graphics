@@ -1,5 +1,8 @@
 from pathlib import Path
 
+# Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
+# https://github.com/pydata/xarray/issues/7259
+import netCDF4  # type: ignore # noqa: F401 # This needs to be imported before numpy
 import numpy as np
 import pytest
 import xarray as xr
