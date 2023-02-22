@@ -34,6 +34,8 @@ export function bin2d(xThresholds, yThresholds) {
    * @return {TwoDBinArray}
    */
   function bin(data) {
+    if (!(xThresholds.length && yThresholds.length && data.length)) return [];
+
     const colCount = xThresholds.length - 1;
     const rowCount = yThresholds.length - 1;
     const column = scaleThreshold(xThresholds, range(colCount));

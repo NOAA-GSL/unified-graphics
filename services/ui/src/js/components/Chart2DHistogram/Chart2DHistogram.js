@@ -16,9 +16,8 @@ import { bin2d } from "../../helpers";
 
 /**
  * @typedef {object} DiagVector
- * @property {number} direction
- *   A value between 0 and 360 representing the orientation of the vector.
- * @property {number} magnitude The length of the vector.
+ * @property {number} u
+ * @property {number} v
  */
 
 /**
@@ -120,8 +119,8 @@ export default class Chart2DHistogram extends ChartElement {
       this.xScale.ticks(Math.floor(this.contentWidth / 10)),
       this.yScale.ticks(Math.floor(this.contentHeight / 10))
     )
-      .x((d) => d.direction)
-      .y((d) => d.magnitude);
+      .x((d) => d.u)
+      .y((d) => d.v);
 
     return binner(this.#data);
   }
@@ -161,7 +160,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get domain() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.direction);
+    return extent(this.#data, (d) => d.u);
   }
 
   get formatX() {
@@ -192,7 +191,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get range() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.magnitude);
+    return extent(this.#data, (d) => d.v);
   }
 
   get margin() {
