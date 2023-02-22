@@ -43,14 +43,10 @@
     variableType === "vector" ? "chart-2dhistogram" : "chart-histogram";
 
   $: xTitle =
-    variableType === "vector"
-      ? "Direction (Observation − Forecast)"
-      : "Observation − Forecast";
+    variableType === "vector" ? "u (Observation − Forecast)" : "Observation − Forecast";
 
   $: yTitle =
-    variableType === "vector"
-      ? "Magnitude (Observation − Forecast)"
-      : "Observation count";
+    variableType === "vector" ? "v (Observation − Forecast)" : "Observation count";
 
   $: mapRadius =
     variableType === "vector" ? calculateMagnitude : (d) => d.properties["adjusted"];
