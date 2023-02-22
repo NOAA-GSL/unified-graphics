@@ -14,7 +14,7 @@
     "format": "prettier --ignore-path .gitignore --write --plugin-search-dir=. . && stylelint --ignore-path .gitignore --fix src/**/*.{css,scss}"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^1.0.8",
+    "@sveltejs/vite-plugin-svelte": "^1.4.0",
     "@uswds/uswds": "^3.0.0",
     "@vitest/coverage-c8": "^0.23.4",
     "c8": "^7.12.0",
