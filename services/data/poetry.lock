@@ -1185,14 +1185,14 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 
 [[package]]
 name = "zarr"
-version = "2.13.6"
+version = "2.14.1"
 description = "An implementation of chunked, compressed, N-dimensional arrays for Python"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zarr-2.13.6-py3-none-any.whl", hash = "sha256:ce5d88e5e0e07487d7872e381e69593edb18b750c216a961d838a818c54bb6ed"},
-    {file = "zarr-2.13.6.tar.gz", hash = "sha256:f079444d5126db7ba5895a682797d86d02813f49b35854ee2d89c7503dc3677e"},
+    {file = "zarr-2.14.1-py3-none-any.whl", hash = "sha256:652cab30d13b837faf12dcaa7e3061c539eb186f6ccf9526e8909ed6b6f5d333"},
+    {file = "zarr-2.14.1.tar.gz", hash = "sha256:1d2b6cd4460f1741deca17df1e9f071b917380cb2a27b6e2e949f067a2054a64"},
 ]
 
 [package.dependencies]
@@ -1207,4 +1207,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9"
-content-hash = "8a701f36c168eed8c02ca9d210b8793d27b23ffdada88eebbdeb152e6ff52d7d"
+content-hash = "d493185cf10c4e41c074d02e496e9dbab3f6368cead59e80860e81e773987db8"
