@@ -1,4 +1,5 @@
 <script>
+  import { calculateMagnitude } from "./DiagnosticView.helpers.js";
   import { range, region } from "./DiagnosticView.stores.js";
 
   export let src = null;
@@ -52,9 +53,7 @@
       : "Observation count";
 
   $: mapRadius =
-    variableType === "vector"
-      ? (d) => d.properties["adjusted"].magnitude
-      : (d) => d.properties["adjusted"];
+    variableType === "vector" ? calculateMagnitude : (d) => d.properties["adjusted"];
 
   $: mapLegendTitle = variableName === "wind" ? `${variableName} speed` : variableName;
 </script>

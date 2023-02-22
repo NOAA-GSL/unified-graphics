@@ -60,3 +60,9 @@ export function geoFilter(bbox) {
 
   return filter;
 }
+
+export function calculateMagnitude(feature) {
+  const u = feature.properties.adjusted.u;
+  const v = feature.properties.adjusted.v;
+  return Math.sqrt(u * u + v * v);
+}
