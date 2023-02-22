@@ -37,7 +37,7 @@ class VariableType(Enum):
 
 
 Coordinate = namedtuple("Coordinate", "longitude latitude")
-PolarCoordinate = namedtuple("PolarCoordinate", "u v")
+Vector = namedtuple("Vector", "u v")
 
 
 @dataclass
@@ -45,9 +45,9 @@ class Observation:
     variable: str
     variable_type: VariableType
     loop: MinimLoop
-    adjusted: Union[float, PolarCoordinate]
-    unadjusted: Union[float, PolarCoordinate]
-    observed: Union[float, PolarCoordinate]
+    adjusted: Union[float, Vector]
+    unadjusted: Union[float, Vector]
+    observed: Union[float, Vector]
     position: Coordinate
 
     def to_geojson(self):
@@ -219,43 +219,28 @@ def wind(
     data = open_diagnostic(Variable.WIND, initialization_time, loop)
     data = apply_filters(data, filters)
 
+    omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values
+    omf_adj_v = data["obs_minus_forecast_adjusted"].sel(component="v").values
+    omf_una_u = data["obs_minus_forecast_unadjusted"].sel(component="u").values
+    omf_una_v = data["obs_minus_forecast_unadjusted"].sel(component="v").values
+    obs_u = data["observation"].sel(component="u").values
+    obs_v = data["observation"].sel(component="v").values
+    lng = data["longitude"].values
+    lat = data["latitude"].values
+
     return [
         Observation(
             "wind",
             VariableType.VECTOR,
             loop,
-            adjusted=PolarCoordinate(
-                round(
-                    data["obs_minus_forecast_adjusted"].sel(component="u").values[idx],
-                    5,
-                ),
-                round(
-                    data["obs_minus_forecast_adjusted"].sel(component="v").values[idx],
-                    5,
-                ),
+            adjusted=Vector(
+                round(float(omf_adj_u[idx]), 5), round(float(omf_adj_v[idx]), 5)
             ),
-            unadjusted=PolarCoordinate(
-                round(
-                    data["obs_minus_forecast_unadjusted"]
-                    .sel(component="u")
-                    .values[idx],
-                    5,
-                ),
-                round(
-                    data["obs_minus_forecast_unadjusted"]
-                    .sel(component="v")
-                    .values[idx],
-                    5,
-                ),
+            unadjusted=Vector(
+                round(float(omf_una_u[idx]), 5), round(float(omf_una_v[idx]), 5)
             ),
-            observed=PolarCoordinate(
-                round(data["observation"].sel(component="u").values[idx], 5),
-                round(data["observation"].sel(component="v").values[idx], 5),
-            ),
-            position=Coordinate(
-                round(float(data["longitude"].values[idx]), 5),
-                round(float(data["latitude"].values[idx]), 5),
-            ),
+            observed=Vector(round(float(obs_u[idx]), 5), round(float(obs_v[idx]), 5)),
+            position=Coordinate(round(float(lng[idx]), 5), round(float(lat[idx]), 5)),
         )
         for idx in range(data.dims["nobs"])
     ]
