@@ -21,15 +21,15 @@
     let params = [];
 
     if ($region) {
-      let lng = $region.map((d) => d[0]).join(",");
-      let lat = $region.map((d) => d[1]).join(",");
+      let lng = $region.map((d) => d[0]).join("::");
+      let lat = $region.map((d) => d[1]).join("::");
 
       params.push(`longitude=${lng}`);
       params.push(`latitude=${lat}`);
     }
 
     if ($range) {
-      params.push(`obs_minus_forecast_adjusted=${$range.join(",")}`);
+      params.push(`obs_minus_forecast_adjusted=${$range.join("::")}`);
     }
 
     const query = params.join("&");
