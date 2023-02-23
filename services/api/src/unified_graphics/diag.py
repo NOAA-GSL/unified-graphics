@@ -142,7 +142,6 @@ def get_bounds(filters: MultiDict):
 def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
     for coord, lower, upper in get_bounds(filters):
         data_array = dataset[coord]
-        print(data_array >= lower)
         dataset = dataset.where(
             (data_array >= lower) & (data_array <= upper), drop=True
         )
