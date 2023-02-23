@@ -79,7 +79,7 @@ def diag_dataset():
         **kwargs,
     ):
         dims = ["nobs", *kwargs.keys()]
-        shape = [*map(len, kwargs.values()), 2]
+        shape = [3, *map(len, kwargs.values())]
         variables = [
             "observation",
             "forecast_adjusted",
@@ -97,9 +97,9 @@ def diag_dataset():
             ds = xr.Dataset(
                 {var: (dims, np.zeros(shape)) for var in variables},
                 coords=dict(
-                    longitude=(["nobs"], np.array([90, -160], dtype=np.float64)),
-                    latitude=(["nobs"], np.array([22, 25], dtype=np.float64)),
-                    is_used=(["nobs"], np.array([1, 0], dtype=np.int8)),
+                    longitude=(["nobs"], np.array([90, 91, -160], dtype=np.float64)),
+                    latitude=(["nobs"], np.array([22, 23, 25], dtype=np.float64)),
+                    is_used=(["nobs"], np.array([1, 0, 1], dtype=np.int8)),
                     **kwargs,
                 ),
                 attrs={
