@@ -2,6 +2,7 @@
   export let diag_data = null;
   export let variableName = "";
   export let variableType = "scalar";
+  export let includeUnused = false;
 
   let currentVariable = null;
 
@@ -62,6 +63,11 @@ The site header for the application.
         {/each}
       {/await}
     </select>
+
+    <label>
+      <input type="checkbox" name="is_used" bind:checked={includeUnused} />
+      Include unused observations
+    </label>
   </form>
   <nav>
     <!-- svelte-ignore a11y-no-redundant-roles -->

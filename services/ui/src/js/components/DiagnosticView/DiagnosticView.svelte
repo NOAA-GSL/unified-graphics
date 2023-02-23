@@ -5,6 +5,7 @@
   export let currentVariable = null;
   export let variableName = "";
   export let variableType = "scalar";
+  export let includeUnused = false;
 
   let guessURL = "";
   let analysisURL = "";
@@ -30,6 +31,10 @@
 
     if ($range) {
       params.push(`obs_minus_forecast_adjusted=${$range.join("::")}`);
+    }
+
+    if (includeUnused) {
+      params.push("is_used=false::true");
     }
 
     const query = params.join("&");
