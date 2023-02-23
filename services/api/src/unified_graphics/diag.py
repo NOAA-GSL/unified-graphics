@@ -133,6 +133,11 @@ def open_diagnostic(
 # that represent different filters that can be added together into a filtering pipeline
 def get_bounds(filters: MultiDict):
     for coord, value in filters.items():
+        if value in ["true", "false"]:
+            lower = 0 if value == "false" else 1
+            yield coord, lower, lower
+            continue
+
         extent = np.array(
             [[float(digit) for digit in pair.split(",")] for pair in value.split("::")]
         )
@@ -140,12 +145,20 @@ def get_bounds(filters: MultiDict):
 
 
 def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
-    dataset = dataset.where(dataset["is_used"], drop=True)
     for coord, lower, upper in get_bounds(filters):
         data_array = dataset[coord]
+        if lower == upper:
+            dataset = dataset.where(data_array == lower, drop=True)
+            continue
+
         dataset = dataset.where(
             (data_array >= lower) & (data_array <= upper), drop=True
         )
+
+    # If the is_used filter is not passed, our default behavior is to include only used
+    # observations.
+    if "is_used" not in filters:
+        dataset = dataset.where(dataset["is_used"], drop=True)
 
     return dataset
 

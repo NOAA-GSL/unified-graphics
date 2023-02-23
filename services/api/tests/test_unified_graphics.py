@@ -320,6 +320,37 @@ def test_range_filter_vector(diag_zarr, client):
     }
 
 
+def test_used_filter(diag_zarr, client):
+    variable_code = "t"
+    variable_name = "temperature"
+    loop = "ges"
+    init_time = "2022-05-16T04:00"
+    diag_zarr([variable_code], init_time, loop)
+
+    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    query = "is_used=false"
+    response = client.get(f"{url}?{query}")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "scalar",
+                    "loop": loop,
+                    "variable": variable_name,
+                    "adjusted": 0,
+                    "unadjusted": 0,
+                    "observed": 0,
+                },
+                "geometry": {"type": "Point", "coordinates": [91, 23]},
+            },
+        ],
+    }
+
+
 @pytest.mark.parametrize(
     "variable_name", ["temperature", "moisture", "pressure", "wind"]
 )
