@@ -128,18 +128,29 @@ def open_diagnostic(
     return xr.open_zarr(store, group=group)
 
 
+def parse_filter_value(value):
+    if value == "true":
+        return 1
+
+    if value == "false":
+        return 0
+
+    try:
+        return float(value)
+    except ValueError:
+        return value
+
+
 # TODO: Refactor to a class
 # I think this might belong in a different module. It could be a class or set of classes
 # that represent different filters that can be added together into a filtering pipeline
 def get_bounds(filters: MultiDict):
     for coord, value in filters.items():
-        if value in ["true", "false"]:
-            lower = 0 if value == "false" else 1
-            yield coord, lower, lower
-            continue
-
         extent = np.array(
-            [[float(digit) for digit in pair.split(",")] for pair in value.split("::")]
+            [
+                [parse_filter_value(digit) for digit in pair.split(",")]
+                for pair in value.split("::")
+            ]
         )
         yield coord, extent.min(axis=0), extent.max(axis=0)
 
@@ -147,10 +158,6 @@ def get_bounds(filters: MultiDict):
 def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
     for coord, lower, upper in get_bounds(filters):
         data_array = dataset[coord]
-        if lower == upper:
-            dataset = dataset.where(data_array == lower, drop=True)
-            continue
-
         dataset = dataset.where(
             (data_array >= lower) & (data_array <= upper), drop=True
         )
