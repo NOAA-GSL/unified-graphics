@@ -198,7 +198,7 @@ def test_range_filter_scalar(diag_zarr, client):
         coords=dict(
             longitude=(["nobs"], [90, -160]),
             latitude=(["nobs"], [22, 25]),
-            is_used=(["nobs"], [1, 0]),
+            is_used=(["nobs"], [0, 1]),
         ),
         attrs={
             "name": variable,
