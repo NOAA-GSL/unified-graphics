@@ -140,6 +140,7 @@ def get_bounds(filters: MultiDict):
 
 
 def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
+    dataset = dataset.where(dataset["is_used"], drop=True)
     for coord, lower, upper in get_bounds(filters):
         data_array = dataset[coord]
         dataset = dataset.where(
