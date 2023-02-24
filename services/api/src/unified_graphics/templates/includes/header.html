@@ -1,3 +1,21 @@
-<header>
-  <h1>Unified Graphics</h1>
+<header class="cluster">
+  <h1 class="text-bold">Unified Graphics</h1>
+  <form data-layout="cluster">
+    <select>
+      {% for variable in variables -%}
+          <option>{{ variable }}</option>
+      {%- endfor %}
+    </select>
+
+    <select>
+      {% for time in initialization_times -%}
+        <option>{{ time }}</option>
+      {%- endfor %}
+    </select>
+
+    <label>
+      <input type="checkbox" name="is_used" />
+      Include unused observations
+    </label>
+  </form>
 </header>
