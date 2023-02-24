@@ -1,0 +1,29 @@
+@layer reset {
+  * {
+    box-sizing: border-box;
+    font: inherit;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: clip;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
+  }
+
+  svg {
+    display: block;
+  }
+
+  [role=list] {
+    list-style: none;
+  }
+
+  [role=list] > li {
+    padding: 0;
+  }
+}

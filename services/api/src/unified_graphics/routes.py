@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, request, stream_template, url_for
 
 from unified_graphics import diag
 
@@ -24,7 +24,7 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    return jsonify({"diagnostics": url_for(".list_variables")})
+    return stream_template("layouts/diag/scalar.html")
 
 
 @bp.route("/diag/")
