@@ -24,10 +24,13 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    variables = [v.name.lower() for v in diag.Variable]
-    init_times = diag.initialization_times(variables[0])
+    variables = [v for v in diag.Variable]
+    init_times = diag.initialization_times(variables[0].name.lower())
     return stream_template(
-        "layouts/diag/scalar.html", variables=variables, initialization_times=init_times
+        "layouts/diag/scalar.html",
+        variables=variables,
+        initialization_times=init_times,
+        form=request.args,
     )
 
 
