@@ -1,13 +1,13 @@
 <header class="cluster justify padding-2 bg-primary-darker text-white">
   <h1 class="text-bold">Unified Graphics</h1>
-  <form class="cluster">
-    <select>
+  <form class="cluster" method="GET">
+    <select name="variable">
       {% for variable in variables -%}
           <option>{{ variable }}</option>
       {%- endfor %}
     </select>
 
-    <select>
+    <select name="initialization_time">
       {% for time in initialization_times -%}
         <option>{{ time }}</option>
       {%- endfor %}
@@ -17,5 +17,6 @@
       <input type="checkbox" name="is_used" />
       Include unused observations
     </label>
+    <button>Load</button>
   </form>
 </header>
