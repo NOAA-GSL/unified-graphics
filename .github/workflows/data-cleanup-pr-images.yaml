@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cleanup images
-        uses: bots-house/ghcr-delete-image-action@v1.0.1
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
         with:
           owner: noaa-gsl
           name: unified-graphics/data
