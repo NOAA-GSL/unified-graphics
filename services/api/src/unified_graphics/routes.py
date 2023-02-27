@@ -30,7 +30,10 @@ def index():
         "layouts/diag/scalar.html",
         variables=variables,
         initialization_times=init_times,
-        form=request.args,
+        form={
+            "variable": diag.Variable(request.args["variable"]),
+            "initialization_time": request.args["initialization_time"],
+        },
     )
 
 

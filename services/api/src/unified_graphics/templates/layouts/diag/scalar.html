@@ -1,5 +1,19 @@
 {% extends "layouts/base.html" %}
 
 {% block main -%}
-<p>Scalar!</p>
+{% for minim_loop in ["ges", "anl"] -%}
+  {% set data_url %}/diag/{{ form.variable.name.lower() }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
+  <div class="grid" style="--row-size: minmax(20rem, 1fr)">
+    <chart-container>
+      <span class="axis-y title" slot="title-y">Observation Count</span>
+      <chart-histogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-histogram>
+      <span class="axis-x title" slot="title-x">Observation - Forecast</span>
+    </chart-container>
+    <chart-container>
+      <chart-map id="observations-{{ minim_loop }}" src="{{ data_url }}"></chart-map>
+      <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
+        >Observation - Forecast</color-ramp>
+    </chart-container>
+  </div>
+{%- endfor %}
 {%- endblock %}

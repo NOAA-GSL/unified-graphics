@@ -6,4 +6,16 @@
     gap: var(--space, 1rem);
     justify-content: flex-start;
   }
+
+  .grid {
+    gap: var(--gutter, var(--space-2));
+
+    display: grid;
+
+    grid-auto-rows: var(--row-size, auto);
+    grid-template-columns: repeat(
+      auto-fit,
+      var(--column-size, minmax(min(30rem, 100%), 1fr))
+    );
+  }
 }

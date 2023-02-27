@@ -47,4 +47,22 @@
     background-color: var(--surface-1);
     color: var(--text-1);
   }
+
+  body,
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  body > header {
+    flex: 0 0 auto;
+  }
+
+  body > main {
+    flex: 1 1 auto;
+  }
+
+  main > * {
+    flex: 1 1 auto;
+  }
 }
