@@ -14,7 +14,7 @@ netCDF4 = "^1.6.1"
 xarray = "^2023.02.0"
 fsspec = "^2022.10.0"
 s3fs = "^2022.10.0"
-zarr = "^2.13.6"
+zarr = "^2.14.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2"

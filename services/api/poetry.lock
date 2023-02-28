@@ -1529,14 +1529,14 @@ multidict = ">=4.0"
 
 [[package]]
 name = "zarr"
-version = "2.14.1"
+version = "2.14.2"
 description = "An implementation of chunked, compressed, N-dimensional arrays for Python"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zarr-2.14.1-py3-none-any.whl", hash = "sha256:652cab30d13b837faf12dcaa7e3061c539eb186f6ccf9526e8909ed6b6f5d333"},
-    {file = "zarr-2.14.1.tar.gz", hash = "sha256:1d2b6cd4460f1741deca17df1e9f071b917380cb2a27b6e2e949f067a2054a64"},
+    {file = "zarr-2.14.2-py3-none-any.whl", hash = "sha256:feb72d6ccc43c447661861020dbf2e685a8367e80d890b6f5905954400394ed2"},
+    {file = "zarr-2.14.2.tar.gz", hash = "sha256:68ec59b8ebdfc4fee5e32bd6c0ce273f72f7d4ed017454b45327c673c60907bc"},
 ]
 
 [package.dependencies]
@@ -1551,4 +1551,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "4aa634641b695b398008f1e50d11172cd5c4926e0c000488b2d2a552044fbb2a"
+content-hash = "4a4294a5367acdbc8f313145e2c9ed6fa01abc4533d8941fb39e35688a003596"
