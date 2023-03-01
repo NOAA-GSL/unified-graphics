@@ -3,6 +3,8 @@ const VERSION = "20230228"; // eslint-disable-line no-unused-vars
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
 
+const activeFetches = new Map();
+
 /**
  * Enable navigation preload if it's supported.
  *
@@ -44,6 +46,10 @@ async function addToCache(request, response) {
   const cache = await caches.open(cacheName);
   console.info(`[addToCache] ${cacheName}`);
   await cache.put(request, response);
+  if (activeFetches.has(request.url)) {
+    console.info(`[addToCache] Removing fetch for ${request.url}`);
+    activeFetches.delete(request.url);
+  }
 }
 
 async function respondFromCache(event) {
@@ -70,11 +76,20 @@ async function respondFromCache(event) {
   }
 
   try {
-    const response = await fetch(request);
-    addToCache(request, response.clone());
-    return response;
+    let response;
+
+    if (activeFetches.has(request.url)) {
+      console.info(`[respondFromCache] Fetch in progress for ${request.url}`);
+      response = await activeFetches.get(request.url);
+    } else {
+      console.info(`[respondFromCache] Starting fetch for ${request.url}`);
+      activeFetches.set(request.url, fetch(request));
+      response = await activeFetches.get(request.url);
+      addToCache(request, response.clone());
+    }
+    return response.clone();
   } catch (error) {
-    console.error(`[Network error] ${error}`);
+    console.error(`[respondFromCache] Network error: ${error}`);
     return new Response("Network error", {
       status: 400,
       header: { "Content-Type": "text/plain" },
