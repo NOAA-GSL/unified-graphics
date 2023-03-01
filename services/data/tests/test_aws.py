@@ -86,7 +86,7 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
     mock_save.assert_called_once_with(ug_bucket, mock_load.return_value)
 
 
-def test_hander_no_records(monkeypatch):
+def test_handler_no_records(monkeypatch):
     context = {}
     event = {}
     ug_bucket = "s3://test-bucket/test.zarr"
