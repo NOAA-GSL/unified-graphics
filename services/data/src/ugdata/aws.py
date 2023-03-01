@@ -51,6 +51,12 @@ def lambda_handler(event, context):
     if "Event" in event and event["Event"] == "s3:TestEvent":
         return "Test event received"
 
+    if "Records" not in event:
+        # FIXME: This should use a real logger
+        print("Records missing from event")
+        print(event)
+        return ""
+
     upload_bucket = os.environ["UG_DIAG_ZARR"]
 
     for record in event["Records"]:

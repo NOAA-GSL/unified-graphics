@@ -86,6 +86,17 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
     mock_save.assert_called_once_with(ug_bucket, mock_load.return_value)
 
 
+def test_handler_no_records(monkeypatch):
+    context = {}
+    event = {}
+    ug_bucket = "s3://test-bucket/test.zarr"
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+
+    result = aws.lambda_handler(event, context)
+
+    assert result == ""
+
+
 @mock.patch("ugdata.diag.save")
 @mock.patch("ugdata.diag.load")
 @mock.patch("ugdata.aws.fetch_record")
