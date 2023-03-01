@@ -3,6 +3,7 @@ const VERSION = "20230228"; // eslint-disable-line no-unused-vars
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
 
+// Track active fetch requests to avoid duplicate network requests.
 const activeFetches = new Map();
 
 /**
@@ -52,32 +53,18 @@ async function addToCache(request, response) {
   }
 }
 
-async function respondFromCache(event) {
-  const request = event.request;
-
-  const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    console.info(`[respondFromCache] Response loaded from cache: ${request.url}`);
-
-    if (isAppResource(cachedResponse)) {
-      console.info(`[respondFromCache] Updating app cache`);
-      const cache = await caches.open(APP_CACHE);
-      event.waitUntil(cache.add(request));
-    }
-
-    return cachedResponse;
-  }
-
-  const preloadResponse = await event.preloadResponse;
-  if (preloadResponse) {
-    console.info(`[${request.url}] Response preloaded`);
-    addToCache(request, preloadResponse.clone());
-    return preloadResponse;
-  }
-
+/**
+ * Fetch data from the network
+ *
+ * Checks our currently open fetch requests to see if this one is a duplicate.
+ * If so, use the response from the existing request, otherwise start a new one.
+ */
+async function networkResponse(request) {
   try {
     let response;
 
+    // If we already have a fetch request for this URL, we'll use that response
+    // instead of starting a new one.
     if (activeFetches.has(request.url)) {
       console.info(`[respondFromCache] Fetch in progress for ${request.url}`);
       response = await activeFetches.get(request.url);
@@ -96,6 +83,39 @@ async function respondFromCache(event) {
     });
   }
 }
+
+/**
+ * Return a response for a fetch request prioritizing the cache over the network.
+ */
+async function respondFromCache(event) {
+  const request = event.request;
+
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    console.info(`[respondFromCache] Response loaded from cache: ${request.url}`);
+
+    // If this is a cached response for the App (HTML, CSS, JS), return the
+    // cached version and update the cache in the background so on the next
+    // request there's an up-to-date response.
+    if (isAppResource(cachedResponse)) {
+      console.info(`[respondFromCache] Updating app cache`);
+      const cache = await caches.open(APP_CACHE);
+      event.waitUntil(cache.add(request));
+    }
+
+    return cachedResponse;
+  }
+
+  const preloadResponse = await event.preloadResponse;
+  if (preloadResponse) {
+    console.info(`[${request.url}] Response preloaded`);
+    addToCache(request, preloadResponse.clone());
+    return preloadResponse;
+  }
+
+  return networkResponse(request);
+}
+
 self.addEventListener("fetch", (event) => {
   event.respondWith(respondFromCache(event));
 });
