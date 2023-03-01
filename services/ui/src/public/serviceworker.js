@@ -1,5 +1,8 @@
 const VERSION = "20230228"; // eslint-disable-line no-unused-vars
 
+const APP_CACHE = `app-${VERSION}`;
+const DATA_CACHE = `data-${VERSION}`;
+
 /**
  * Enable navigation preload if it's supported.
  *
@@ -23,22 +26,46 @@ self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
-async function addToCache(key, value) {
-  const cache = await caches.open(VERSION);
-  await cache.put(key, value);
+/**
+ * Return `true` if `request` is for an app resource, not data.
+ *
+ * Any request for JSON is considered a data request. Everything else is an app resource.
+ */
+function isAppResource(response) {
+  const contentType = response.headers.get("Content-Type");
+  return contentType !== "application/json";
 }
 
-async function respondFromCache({ request, preloadResponse }) {
+/**
+ * Add a response to the appropriate cache.
+ */
+async function addToCache(request, response) {
+  const cacheName = isAppResource(response) ? APP_CACHE : DATA_CACHE;
+  const cache = await caches.open(cacheName);
+  console.info(`[addToCache] ${cacheName}`);
+  await cache.put(request, response);
+}
+
+async function respondFromCache(event) {
+  const request = event.request;
+
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
-    console.info(`[${request.url}] Response loaded from cache`);
+    console.info(`[respondFromCache] Response loaded from cache: ${request.url}`);
+
+    if (isAppResource(cachedResponse)) {
+      console.info(`[respondFromCache] Updating app cache`);
+      const cache = await caches.open(APP_CACHE);
+      event.waitUntil(cache.add(request));
+    }
+
     return cachedResponse;
   }
 
-  const preloadResponsePromise = await preloadResponse;
+  const preloadResponse = await event.preloadResponse;
   if (preloadResponse) {
     console.info(`[${request.url}] Response preloaded`);
-    addToCache(request, preloadResponsePromise.clone());
+    addToCache(request, preloadResponse.clone());
     return preloadResponse;
   }
 
