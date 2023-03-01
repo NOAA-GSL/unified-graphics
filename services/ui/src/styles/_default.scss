@@ -1,13 +1,22 @@
 @mixin css {
+  #app,
   body {
+    overflow: clip;
+  }
+
+  #app {
     isolation: isolate;
     flex-direction: column;
 
     display: flex;
+
+    height: 100%;
   }
 
   main {
     flex: 1 1 auto;
+
+    overflow: auto;
 
     contain: strict;
   }
