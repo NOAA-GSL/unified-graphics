@@ -151,9 +151,9 @@ export default class ChartMap extends ChartElement {
 
     return isDiverging
       ? d3
-        .scaleQuantize()
-        .domain([-largestBound, largestBound])
-        .range(d3.schemePuOr[9])
+          .scaleQuantize()
+          .domain([-largestBound, largestBound])
+          .range(d3.schemePuOr[9])
       : d3.scaleQuantize().domain([lower, upper]).range(d3.schemePurples[9]);
   }
 
@@ -223,12 +223,6 @@ export default class ChartMap extends ChartElement {
     if (!(observations && this.#radiusAccessor)) return;
 
     const fill = () => "#aaa";
-
-    /** @type number[] */
-    const [lower, upper] = d3.extent(
-      observations.features,
-      this.#radiusAccessor
-    );
 
     const r = () => 1.5;
 
@@ -303,9 +297,9 @@ export default class ChartMap extends ChartElement {
         this.#selection === null
           ? null
           : [
-            [left, top],
-            [right, bottom],
-          ],
+              [left, top],
+              [right, bottom],
+            ],
     });
     this.dispatchEvent(brush);
   };
@@ -358,7 +352,7 @@ export default class ChartMap extends ChartElement {
     ctx.fillStyle = "#aaa";
 
     ctx.beginPath();
-    d3.path(polygon);
+    path(polygon);
     ctx.fill();
     ctx.restore();
   }

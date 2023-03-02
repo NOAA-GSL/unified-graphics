@@ -1,0 +1,20 @@
+{
+  "name": "ui",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "echo 'No tests' && exit 1",
+    "lint": "prettier --check --plugin-search-dir=. . '!**/*.{min.js,json,html}'&& eslint . --ignore-pattern '**/*.min.js' --ignore-pattern '**/htmlcov/**' && stylelint src/**/*.css",
+    "format": "prettier --write --plugin-search-dir=. . '!**/*.{min.js,json,html}' && stylelint --fix src/**/*.css"
+  },
+  "devDependencies": {
+    "del-cli": "^5.0.0",
+    "eslint": "^8.35.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.8.4",
+    "stylelint": "^14.8.2",
+    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-order": "^6.0.2",
+    "stylelint-prettier": "^3.0.0"
+  },
+  "type": "module"
+}

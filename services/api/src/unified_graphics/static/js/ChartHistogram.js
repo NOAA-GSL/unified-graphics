@@ -310,7 +310,7 @@ class ChartHistogram extends ChartElement {
       .scaleLinear()
       .domain(
         this.thresholds
-          ? extent(this.thresholds)
+          ? d3.extent(this.thresholds)
           : [d3.min(data, (d) => d.x0), d3.max(data, (d) => d.x1)]
       )
       .range([0, width - margin.left - margin.right]));

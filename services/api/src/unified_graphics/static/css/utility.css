@@ -1,13 +1,23 @@
 @layer utility {
   /* Color */
-  .bg-primary-dark { background-color: var(--primary-dark) }
-  .bg-primary-darker { background-color: var(--primary-darker) }
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+  .bg-primary-darker {
+    background-color: var(--primary-darker);
+  }
 
-  .text-white { color: var(--gray-0) }
+  .text-white {
+    color: var(--gray-0);
+  }
 
   /* Spacing */
-  .padding-2 { padding: var(--space-2) }
+  .padding-2 {
+    padding: var(--space-2);
+  }
 
   /* Layout */
-  .justify { justify-content: space-between }
+  .justify {
+    justify-content: space-between;
+  }
 }

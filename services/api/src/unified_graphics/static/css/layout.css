@@ -8,9 +8,8 @@
   }
 
   .grid {
-    gap: var(--gutter, var(--space-2));
-
     display: grid;
+    gap: var(--gutter, var(--space-2));
 
     grid-auto-rows: var(--row-size, auto);
     grid-template-columns: repeat(

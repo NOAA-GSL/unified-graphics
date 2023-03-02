@@ -12,18 +12,19 @@
   }
 
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+      Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
   }
 
   svg {
     display: block;
   }
 
-  [role=list] {
+  [role="list"] {
     list-style: none;
   }
 
-  [role=list] > li {
+  [role="list"] > li {
     padding: 0;
   }
 }
