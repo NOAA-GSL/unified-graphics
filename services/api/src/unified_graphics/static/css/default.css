@@ -2,6 +2,7 @@
   :root {
     /* Color Tokens */
     --gray-0: #ffffff;
+    --gray-5: #f0f0f0;
     --gray-90: #1b1b1b;
 
     --gray-cool-10: #dfe1e2;
@@ -29,10 +30,14 @@
     --base-darkest: var(--gray-90);
 
     /* Size Tokens */
+    --space-05: 0.25rem;
     --space-2: 1rem;
 
+    /* Shadows */
+    --shadow-1: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
+
     /* Theme */
-    --surface-1: var(--base-lighter);
+    --surface-1: var(--base-lightest);
     --text-1: var(--base-darkest);
 
     --primary-lighter: var(--blue-10);
@@ -52,6 +57,11 @@
   main {
     display: flex;
     flex-direction: column;
+  }
+
+  main {
+    --gutter: var(--space-2);
+    gap: var(--gutter);
   }
 
   body > header {

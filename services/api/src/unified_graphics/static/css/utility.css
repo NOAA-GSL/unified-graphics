@@ -1,5 +1,8 @@
 @layer utility {
   /* Color */
+  .bg-white {
+    background-color: var(--gray-0);
+  }
   .bg-primary-dark {
     background-color: var(--primary-dark);
   }
@@ -19,5 +22,15 @@
   /* Layout */
   .justify {
     justify-content: space-between;
+  }
+
+  /* Border */
+  .radius-md {
+    border-radius: var(--space-05);
+  }
+
+  /* Shadows */
+  .shadow-1 {
+    box-shadow: var(--shadow-1);
   }
 }
