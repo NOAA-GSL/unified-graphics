@@ -51,24 +51,28 @@ def lambda_handler(event, context):
     if "Event" in event and event["Event"] == "s3:TestEvent":
         return "Test event received"
 
-    if "Records" not in event:
+    if (
+        "detail" not in event
+        or "bucket" not in event["detail"]
+        or "object" not in event["detail"]
+    ):
         # FIXME: This should use a real logger
-        print("Records missing from event")
+        print("Object details missing from event")
         print(event)
         return ""
 
     upload_bucket = os.environ["UG_DIAG_ZARR"]
 
-    for record in event["Records"]:
-        bucket = record["s3"]["bucket"]["name"]
-        key = unquote_plus(record["s3"]["object"]["key"])
+    bucket = event["detail"]["bucket"]["name"]
+    key = unquote_plus(event["detail"]["object"]["key"])
 
-        # Only fetch the first (ges) and last (anl) minimization loops, ignore
-        # all intermediate loops.
-        if diag.parse_diag_filename(key).loop not in ["anl", "ges"]:
-            continue
+    # Only fetch the first (ges) and last (anl) minimization loops, ignore
+    # all intermediate loops.
+    if diag.parse_diag_filename(key).loop not in ["anl", "ges"]:
+        print(f"Skipping loop: {key}")
+        return ""
 
-        tmp_file = fetch_record(bucket, key)
+    tmp_file = fetch_record(bucket, key)
 
-        data = diag.load(tmp_file)
-        diag.save(upload_bucket, data)
+    data = diag.load(tmp_file)
+    diag.save(upload_bucket, data)

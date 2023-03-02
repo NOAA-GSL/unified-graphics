@@ -65,18 +65,10 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
 
     context = {}
     event = {
-        "Records": [
-            {
-                "s3": {
-                    "bucket": {
-                        "name": dl_bucket,
-                    },
-                    "object": {
-                        "key": key,
-                    },
-                }
-            }
-        ]
+        "detail": {
+            "bucket": {"name": dl_bucket},
+            "object": {"key": key},
+        }
     }
 
     aws.lambda_handler(event, context)
@@ -109,18 +101,10 @@ def test_handler_skip_second_loop(mock_fetch_record, mock_load, mock_save, monke
 
     context = {}
     event = {
-        "Records": [
-            {
-                "s3": {
-                    "bucket": {
-                        "name": dl_bucket,
-                    },
-                    "object": {
-                        "key": key,
-                    },
-                }
-            }
-        ]
+        "detail": {
+            "bucket": {"name": dl_bucket},
+            "object": {"key": key},
+        }
     }
 
     aws.lambda_handler(event, context)
