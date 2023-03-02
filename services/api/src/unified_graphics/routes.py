@@ -47,7 +47,7 @@ def index():
         )
 
     return stream_template(
-        "layouts/diag/scalar.html",
+        "layouts/diag.html",
         variables=variables,
         initialization_times=init_times,
         form={
