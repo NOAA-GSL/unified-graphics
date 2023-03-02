@@ -3,23 +3,23 @@
   <form class="cluster" method="GET">
     <select name="variable">
       {% for variable in variables -%}
-        {%- set selected = " selected" if variable.value == form.variable else "" -%}
-        <option value="{{ variable.value }}"{{ selected }}>
-          {{- variable.name.lower() -}}
-        </option>
+      {%- set selected = " selected" if variable.value == form.variable.value else "" -%}
+      <option value="{{ variable.value }}" {{ selected }}>
+        {{- variable.name.lower() -}}
+      </option>
       {%- endfor %}
     </select>
 
     <select name="initialization_time">
       {% for time in initialization_times -%}
-        {%- set selected = " selected" if time == form.initialization_time else "" -%}
-        <option{{ selected }}>{{ time }}</option>
-      {%- endfor %}
+      {%- set selected = " selected" if time == form.initialization_time else "" -%}
+      <option{{ selected }}>{{ time }}</option>
+        {%- endfor %}
     </select>
 
     <label>
       {%- set checked = " checked" if form.is_used else "" -%}
-      <input type="checkbox" name="is_used"{{ checked }} />
+      <input type="checkbox" name="is_used" {{ checked }} />
       Include unused observations
     </label>
     <button>Load</button>
