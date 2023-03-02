@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, stream_template, url_for
+from flask import Blueprint, jsonify, redirect, request, stream_template, url_for
 
 from unified_graphics import diag
 
@@ -25,15 +25,32 @@ def handle_diag_file_read_error(e):
 @bp.route("/")
 def index():
     variables = [v for v in diag.Variable]
-    init_times = diag.initialization_times(variables[0].name.lower())
+    should_redirect = False
+
+    if "variable" in request.args:
+        variable = diag.Variable(request.args["variable"])
+    else:
+        variable = variables[0]
+        should_redirect = True
+
+    init_times = list(diag.initialization_times(variable.name.lower()))
+
+    if "initialization_time" in request.args:
+        init_time = request.args["initialization_time"]
+    else:
+        init_time = init_times[0]
+        should_redirect = True
+
+    if should_redirect:
+        return redirect(
+            url_for(".index", variable=variable.value, initialization_time=init_time)
+        )
+
     return stream_template(
         "layouts/diag/scalar.html",
         variables=variables,
         initialization_times=init_times,
-        form={
-            "variable": diag.Variable(request.args["variable"]),
-            "initialization_time": request.args["initialization_time"],
-        },
+        form={"variable": variable, "initialization_time": init_time},
     )
 
 
