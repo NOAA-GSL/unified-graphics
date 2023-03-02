@@ -1,18 +1,7 @@
 /** @module components/Chart2DHistogram */
 
-import {
-  axisBottom,
-  axisLeft,
-  extent,
-  format,
-  scaleLinear,
-  scaleQuantize,
-  schemeYlGnBu,
-  select,
-} from "d3";
-
-import ChartElement from "../ChartElement";
-import { bin2d } from "../../helpers";
+import ChartElement from "./ChartElement.js";
+import { bin2d } from "./helpers.js";
 
 /**
  * @typedef {object} DiagVector
@@ -79,11 +68,13 @@ export default class Chart2DHistogram extends ChartElement {
 
   #selection = null;
 
-  #xScale = scaleLinear();
-  #yScale = scaleLinear();
+  #xScale = d3.scaleLinear();
+  #yScale = d3.scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
+    return ["format-x", "format-y", "src"].concat(
+      ChartElement.observedAttributes
+    );
   }
 
   constructor() {
@@ -161,7 +152,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get domain() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.u);
+    return d3.extent(this.#data, (d) => d.u);
   }
 
   get formatX() {
@@ -192,7 +183,7 @@ export default class Chart2DHistogram extends ChartElement {
   // so that we can create multiple charts with the same axes.
   get range() {
     if (!this.#data) return [0, 0];
-    return extent(this.#data, (d) => d.v);
+    return d3.extent(this.#data, (d) => d.v);
   }
 
   get margin() {
@@ -207,9 +198,9 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   get scale() {
-    return scaleQuantize(
-      extent(this.bins, (d) => d.length),
-      schemeYlGnBu[9]
+    return d3.scaleQuantize(
+      d3.extent(this.bins, (d) => d.length),
+      d3.schemeYlGnBu[9]
     );
   }
 
@@ -236,11 +227,19 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   get xScale() {
-    return scaleLinear().domain(this.domain).range([0, this.contentWidth]).nice();
+    return d3
+      .scaleLinear()
+      .domain(this.domain)
+      .range([0, this.contentWidth])
+      .nice();
   }
 
   get yScale() {
-    return scaleLinear().domain(this.range).range([this.contentHeight, 0]).nice();
+    return d3
+      .scaleLinear()
+      .domain(this.range)
+      .range([this.contentHeight, 0])
+      .nice();
   }
 
   onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
@@ -283,7 +282,7 @@ export default class Chart2DHistogram extends ChartElement {
   };
 
   render() {
-    const svg = select(this.shadowRoot).select("svg");
+    const svg = d3.select(this.shadowRoot).select("svg");
     const height = this.height;
     const width = this.width;
 
@@ -305,13 +304,15 @@ export default class Chart2DHistogram extends ChartElement {
     const xScale = this.xScale;
     const yScale = this.yScale;
 
-    const xAxis = axisBottom(xScale)
-      .tickFormat(format(this.formatX))
+    const xAxis = d3
+      .axisBottom(xScale)
+      .tickFormat(d3.format(this.formatX))
       .tickSize(contentHeight);
 
-    const yAxis = axisLeft(yScale)
+    const yAxis = d3
+      .axisLeft(yScale)
       .ticks(height / fontSize / 2)
-      .tickFormat(format(this.formatY))
+      .tickFormat(d3.format(this.formatY))
       .tickSize(contentWidth);
 
     svg
@@ -339,7 +340,10 @@ export default class Chart2DHistogram extends ChartElement {
 
     svg
       .select(".y-axis")
-      .attr("transform", `translate(${margin.left + contentWidth}, ${margin.top})`)
+      .attr(
+        "transform",
+        `translate(${margin.left + contentWidth}, ${margin.top})`
+      )
       .call(yAxis)
       .call((g) => {
         g.select(".domain").remove();
@@ -357,9 +361,11 @@ export default class Chart2DHistogram extends ChartElement {
 
     const [x0, y0, x1, y1] = this.#selection
       .flat()
-      .map((val, idx) => (idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)));
+      .map((val, idx) =>
+        idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)
+      );
 
-    select(this.shadowRoot.querySelector("svg"))
+    d3.select(this.shadowRoot.querySelector("svg"))
       .select("#selection")
       .attr("x", Math.min(x0, x1))
       .attr("y", Math.min(y0, y1))
@@ -367,3 +373,5 @@ export default class Chart2DHistogram extends ChartElement {
       .attr("height", Math.abs(y1 - y0));
   }
 }
+
+customElements.define("chart-2dhistogram", Chart2DHistogram);
