@@ -45,7 +45,7 @@ import { bin2d } from "./helpers.js";
  * @readonly
  * @property {object} yScale The scale used for the y-axis
  */
-export default class Chart2DHistogram extends ChartElement {
+class Chart2DHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
     <g class="y-axis"></g>

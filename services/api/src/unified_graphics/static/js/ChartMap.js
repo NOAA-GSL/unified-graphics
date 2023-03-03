@@ -35,7 +35,7 @@ import ChartElement from "./ChartElement.js";
  *   @property {object} scale - a d3.scaleQuantize object for the fill colors on the map
  * @fires ChartMap#BrushEvent
  */
-export default class ChartMap extends ChartElement {
+class ChartMap extends ChartElement {
   static #TEMPLATE = `<canvas id="data"></canvas><canvas id="selection"></canvas>`;
 
   static #STYLE = `:host {
