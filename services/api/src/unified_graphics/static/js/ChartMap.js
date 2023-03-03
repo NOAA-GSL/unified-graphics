@@ -1,4 +1,14 @@
 /** @module components/ChartMap */
+
+import {
+  extent,
+  geoAlbers,
+  geoPath,
+  scaleQuantize,
+  schemePuOr,
+  schemePurples,
+} from "./vendor/d3.js";
+
 import ChartElement from "./ChartElement.js";
 
 /**
@@ -32,7 +42,7 @@ import ChartElement from "./ChartElement.js";
  *   selection consisting of two tuples, the first of which is the left, top
  *   corner, and the second of which is the right, bottom corner
  *   @readonly
- *   @property {object} scale - a d3.scaleQuantize object for the fill colors on the map
+ *   @property {object} scale - a scaleQuantize object for the fill colors on the map
  * @fires ChartMap#BrushEvent
  */
 class ChartMap extends ChartElement {
@@ -51,7 +61,7 @@ class ChartMap extends ChartElement {
     grid-area: main;
   }`;
 
-  #projection = d3.geoAlbers();
+  #projection = geoAlbers();
 
   /** @type {?[number, number][]} */
   #selection = null;
@@ -138,10 +148,10 @@ class ChartMap extends ChartElement {
   get scale() {
     const observations = this.#data;
 
-    if (!observations) return d3.scaleQuantize().range(d3.schemePurples[9]);
+    if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = d3.extent(
+    const [lower, upper] = extent(
       observations.features.map(),
       this.#radiusAccessor
     );
@@ -150,11 +160,10 @@ class ChartMap extends ChartElement {
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
 
     return isDiverging
-      ? d3
-          .scaleQuantize()
+      ? scaleQuantize()
           .domain([-largestBound, largestBound])
-          .range(d3.schemePuOr[9])
-      : d3.scaleQuantize().domain([lower, upper]).range(d3.schemePurples[9]);
+          .range(schemePuOr[9])
+      : scaleQuantize().domain([lower, upper]).range(schemePurples[9]);
   }
 
   get selection() {
@@ -206,7 +215,7 @@ class ChartMap extends ChartElement {
 
     ctx.clearRect(0, 0, width, height);
 
-    const path = d3.geoPath(this.#projection, ctx);
+    const path = geoPath(this.#projection, ctx);
 
     if (borders) {
       ctx.save();
@@ -307,7 +316,7 @@ class ChartMap extends ChartElement {
   #brush() {
     const canvas = this.shadowRoot?.getElementById("selection");
     const ctx = canvas.getContext("2d");
-    const path = d3.geoPath(this.#projection, ctx);
+    const path = geoPath(this.#projection, ctx);
 
     ctx.clearRect(0, 0, this.width, this.height);
 

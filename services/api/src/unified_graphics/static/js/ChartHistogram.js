@@ -1,3 +1,17 @@
+import {
+  axisBottom,
+  axisRight,
+  bin,
+  deviation,
+  extent,
+  format,
+  max,
+  mean,
+  min,
+  scaleLinear,
+  select,
+} from "./vendor/d3.js";
+
 import ChartElement from "./ChartElement.js";
 
 /**
@@ -78,8 +92,8 @@ class ChartHistogram extends ChartElement {
 
   #selection = null;
 
-  #xScale = d3.scaleLinear();
-  #yScale = d3.scaleLinear();
+  #xScale = scaleLinear();
+  #yScale = scaleLinear();
 
   static get observedAttributes() {
     return ["format-x", "format-y", "src"].concat(
@@ -118,17 +132,17 @@ class ChartHistogram extends ChartElement {
 
     if (!svg) return;
 
-    this.#selection = d3.select(svg).select("#selection").datum([0, 0]);
+    this.#selection = select(svg).select("#selection").datum([0, 0]);
     svg.addEventListener("mousedown", this.onMouseDown);
   }
 
   get bins() {
-    const binner = d3.bin();
+    const binner = bin();
 
     if (this.thresholds) {
       binner.thresholds(this.thresholds);
     } else {
-      const scale = d3.scaleLinear().domain(d3.extent(this.data)).nice(160);
+      const scale = scaleLinear().domain(extent(this.data)).nice(160);
       binner.thresholds(scale.ticks(160));
     }
 
@@ -140,8 +154,8 @@ class ChartHistogram extends ChartElement {
   }
 
   set data(value) {
-    this.#mean = d3.mean(value);
-    this.#deviation = d3.deviation(value);
+    this.#mean = mean(value);
+    this.#deviation = deviation(value);
 
     this.#data = value;
 
@@ -290,7 +304,7 @@ class ChartHistogram extends ChartElement {
   };
 
   render() {
-    const svg = d3.select(this.shadowRoot).select("svg");
+    const svg = select(this.shadowRoot).select("svg");
     const height = this.height;
     const width = this.width;
 
@@ -306,25 +320,22 @@ class ChartHistogram extends ChartElement {
     const data = this.bins;
 
     // Store the x scale so we can invert values from mouse events.
-    const xScale = (this.#xScale = d3
-      .scaleLinear()
+    const xScale = (this.#xScale = scaleLinear()
       .domain(
         this.thresholds
-          ? d3.extent(this.thresholds)
-          : [d3.min(data, (d) => d.x0), d3.max(data, (d) => d.x1)]
+          ? extent(this.thresholds)
+          : [min(data, (d) => d.x0), max(data, (d) => d.x1)]
       )
       .range([0, width - margin.left - margin.right]));
 
-    const yScale = (this.#yScale = d3
-      .scaleLinear()
-      .domain(this.range ?? [0, d3.max(data, (d) => d.length)])
+    const yScale = (this.#yScale = scaleLinear()
+      .domain(this.range ?? [0, max(data, (d) => d.length)])
       .range([height - margin.top - margin.bottom, 0]));
 
-    const xAxis = d3.axisBottom(xScale).tickFormat(d3.format(this.formatX));
-    const yAxis = d3
-      .axisRight(yScale)
+    const xAxis = axisBottom(xScale).tickFormat(format(this.formatX));
+    const yAxis = axisRight(yScale)
       .ticks(height / fontSize / 2)
-      .tickFormat(d3.format(this.formatY))
+      .tickFormat(format(this.formatY))
       .tickSize(width);
 
     svg

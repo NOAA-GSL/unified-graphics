@@ -1,5 +1,7 @@
 /** @module helpers */
 
+import { range, scaleThreshold } from "./vendor/d3.js";
+
 /**
  * @typedef {Array.<number>} TwoDBin
  * @property {number} x0 The lower bound of the bin on the x-axis
@@ -36,8 +38,8 @@ export function bin2d(xThresholds, yThresholds) {
 
     const colCount = xThresholds.length - 1;
     const rowCount = yThresholds.length - 1;
-    const column = d3.scaleThreshold(xThresholds, d3.range(colCount));
-    const row = d3.scaleThreshold(yThresholds, d3.range(rowCount));
+    const column = scaleThreshold(xThresholds, range(colCount));
+    const row = scaleThreshold(yThresholds, range(rowCount));
     const result = new Array(colCount * rowCount);
 
     for (let d of data) {
