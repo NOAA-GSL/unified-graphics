@@ -63,7 +63,7 @@ class ChartMap extends ChartElement {
   #radiusAccessor = () => 1;
 
   static get observedAttributes() {
-    return ["src"];
+    return ["src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
