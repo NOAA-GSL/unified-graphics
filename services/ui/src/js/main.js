@@ -15,7 +15,7 @@ customElements.define("color-ramp", ColorRamp);
 customElements.define("loading-spinner", LoadingSpinner);
 
 const app = new App({
-  target: document.body,
+  target: document.getElementById("app"),
 });
 
 export default app;
