@@ -100,7 +100,19 @@ class ChartContainer extends HTMLElement {
     const { width, height } = this.#container.getBoundingClientRect();
 
     for (const child of this.querySelectorAll(":not([slot])")) {
-      Object.assign(child, { width, height });
+      if (child.localName.includes("-")) {
+        // If this is a custom element, make sure we wait until it's defined
+        // before setting the width and height. There can be a race condition
+        // where ChartContainer elements are upgraded before their children, and
+        // then setting width and height on the children shadows the getters and
+        // setters on the custom element. If the setter doesn't run,
+        // setAttribute is never called and the elements never re-render.
+        customElements.whenDefined(child.localName).then(() => {
+          Object.assign(child, { width, height });
+        });
+      } else {
+        Object.assign(child, { width, height });
+      }
     }
   }
 }
