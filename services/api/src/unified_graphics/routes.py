@@ -1,4 +1,13 @@
-from flask import Blueprint, jsonify, redirect, request, stream_template, url_for
+from flask import (
+    Blueprint,
+    jsonify,
+    make_response,
+    redirect,
+    request,
+    send_from_directory,
+    stream_template,
+    url_for,
+)
 
 from unified_graphics import diag
 
@@ -56,6 +65,11 @@ def index():
             "is_used": request.args.get("is_used", "off") == "on",
         },
     )
+
+
+@bp.route("/serviceworker.js")
+def serviceworker():
+    return make_response(send_from_directory("static", path="serviceworker.js"))
 
 
 @bp.route("/diag/")
