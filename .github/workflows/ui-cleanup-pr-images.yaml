@@ -4,10 +4,10 @@ on:
   pull_request:
     types: [closed]
     paths:
-      - '.nvmrc'
-      - 'services/ui/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
+      - ".nvmrc"
+      - "services/ui/**"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
 jobs:
   purge-ghcr-images:
     name: Cleanup PR images from ghcr.io

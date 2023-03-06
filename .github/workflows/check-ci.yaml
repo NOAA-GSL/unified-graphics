@@ -2,13 +2,13 @@ name: Check CI scripts
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - '.github/scripts/**'
+      - ".github/scripts/**"
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - '.github/scripts/**'
+      - ".github/scripts/**"
 
 jobs:
   check:
