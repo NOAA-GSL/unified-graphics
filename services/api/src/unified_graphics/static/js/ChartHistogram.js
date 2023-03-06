@@ -96,9 +96,7 @@ class ChartHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y", "src"].concat(
-      ChartElement.observedAttributes
-    );
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -367,8 +365,7 @@ class ChartHistogram extends ChartElement {
         const fmt = xAxis.tickFormat();
         const y = fontSize * 3;
         const width =
-          xScale(this.mean + this.deviation) -
-          xScale(this.mean - this.deviation);
+          xScale(this.mean + this.deviation) - xScale(this.mean - this.deviation);
         let x1 = width;
         let x2 = width + 0.75 * fontSize;
         let x = width + fontSize;

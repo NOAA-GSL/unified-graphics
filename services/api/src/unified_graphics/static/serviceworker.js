@@ -92,9 +92,7 @@ async function respondFromCache(event) {
 
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
-    console.info(
-      `[respondFromCache] Response loaded from cache: ${request.url}`
-    );
+    console.info(`[respondFromCache] Response loaded from cache: ${request.url}`);
 
     // If this is a cached response for the App (HTML, CSS, JS), return the
     // cached version and update the cache in the background so on the next

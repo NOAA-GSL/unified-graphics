@@ -83,9 +83,7 @@ class Chart2DHistogram extends ChartElement {
   #yScale = scaleLinear();
 
   static get observedAttributes() {
-    return ["format-x", "format-y", "src"].concat(
-      ChartElement.observedAttributes
-    );
+    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -238,17 +236,11 @@ class Chart2DHistogram extends ChartElement {
   }
 
   get xScale() {
-    return scaleLinear()
-      .domain(this.domain)
-      .range([0, this.contentWidth])
-      .nice();
+    return scaleLinear().domain(this.domain).range([0, this.contentWidth]).nice();
   }
 
   get yScale() {
-    return scaleLinear()
-      .domain(this.range)
-      .range([this.contentHeight, 0])
-      .nice();
+    return scaleLinear().domain(this.range).range([this.contentHeight, 0]).nice();
   }
 
   onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
@@ -347,10 +339,7 @@ class Chart2DHistogram extends ChartElement {
 
     svg
       .select(".y-axis")
-      .attr(
-        "transform",
-        `translate(${margin.left + contentWidth}, ${margin.top})`
-      )
+      .attr("transform", `translate(${margin.left + contentWidth}, ${margin.top})`)
       .call(yAxis)
       .call((g) => {
         g.select(".domain").remove();
@@ -368,9 +357,7 @@ class Chart2DHistogram extends ChartElement {
 
     const [x0, y0, x1, y1] = this.#selection
       .flat()
-      .map((val, idx) =>
-        idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)
-      );
+      .map((val, idx) => (idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)));
 
     select(this.shadowRoot.querySelector("svg"))
       .select("#selection")

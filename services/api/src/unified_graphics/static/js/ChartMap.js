@@ -151,18 +151,13 @@ class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(
-      observations.features.map(),
-      this.#radiusAccessor
-    );
+    const [lower, upper] = extent(observations.features.map(), this.#radiusAccessor);
 
     const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
 
     return isDiverging
-      ? scaleQuantize()
-          .domain([-largestBound, largestBound])
-          .range(schemePuOr[9])
+      ? scaleQuantize().domain([-largestBound, largestBound]).range(schemePuOr[9])
       : scaleQuantize().domain([lower, upper]).range(schemePurples[9]);
   }
 
