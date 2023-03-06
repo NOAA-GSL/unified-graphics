@@ -37,7 +37,7 @@
     "svelte": "^3.50.1",
     "vite": "^3.0.0",
     "vite-plugin-static-copy": "^0.13.1",
-    "vitest": "^0.29.1"
+    "vitest": "^0.29.2"
   },
   "type": "module"
 }
