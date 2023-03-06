@@ -9,6 +9,8 @@
         <span class="axis-y title" slot="title-y">v (Observation &minus; Forecast)</span>
         <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-2dhistogram>
         <span class="axis-x title" slot="title-x">u (Observation &minus; Forecast)</span>
+        <color-ramp slot="legend" for="distribution-{{ minim_loop }}" class="font-ui-3xs" format="s"
+          >Observation &minus; Forecast</color-ramp>
       {%- else -%}
         <span class="axis-y title" slot="title-y">Observation Count</span>
         <chart-histogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-histogram>
