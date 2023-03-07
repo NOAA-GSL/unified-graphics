@@ -9,10 +9,10 @@ import {
   scaleQuantize,
   schemeYlGnBu,
   select,
-} from "./vendor/d3.js";
+} from "../vendor/d3.js";
 
 import ChartElement from "./ChartElement.js";
-import { bin2d } from "./helpers.js";
+import { bin2d } from "../lib/helpers.js";
 
 /**
  * @typedef {object} DiagVector
@@ -56,7 +56,7 @@ import { bin2d } from "./helpers.js";
  * @readonly
  * @property {object} yScale The scale used for the y-axis
  */
-class Chart2DHistogram extends ChartElement {
+export default class Chart2DHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
     <g class="y-axis"></g>

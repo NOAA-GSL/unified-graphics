@@ -10,7 +10,7 @@ import {
   min,
   scaleLinear,
   select,
-} from "./vendor/d3.js";
+} from "../vendor/d3.js";
 
 import ChartElement from "./ChartElement.js";
 
@@ -49,7 +49,7 @@ import ChartElement from "./ChartElement.js";
  *   + 1 bins in the histogram.
  *   @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bin_thresholds}
  */
-class ChartHistogram extends ChartElement {
+export default class ChartHistogram extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
     <g class="y-axis"></g>

@@ -1,6 +1,6 @@
 /** @module helpers */
 
-import { range, scaleThreshold } from "./vendor/d3.js";
+import { range, scaleThreshold } from "../vendor/d3.js";
 
 /**
  * @typedef {Array.<number>} TwoDBin

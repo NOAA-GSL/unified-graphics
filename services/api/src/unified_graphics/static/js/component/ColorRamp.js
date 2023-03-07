@@ -1,6 +1,6 @@
 /** @module components/ColorRamp */
 
-import { format, select } from "./vendor/d3.js";
+import { format, select } from "../vendor/d3.js";
 
 /**
  * Generate lower and upper bounds for a set of scale thresholds
@@ -29,7 +29,7 @@ function thresholdBoundaries(scale) {
  * @property for {string} - The ID of a chart with a scale property for which this color ramp will display a legend.
  * @property format {string} - A format string for D3's formatter that is used to format the threshold labels
  */
-class ColorRamp extends HTMLElement {
+export default class ColorRamp extends HTMLElement {
   static #TEMPLATE = `<slot></slot>
     <svg viewBox="0 0 300 16"></svg>`;
 

@@ -7,7 +7,7 @@ import {
   scaleQuantize,
   schemePuOr,
   schemePurples,
-} from "./vendor/d3.js";
+} from "../vendor/d3.js";
 
 import ChartElement from "./ChartElement.js";
 
@@ -45,7 +45,7 @@ import ChartElement from "./ChartElement.js";
  *   @property {object} scale - a scaleQuantize object for the fill colors on the map
  * @fires ChartMap#BrushEvent
  */
-class ChartMap extends ChartElement {
+export default class ChartMap extends ChartElement {
   static #TEMPLATE = `<canvas id="data"></canvas><canvas id="selection"></canvas>`;
 
   static #STYLE = `:host {
@@ -151,7 +151,7 @@ class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(observations.features.map(), this.#radiusAccessor);
+    const [lower, upper] = extent(observations.features, this.#radiusAccessor);
 
     const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
