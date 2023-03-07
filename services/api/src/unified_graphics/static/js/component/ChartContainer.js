@@ -16,7 +16,7 @@
  *   <span slot="title-x">X Axis Title</span>
  * <chart-container>
  */
-class ChartContainer extends HTMLElement {
+export default class ChartContainer extends HTMLElement {
   static #TEMPLATE = `<slot name=title-y></slot>
     <div class=container><slot></slot></div>
     <slot name=title-x></slot>

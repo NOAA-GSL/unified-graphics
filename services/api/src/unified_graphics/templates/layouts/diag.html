@@ -1,5 +1,10 @@
 {% extends "layouts/base.html" %}
 
+{% block head %}
+  {%- set scriptname = "vectordiag.js" if form.variable.value == "uv" else "scalardiag.js" -%}
+  <script type="module" src="{{ url_for('static', filename='js/' + scriptname) }}"></script>
+{% endblock %}
+
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
   {% set data_url %}/diag/{{ form.variable.name.lower() }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
