@@ -8,13 +8,13 @@ on:
     # Path filters aren't evaluated for tags - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
     paths:
       - ".nvmrc"
-      - "services/ui/**"
+      - "services/api/**"
       - ".github/workflows/**"
       - ".github/scripts/**"
   pull_request:
     paths:
       - ".nvmrc"
-      - "services/ui/**"
+      - "services/api/**"
       - ".github/workflows/**"
       - ".github/scripts/**"
     branches: [main]
@@ -31,7 +31,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
-          cache-dependency-path: "services/ui/package-lock.json"
+          cache-dependency-path: "services/api/package-lock.json"
       - name: Install dependencies
         working-directory: services/ui
         run: npm ci
@@ -48,7 +48,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
-          cache-dependency-path: "services/ui/package-lock.json"
+          cache-dependency-path: "services/api/package-lock.json"
       - name: Install dependencies
         working-directory: services/ui
         run: npm ci
@@ -88,7 +88,7 @@ jobs:
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Build & tag image
         run: |
-          docker build -t ${{ env.REGISTRY }}:${{ env.BRANCH }} services/ui
+          docker build -t ${{ env.REGISTRY }}:${{ env.BRANCH }} -f services/api/Dockerfile-webserver services/api
       - name: Login to GHCR
         uses: docker/login-action@v2
         with:
