@@ -5,6 +5,7 @@
     "build": "run-p build:*",
     "build:css": "postcss --use postcss-import --use cssnano --dir build/css/ --no-map src/unified_graphics/static/css/style.css",
     "build:js": "rollup src/unified_graphics/static/js/*.js --format es --dir build/js/",
+    "build:assets": "mkdir -p build && cp -r src/unified_graphics/static/geo build/geo",
     "clean": "del build/",
     "test": "echo 'No tests' && exit 1",
     "lint": "prettier --check --plugin-search-dir=. . '!**/*.{min.js,json,html}' '!**/vendor/*' && eslint . --ignore-pattern '**/*.min.js' --ignore-pattern '**/htmlcov/**' --ignore-pattern '**/vendor/*' && stylelint src/**/*.css",
