@@ -7,7 +7,7 @@ directory. The services are
 
 - `services/api` — A Flask (Python) application that provides a RESTful API for
   the application
-- `services/ui` — The frontend of the application, written with SvelteKit
+- `services/data` — The Lambda function used to process incoming data
 
 For the Python services, we use [poetry](https://python-poetry.org/) for
 packaging. You will also need to install [pyenv](https://github.com/pyenv/pyenv)
@@ -23,8 +23,6 @@ Each service is deployed inside a Docker container, so every service has a
 `Dockerfile`.
 
 ## Building and Running
-
-### API Service
 
 In development, you can run the Flask development server.
 
@@ -44,7 +42,7 @@ docker build -t unified-graphics/api:latest .
 docker run --rm -p 5000:80 unified-graphics/api
 ```
 
-#### Configuration
+### Configuration
 
 The application is configured using environment variables. The environment
 variables are all prefixed with `FLASK_` so that Flask can find them and add
@@ -54,43 +52,9 @@ them automatically to its config.
   `FLASK_ENV=development`, the server adds a CORS header permitting connections
   from http://localhost:3000 so that the frontend can make requests without
   proxying
-- `FLASK_DIAG_DIR` - The path to the local directory or S3 bucekt containing the
-  NetCDF diagnostics files. Should be prefixed with `file://` or `s3://` depending
-  on the storage backend used.
-
-### UI Service
-
-In development, you should run the development server with `npm`.
-
-```
-cd services/ui
-UG_DIAG_API_HOST="http://localhost:5000" npm run dev
-```
-
-This will start up a Vite server that incrementally builds the application when
-you make changes and loads them in the browser. The application will be
-available at http://localhost:3000.
-
-To preview the production build, you can either use SvelteKit’s preview
-functionality:
-
-```
-npm run build
-npm run preview
-```
-
-Or, better still, build the Docker container and run that:
-
-```
-docker build -t unified-graphics/ui:latest .
-docker run --rm -p 3000:80 --env UG_DIAG_API_HOST=<API CONTAINER> unified-graphics/ui
-```
-
-#### Configuration
-
-- `UG_DIAG_API_HOST` - The URL for the host where the API is located. In
-  development, you can set this to `http://localhost:5000` to use the local
-  version of the API
+- `FLASK_DIAG_ZARR` - The path to the local directory or S3 bucekt containing the
+  Zarr diagnostics files. Should be prefixed with `file://` or `s3://` depending
+  on the storage backend used. (Local files work with or without the file:// scheme)
 
 ## Testing
 
@@ -134,17 +98,18 @@ poetry run isort .
 
 ### JavaScript
 
-For JavaScript, SCSS, CSS, and HTML, we lint with either `eslint` or `stylelint`
-and format using `prettier`. Stylelint enforces an order for CSS properties
-based on the [9elements recommendations](https://9elements.com/css-rule-order/).
+For JavaScript, CSS, and HTML, we lint with either `eslint` or `stylelint`
+and format using `prettier`. Stylelint enforces an alphabetical order for CSS
+properties.
 
 ### Git Hooks
 
 If you want to avoid getting scolded by CI for committing unlintend, unformatted
-code, you can install our `pre-commit` hook from the `.githooks/` directory.
+code, you can install the [pre-commit](https://pre-commit.com/) package for
+running our hooks
 
 ```
-git config core.hookspath .githooks
+pip3 install --user pre-commit
 ```
 
 The `pre-commit` script will check all of the files in your index with our
