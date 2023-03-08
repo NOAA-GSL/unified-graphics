@@ -20,6 +20,7 @@ repos:
     rev: v8.35.0
     hooks:
       - id: eslint
+        exclude: .github/workflows/.*\.yaml
         additional_dependencies:
           - eslint-config-prettier@8.3.0
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -27,3 +28,4 @@ repos:
     hooks:
       - id: prettier
         types_or: [css, javascript, json, yaml]
+        exclude: .github/workflows/.*\.yaml
