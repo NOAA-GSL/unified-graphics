@@ -1,0 +1,79 @@
+@layer default {
+  :root {
+    /* Color Tokens */
+    --gray-0: #ffffff;
+    --gray-5: #f0f0f0;
+    --gray-90: #1b1b1b;
+
+    --gray-cool-10: #dfe1e2;
+    --gray-cool-30: #a9aeb1;
+    --gray-cool-50: #71767a;
+    --gray-cool-60: #565c65;
+    --gray-cool-70: #3d4551;
+    --gray-cool-90: #1c1d1f;
+
+    --blue-10: #d9e8f6;
+    --blue-30: #73b3e7;
+
+    --blue-60v: #005ea2;
+
+    --blue-warm-60v: #0050d8;
+    --blue-warm-70v: #1a4480;
+    --blue-warm-80v: #162e51;
+
+    --base-lightest: var(--gray-5);
+    --base-lighter: var(--gray-cool-10);
+    --base-light: var(--gray-cool-30);
+    --base: var(--gray-cool-50);
+    --base-dark: var(--gray-cool-60);
+    --base-darker: var(--gray-cool-70);
+    --base-darkest: var(--gray-90);
+
+    /* Size Tokens */
+    --space-05: 0.25rem;
+    --space-2: 1rem;
+
+    /* Shadows */
+    --shadow-1: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
+
+    /* Theme */
+    --surface-1: var(--base-lightest);
+    --text-1: var(--base-darkest);
+
+    --primary-lighter: var(--blue-10);
+    --primary-light: var(--blue-30);
+    --primary: var(--blue-60v);
+    --primary-vivid: var(--blue-warm-60v);
+    --primary-dark: var(--blue-warm-70v);
+    --primary-darker: var(--blue-warm-80v);
+  }
+
+  html {
+    background-color: var(--surface-1);
+    color: var(--text-1);
+  }
+
+  body,
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  main {
+    --gutter: var(--space-2);
+    gap: var(--gutter);
+    overflow-y: auto;
+  }
+
+  body > header {
+    flex: 0 0 auto;
+  }
+
+  body > main {
+    flex: 1 1 auto;
+  }
+
+  main > * {
+    flex: 1 1 auto;
+  }
+}

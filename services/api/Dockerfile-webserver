@@ -1,0 +1,16 @@
+FROM node:18.14 AS build
+
+WORKDIR /home/node/app
+
+COPY package*.json ./
+RUN npm clean-install
+COPY src/unified_graphics/static/ src/unified_graphics/static/
+RUN npm run build
+
+FROM nginx:1.21
+
+COPY --from=build /home/node/app/build /usr/share/nginx/html/static
+COPY default.conf.template /etc/nginx/templates/
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*

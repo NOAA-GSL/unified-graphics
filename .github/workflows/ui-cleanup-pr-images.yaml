@@ -5,7 +5,7 @@ on:
     types: [closed]
     paths:
       - '.nvmrc'
-      - 'services/ui/**'
+      - 'services/api/**'
       - '.github/workflows/**'
       - '.github/scripts/**'
 jobs:

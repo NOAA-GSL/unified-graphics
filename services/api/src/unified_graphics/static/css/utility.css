@@ -1,0 +1,36 @@
+@layer utility {
+  /* Color */
+  .bg-white {
+    background-color: var(--gray-0);
+  }
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+  }
+  .bg-primary-darker {
+    background-color: var(--primary-darker);
+  }
+
+  .text-white {
+    color: var(--gray-0);
+  }
+
+  /* Spacing */
+  .padding-2 {
+    padding: var(--space-2);
+  }
+
+  /* Layout */
+  .justify {
+    justify-content: space-between;
+  }
+
+  /* Border */
+  .radius-md {
+    border-radius: var(--space-05);
+  }
+
+  /* Shadows */
+  .shadow-1 {
+    box-shadow: var(--shadow-1);
+  }
+}

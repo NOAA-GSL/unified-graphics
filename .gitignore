@@ -1,6 +1,9 @@
 # Create a tmp/ directory if you need a place for files you don't want to commit
 tmp/
 
+# Libraries we vendor for development
+vendor/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -19,7 +22,7 @@ downloads/
 eggs/
 .eggs/
 lib/
-!**/src/lib
+!**/src/**/lib
 lib64/
 package/
 parts/

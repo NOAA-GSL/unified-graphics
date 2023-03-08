@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: no-commit-to-branch
+      - id: trailing-whitespace
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.0.1
+    hooks:
+      - id: mypy
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.35.0
+    hooks:
+      - id: eslint
+        exclude: .github/workflows/.*\.yaml
+        additional_dependencies:
+          - eslint-config-prettier@8.3.0
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+      - id: prettier
+        types_or: [css, javascript, json, yaml]
+        exclude: .github/workflows/.*\.yaml

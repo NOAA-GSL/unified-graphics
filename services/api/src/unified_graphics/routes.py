@@ -1,4 +1,13 @@
-from flask import Blueprint, jsonify, request, url_for
+from flask import (
+    Blueprint,
+    jsonify,
+    make_response,
+    redirect,
+    request,
+    send_from_directory,
+    stream_template,
+    url_for,
+)
 
 from unified_graphics import diag
 
@@ -24,7 +33,43 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    return jsonify({"diagnostics": url_for(".list_variables")})
+    variables = [v for v in diag.Variable]
+    should_redirect = False
+
+    if "variable" in request.args:
+        variable = diag.Variable(request.args["variable"])
+    else:
+        variable = variables[0]
+        should_redirect = True
+
+    init_times = list(diag.initialization_times(variable.name.lower()))
+
+    if "initialization_time" in request.args:
+        init_time = request.args["initialization_time"]
+    else:
+        init_time = init_times[0]
+        should_redirect = True
+
+    if should_redirect:
+        return redirect(
+            url_for(".index", variable=variable.value, initialization_time=init_time)
+        )
+
+    return stream_template(
+        "layouts/diag.html",
+        variables=variables,
+        initialization_times=init_times,
+        form={
+            "variable": variable,
+            "initialization_time": init_time,
+            "is_used": request.args.get("is_used", "off") == "on",
+        },
+    )
+
+
+@bp.route("/serviceworker.js")
+def serviceworker():
+    return make_response(send_from_directory("static", path="serviceworker.js"))
 
 
 @bp.route("/diag/")
