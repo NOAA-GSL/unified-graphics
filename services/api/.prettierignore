@@ -1,0 +1,10 @@
+# Python artifacts
+.pytest_cache
+.mypy_cache
+htmlcov
+
+# Project components
+**/*.min.js
+**/*.json
+**/*.html
+**/vendor/*

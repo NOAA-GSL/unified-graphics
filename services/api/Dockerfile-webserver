@@ -5,7 +5,7 @@ WORKDIR /home/node/app
 COPY package*.json ./
 RUN npm clean-install
 COPY src/unified_graphics/static/ src/unified_graphics/static/
-RUN npm run build
+RUN npm run vendor && npm run build
 
 FROM nginx:1.21
 
