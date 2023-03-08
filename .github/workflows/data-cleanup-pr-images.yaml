@@ -4,9 +4,9 @@ on:
   pull_request:
     types: [closed]
     paths:
-      - "services/data/**"
-      - ".github/workflows/**"
-      - ".github/scripts/**"
+      - 'services/data/**'
+      - '.github/workflows/**'
+      - '.github/scripts/**'
 jobs:
   purge-ghcr-images:
     name: Cleanup PR images from ghcr.io
