@@ -2,22 +2,21 @@ name: "UI Service Build"
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
-      - '[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
-    branches: [ main ]
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"
+    branches: [main]
     # Path filters aren't evaluated for tags - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
     paths:
-      - '.nvmrc'
-      - 'services/api/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
+      - ".nvmrc"
+      - "services/api/**"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
   pull_request:
     paths:
-      - '.nvmrc'
-      - 'services/api/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
-    branches: [main]
+      - ".nvmrc"
+      - "services/api/**"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
   workflow_dispatch: # Manually
 env:
   REGISTRY: ghcr.io/noaa-gsl/unified-graphics/ui
@@ -29,9 +28,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: 'services/api/package-lock.json'
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: "services/api/package-lock.json"
       - name: Install dependencies
         working-directory: services/ui
         run: npm ci
@@ -46,9 +45,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: 'services/api/package-lock.json'
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: "services/api/package-lock.json"
       - name: Install dependencies
         working-directory: services/ui
         run: npm ci
@@ -69,7 +68,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: both
-          thresholds: '0 80'
+          thresholds: "0 80"
       - name: Add Coverage PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request'
@@ -108,12 +107,12 @@ jobs:
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}:${{ env.BRANCH }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          image-ref: "${{ env.REGISTRY }}:${{ env.BRANCH }}"
+          format: "sarif"
+          output: "trivy-results.sarif"
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
@@ -121,7 +120,7 @@ jobs:
         if: always()
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
   deploy:
     if: ${{ github.actor != 'dependabot[bot]' }} # Don't deploy Dependabot changes
     runs-on: ubuntu-latest
