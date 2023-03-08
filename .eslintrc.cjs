@@ -10,7 +10,4 @@ module.exports = {
     es2017: true,
     node: true,
   },
-  globals: {
-    d3: "readonly",
-  },
 };
