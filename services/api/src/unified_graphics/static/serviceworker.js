@@ -1,4 +1,4 @@
-const VERSION = "20230228"; // eslint-disable-line no-unused-vars
+const VERSION = "20230308"; // eslint-disable-line no-unused-vars
 
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
@@ -30,6 +30,16 @@ self.addEventListener("install", () => {
 });
 
 /**
+ * Return `true` if this is a resource we want to cache.
+ *
+ * We only cache successful responses so that we don't accidentally trap people in redirect loops from 303s or errors.
+ */
+function shouldCache(response) {
+  console.info(`[shouldCache] ${response.ok}`);
+  return response.ok;
+}
+
+/**
  * Return `true` if `request` is for an app resource, not data.
  *
  * Any request for JSON is considered a data request. Everything else is an app resource.
@@ -43,6 +53,8 @@ function isAppResource(response) {
  * Add a response to the appropriate cache.
  */
 async function addToCache(request, response) {
+  if (!shouldCache(response)) return;
+
   const cacheName = isAppResource(response) ? APP_CACHE : DATA_CACHE;
   const cache = await caches.open(cacheName);
   console.info(`[addToCache] ${cacheName}`);
