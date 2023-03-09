@@ -40,7 +40,7 @@ function shouldCache(response) {
 }
 
 /**
- * Return `true` if `request` is for an app resource.
+ * Return `true` if `response` is for an app resource.
  *
  * Any request for JSON is considered a data request. Everything else is an app resource.
  */
