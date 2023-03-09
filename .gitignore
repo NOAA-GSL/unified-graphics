@@ -142,6 +142,8 @@ node_modules/
 
 # Editor/IDE files
 *.code-*
+# Used by Zellij to define workspaces
+*.kdl
 *.sublime-*
 .vscode
 .idea
