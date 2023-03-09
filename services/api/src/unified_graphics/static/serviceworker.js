@@ -1,4 +1,4 @@
-const VERSION = "20230309"; // eslint-disable-line no-unused-vars
+const VERSION = "20230309";
 
 const APP_CACHE = `app-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
