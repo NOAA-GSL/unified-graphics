@@ -27,21 +27,11 @@ import ChartElement from "./ChartElement.js";
  */
 
 /**
- * Return the value used as the radius for each datum.
- * @callback radiusAccessor
- * @param {object} datum The observation being plotted on the map
- * @return {number} The value that will be mapped to the bubble's radius for
- *   `datum`
- */
-
-/**
  * A bubble map component.
  *
  * @property {object[]} data A GeoJSON object to be plotted on the map
  * @property {string} fill A JavaScript object path used to retrieve the fill
  *  value for the data
- * @property {radiusAccessor} radius An accessor function to
- *   retrieve the radius value for each datum
  * @property {[number, number][]} selection A bounding box for the map
  *   selection consisting of two tuples, the first of which is the left, top
  *   corner, and the second of which is the right, bottom corner
@@ -72,9 +62,6 @@ export default class ChartMap extends ChartElement {
 
   #borders = null;
   #data = null;
-
-  /** @type radiusAccessor */
-  #radiusAccessor = () => 1;
 
   static get observedAttributes() {
     return ["fill", "src"].concat(ChartElement.observedAttributes);
@@ -154,14 +141,6 @@ export default class ChartMap extends ChartElement {
     } else {
       this.setAttribute("fill", value);
     }
-  }
-
-  get radius() {
-    return this.#radiusAccessor;
-  }
-
-  set radius(fn) {
-    this.#radiusAccessor = fn;
   }
 
   get scale() {
@@ -249,11 +228,10 @@ export default class ChartMap extends ChartElement {
 
     const fillProp = this.fill;
     const fill = this.scale;
-    const r = () => 1.5;
+    const radius = 2;
 
     observations.features.forEach((feature) => {
       const value = get(feature, fillProp);
-      const radius = r(Math.abs(value));
       const [x, y] = this.#projection(feature.geometry.coordinates);
 
       ctx.save();
