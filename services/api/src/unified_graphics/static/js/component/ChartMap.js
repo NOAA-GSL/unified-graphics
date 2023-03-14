@@ -9,6 +9,8 @@ import {
   schemePurples,
 } from "../vendor/d3.js";
 
+import { get } from "../vendor/lodash.js";
+
 import ChartElement from "./ChartElement.js";
 
 /**
@@ -36,6 +38,8 @@ import ChartElement from "./ChartElement.js";
  * A bubble map component.
  *
  * @property {object[]} data A GeoJSON object to be plotted on the map
+ * @property {string} fill A JavaScript object path used to retrieve the fill
+ *  value for the data
  * @property {radiusAccessor} radius An accessor function to
  *   retrieve the radius value for each datum
  * @property {[number, number][]} selection A bounding box for the map
@@ -73,7 +77,7 @@ export default class ChartMap extends ChartElement {
   #radiusAccessor = () => 1;
 
   static get observedAttributes() {
-    return ["src"].concat(ChartElement.observedAttributes);
+    return ["fill", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -102,6 +106,9 @@ export default class ChartMap extends ChartElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
+      case "fill":
+        this.update();
+        break;
       case "src":
         fetch(newValue)
           .then((response) => response.json())
@@ -137,6 +144,18 @@ export default class ChartMap extends ChartElement {
     this.update();
   }
 
+  get fill() {
+    return this.getAttribute("fill") ?? "";
+  }
+
+  set fill(value) {
+    if (!value) {
+      this.removeAttribute("fill");
+    } else {
+      this.setAttribute("fill", value);
+    }
+  }
+
   get radius() {
     return this.#radiusAccessor;
   }
@@ -151,7 +170,9 @@ export default class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(observations.features, this.#radiusAccessor);
+    const [lower, upper] = extent(observations.features, (feature) =>
+      get(feature, this.fill)
+    );
 
     const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
@@ -224,14 +245,14 @@ export default class ChartMap extends ChartElement {
       ctx.restore();
     }
 
-    if (!(observations && this.#radiusAccessor)) return;
+    if (!observations) return;
 
-    const fill = () => "#aaa";
-
+    const fillProp = this.fill;
+    const fill = this.scale;
     const r = () => 1.5;
 
     observations.features.forEach((feature) => {
-      const value = this.#radiusAccessor(feature);
+      const value = get(feature, fillProp);
       const radius = r(Math.abs(value));
       const [x, y] = this.#projection(feature.geometry.coordinates);
 
