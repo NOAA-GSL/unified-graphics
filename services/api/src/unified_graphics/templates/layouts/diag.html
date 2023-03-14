@@ -7,6 +7,7 @@
 
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
+  <h2 class="heading-2 flex-0">{% if minim_loop == "ges" %}Guess{% else %}Analysis{% endif %}</h2>
   {% set data_url %}/diag/{{ form.variable.name.lower() }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
   <div class="grid" style="--row-size: minmax(20rem, 1fr)">
     <chart-container class="padding-2 radius-md bg-white shadow-1">
