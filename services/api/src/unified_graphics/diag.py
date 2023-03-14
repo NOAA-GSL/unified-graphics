@@ -264,3 +264,24 @@ def wind(
         )
         for idx in range(data.dims["nobs"])
     ]
+
+
+def magnitude(dataset: List[Observation]) -> List[Observation]:
+    return [
+        Observation(
+            obs.variable,
+            obs.variable_type,
+            obs.loop,
+            adjusted=vector_magnitude(obs.adjusted.u, obs.adjusted.v)
+            if isinstance(obs.adjusted, Vector)
+            else obs.adjusted,
+            unadjusted=vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
+            if isinstance(obs.unadjusted, Vector)
+            else obs.unadjusted,
+            observed=vector_magnitude(obs.observed.u, obs.observed.v)
+            if isinstance(obs.observed, Vector)
+            else obs.observed,
+            position=obs.position,
+        )
+        for obs in dataset
+    ]
