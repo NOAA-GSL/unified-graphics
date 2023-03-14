@@ -29,6 +29,10 @@
   }
 
   /* Layout */
+  .flex-0 {
+    flex: 0 0 auto;
+  }
+
   .justify {
     justify-content: space-between;
   }
