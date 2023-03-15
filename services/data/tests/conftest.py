@@ -60,7 +60,7 @@ def diag_zarr(tmp_path, diag_dataset):
 @pytest.fixture
 def diag_file(tmp_path):
     def factory(variable: str, loop: str, init_time: str) -> Path:
-        filename = f"ncdiag_conv_{variable}_{loop}.nc4.{init_time}"
+        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}.nc4"
         diag_file = tmp_path / filename
 
         ds = xr.Dataset(

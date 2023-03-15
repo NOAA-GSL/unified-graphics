@@ -5,12 +5,12 @@ from typing import Union
 
 import xarray as xr
 
-DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
+DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time background")
 
 diag_filename_regex = re.compile(
     (
         r".*?(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges|\d+)\..*?"
-        r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?.*"
+        r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?(?:\.(\w+))?\.nc4"
     )
 )
 
@@ -19,9 +19,12 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     """Parse the variable, loop, and initialization time from a diag file name
 
     The filename is expected to be of the form
-    X_Y_VARIABLE_LOOP.EXT.YYYYMMDDHH. `X`, `Y`, and `EXT` aren't used, so it
-    doesn't really matter what those are, as long as they're present in the
-    file name.
+
+    diag_VARIABLE_LOOP.YYYYMMDDHHmm.BACKGROUND.nc4
+
+    `diag` may also be `ncdiag`, and the string `conv_` may come before `VARIABLE` or
+    may be omitted. `BACKGROUND` is also optional, as are the minutes (`mm`) in the
+    initialization time.
 
     Parameters
     ----------
@@ -37,7 +40,7 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     if not filename_match:
         raise ValueError(f"Invalid diagnostics filename: {filename}")
 
-    variable, loop, year, month, day, hour, minute = filename_match.groups()
+    variable, loop, year, month, day, hour, minute, background = filename_match.groups()
     # A uv diag file (wind) actually contains two variables -- u and v -- for
     # the vectors
     variables = list(variable) if variable == "uv" else [variable]
@@ -45,7 +48,7 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     if minute:
         init_time += ":" + minute
 
-    return DiagMeta(variables, loop, init_time)
+    return DiagMeta(variables, loop, init_time, background)
 
 
 def get_adjusted(ds: xr.Dataset):
@@ -98,7 +101,7 @@ def load(path: Path) -> xr.Dataset:
         adjusted/unadjusted, and difference adjusted/unadjusted variables from
         the diag file.
     """
-    diag_variables, loop, init_time = parse_diag_filename(path.name)
+    diag_variables, loop, init_time, background = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 

@@ -5,13 +5,20 @@ from ugdata import diag
 
 
 @pytest.mark.parametrize(
-    "filename,variables,loop,init_time",
+    "filename,variables,loop,init_time,background",
     [
-        ("diag_ps_anl.202205051400.nc4", ["ps"], "anl", "2022-05-05T14:00"),
-        ("diag_ps_02.202205051400.nc4", ["ps"], "02", "2022-05-05T14:00"),
-        ("diag_uv_ges.202301020400.nc4", ["u", "v"], "ges", "2023-01-02T04:00"),
-        ("ncdiag_conv_ps_anl.nc4.2022050514", ["ps"], "anl", "2022-05-05T14"),
-        ("ncdiag_conv_uv_ges.nc4.2023010204", ["u", "v"], "ges", "2023-01-02T04"),
+        ("diag_ps_anl.202205051400.nc4", ["ps"], "anl", "2022-05-05T14:00", None),
+        ("diag_ps_02.202205051400.nc4", ["ps"], "02", "2022-05-05T14:00", None),
+        ("diag_uv_ges.202301020400.nc4", ["u", "v"], "ges", "2023-01-02T04:00", None),
+        (
+            "diag_ps_anl.202205051400.HRRR.nc4",
+            ["ps"],
+            "anl",
+            "2022-05-05T14:00",
+            "HRRR",
+        ),
+        ("ncdiag_conv_ps_anl.2022050514.nc4", ["ps"], "anl", "2022-05-05T14", None),
+        ("ncdiag_conv_uv_ges.2023010204.nc4", ["u", "v"], "ges", "2023-01-02T04", None),
         (
             (
                 "2a563509-3785-486a-b0d4-2810e3820abf-UDD_3DRTMA_HRRR_DIAG_"
@@ -20,15 +27,16 @@ from ugdata import diag
             ["u", "v"],
             "ges",
             "2023-02-01T14:00",
+            None,
         ),
     ],
 )
-def test_parse_diag_filename(filename, variables, loop, init_time):
+def test_parse_diag_filename(filename, variables, loop, init_time, background):
     """diag.parse_diag_filename should return the variable, loop, and
     initialization time from a diag filename
     """
     result = diag.parse_diag_filename(filename)
-    assert result == (variables, loop, init_time)
+    assert result == (variables, loop, init_time, background)
 
 
 @pytest.mark.parametrize(
