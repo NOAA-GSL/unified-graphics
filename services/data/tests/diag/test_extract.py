@@ -210,23 +210,48 @@ def test_get_data_array_vector(variable):
 
 
 @pytest.mark.parametrize(
-    "variable,loop,init_time,background,coords",
+    "variable,loop,init_time,model,system,domain,frequency,background,coords",
     [
-        ("ps", "anl", "2022050514", None, {}),
-        ("q", "anl", "2022050514", "HRRR", {}),
-        ("t", "anl", "2022050514", "HRRR", {}),
+        ("ps", "anl", "2022050514", None, None, None, None, None, {}),
+        ("q", "anl", "2022050514", "RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", {}),
+        ("t", "anl", "2022050514", "RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", {}),
     ],
 )
-def test_load(variable, loop, init_time, background, coords, diag_file, diag_dataset):
+def test_load(
+    variable,
+    loop,
+    init_time,
+    model,
+    system,
+    domain,
+    frequency,
+    background,
+    coords,
+    diag_file,
+    diag_dataset,
+    tmp_path,
+):
     """diag.load should return datasets for observations, forecasts, and results"""
 
-    test_file = diag_file(variable, loop, init_time, background)
+    test_file = diag_file(
+        variable, loop, init_time, model, system, domain, frequency, background
+    )
     expected_init_time = (
         f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}"
     )
-    expected = diag_dataset(variable, expected_init_time, loop, background, **coords)
+    expected = diag_dataset(
+        variable,
+        expected_init_time,
+        loop,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+        **coords,
+    )
 
-    result = diag.load(test_file)
+    result = diag.load(test_file, prefix=str(tmp_path))
 
     xr.testing.assert_equal(result, expected)
     assert result.attrs == expected.attrs

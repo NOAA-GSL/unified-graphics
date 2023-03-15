@@ -98,7 +98,7 @@ def get_data_array(
     return da
 
 
-def load(path: Path) -> xr.Dataset:
+def load(path: Path, prefix: Optional[str] = None) -> xr.Dataset:
     """Load a NetCDF diag file into xarray Datasets for observations,
     forecasts, and differences
 
@@ -124,9 +124,9 @@ def load(path: Path) -> xr.Dataset:
         model,
         system,
         domain,
-        frequence,
+        frequency,
         background,
-    ) = parse_diag_filename(path.name)
+    ) = parse_diag_filename(path, prefix)
 
     ds = xr.open_dataset(path)
 
@@ -161,6 +161,10 @@ def load(path: Path) -> xr.Dataset:
             "name": "".join(diag_variables),
             "loop": loop,
             "initialization_time": init_time,
+            "model": model or "Unknown",
+            "system": system or "Unknown",
+            "domain": domain or "Unknown",
+            "frequency": frequency or "Unknown",
             "background": background or "Unknown",
         },
     )

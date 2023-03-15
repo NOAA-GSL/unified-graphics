@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -15,6 +16,10 @@ def diag_dataset():
         variable: str,
         initialization_time: str,
         loop: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
         background: Optional[str] = None,
         **kwargs,
     ):
@@ -40,6 +45,10 @@ def diag_dataset():
                 "name": variable,
                 "loop": loop,
                 "initialization_time": initialization_time,
+                "model": model or "Unknown",
+                "system": system or "Unknown",
+                "domain": domain or "Unknown",
+                "frequency": frequency or "Unknown",
                 "background": background or "Unknown",
             },
         )
@@ -68,14 +77,32 @@ def diag_zarr(tmp_path, diag_dataset):
 @pytest.fixture
 def diag_file(tmp_path):
     def factory(
-        variable: str, loop: str, init_time: str, background: Optional[str] = None
+        variable: str,
+        loop: str,
+        init_time: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
     ) -> Path:
         filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
         if background:
             filename += f".{background}"
         filename += ".nc4"
 
-        diag_file = tmp_path / filename
+        diag_file = tmp_path
+        if model:
+            diag_file /= model
+        if system:
+            diag_file /= system
+        if domain:
+            diag_file /= domain
+        if frequency:
+            diag_file /= frequency
+
+        os.makedirs(diag_file, exist_ok=True)
+        diag_file /= filename
 
         ds = xr.Dataset(
             {
