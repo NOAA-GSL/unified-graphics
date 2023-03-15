@@ -136,6 +136,7 @@ def load(path: Path) -> xr.Dataset:
             "name": "".join(diag_variables),
             "loop": loop,
             "initialization_time": init_time,
+            "background": background or "Unknown",
         },
     )
 

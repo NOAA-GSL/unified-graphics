@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 # Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
 # https://github.com/pydata/xarray/issues/7259
@@ -10,7 +11,13 @@ import xarray as xr
 
 @pytest.fixture
 def diag_dataset():
-    def factory(variable: str, initialization_time: str, loop: str, **kwargs):
+    def factory(
+        variable: str,
+        initialization_time: str,
+        loop: str,
+        background: Optional[str] = None,
+        **kwargs,
+    ):
         dims = [*kwargs.keys(), "nobs"]
         shape = [*map(len, kwargs.values()), 2]
         variables = [
@@ -33,6 +40,7 @@ def diag_dataset():
                 "name": variable,
                 "loop": loop,
                 "initialization_time": initialization_time,
+                "background": background or "Unknown",
             },
         )
 
@@ -59,8 +67,14 @@ def diag_zarr(tmp_path, diag_dataset):
 
 @pytest.fixture
 def diag_file(tmp_path):
-    def factory(variable: str, loop: str, init_time: str) -> Path:
-        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}.nc4"
+    def factory(
+        variable: str, loop: str, init_time: str, background: Optional[str] = None
+    ) -> Path:
+        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
+        if background:
+            filename += f".{background}"
+        filename += ".nc4"
+
         diag_file = tmp_path / filename
 
         ds = xr.Dataset(

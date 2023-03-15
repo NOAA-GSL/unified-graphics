@@ -94,21 +94,23 @@ def test_get_data_array_vector(variable):
 
 
 @pytest.mark.parametrize(
-    "variable,loop,init_time,coords",
+    "variable,loop,init_time,background,coords",
     [
-        ("ps", "anl", "2022050514", {}),
-        ("q", "anl", "2022050514", {}),
-        ("t", "anl", "2022050514", {}),
+        ("ps", "anl", "2022050514", None, {}),
+        ("q", "anl", "2022050514", "HRRR", {}),
+        ("t", "anl", "2022050514", "HRRR", {}),
     ],
 )
-def test_load(variable, loop, init_time, coords, diag_file, diag_dataset):
+def test_load(variable, loop, init_time, background, coords, diag_file, diag_dataset):
     """diag.load should return datasets for observations, forecasts, and results"""
 
-    test_file = diag_file(variable, loop, init_time)
+    test_file = diag_file(variable, loop, init_time, background)
+    expected_init_time = (
+        f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}"
+    )
+    expected = diag_dataset(variable, expected_init_time, loop, background, **coords)
 
     result = diag.load(test_file)
 
-    xr.testing.assert_equal(
-        result,
-        diag_dataset(variable, init_time, loop, **coords),
-    )
+    xr.testing.assert_equal(result, expected)
+    assert result.attrs == expected.attrs
