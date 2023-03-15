@@ -5,20 +5,98 @@ from ugdata import diag
 
 
 @pytest.mark.parametrize(
-    "filename,variables,loop,init_time,background",
+    "filename,variables,loop,init_time,prefix,model,system,domain,frequency,background",
     [
-        ("diag_ps_anl.202205051400.nc4", ["ps"], "anl", "2022-05-05T14:00", None),
-        ("diag_ps_02.202205051400.nc4", ["ps"], "02", "2022-05-05T14:00", None),
-        ("diag_uv_ges.202301020400.nc4", ["u", "v"], "ges", "2023-01-02T04:00", None),
         (
-            "diag_ps_anl.202205051400.HRRR.nc4",
+            "diag_ps_anl.202205051400.nc4",
             ["ps"],
             "anl",
             "2022-05-05T14:00",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
+        (
+            "diag_ps_02.202205051400.nc4",
+            ["ps"],
+            "02",
+            "2022-05-05T14:00",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
+        (
+            "/RTMA/WCOSS/CONUS/RETRO/diag_uv_ges.202301020400.nc4",
+            ["u", "v"],
+            "ges",
+            "2023-01-02T04:00",
+            "/",
+            "RTMA",
+            "WCOSS",
+            "CONUS",
+            "RETRO",
+            None,
+        ),
+        (
+            "/prefix/RTMA/WCOSS/CONUS/REALTIME/diag_ps_anl.202205051400.HRRR.nc4",
+            ["ps"],
+            "anl",
+            "2022-05-05T14:00",
+            "/prefix",
+            "RTMA",
+            "WCOSS",
+            "CONUS",
+            "REALTIME",
             "HRRR",
         ),
-        ("ncdiag_conv_ps_anl.2022050514.nc4", ["ps"], "anl", "2022-05-05T14", None),
-        ("ncdiag_conv_uv_ges.2023010204.nc4", ["u", "v"], "ges", "2023-01-02T04", None),
+        (
+            # In this test the model is missing from the path; after the prefix we have
+            # the system, domain, and frequency. It is expected behavior that everything
+            # is shifted because we don't do any validation of these values, they are
+            # interpreted based on position. Therefore, WCOSS is interpreted as the
+            # model, and the frequency ends up as None, despite the fact that it's
+            # actually the model that's missing.
+            "/prefix/WCOSS/CONUS/REALTIME/diag_ps_anl.202205051400.HRRR.nc4",
+            ["ps"],
+            "anl",
+            "2022-05-05T14:00",
+            "/prefix",
+            "WCOSS",
+            "CONUS",
+            "REALTIME",
+            None,
+            "HRRR",
+        ),
+        (
+            "ncdiag_conv_ps_anl.2022050514.nc4",
+            ["ps"],
+            "anl",
+            "2022-05-05T14",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
+        (
+            "ncdiag_conv_uv_ges.2023010204.nc4",
+            ["u", "v"],
+            "ges",
+            "2023-01-02T04",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ),
         (
             (
                 "2a563509-3785-486a-b0d4-2810e3820abf-UDD_3DRTMA_HRRR_DIAG_"
@@ -28,30 +106,68 @@ from ugdata import diag
             "ges",
             "2023-02-01T14:00",
             None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
     ],
 )
-def test_parse_diag_filename(filename, variables, loop, init_time, background):
+def test_parse_diag_filename(
+    filename,
+    variables,
+    loop,
+    init_time,
+    prefix,
+    model,
+    system,
+    domain,
+    frequency,
+    background,
+):
     """diag.parse_diag_filename should return the variable, loop, and
     initialization time from a diag filename
     """
-    result = diag.parse_diag_filename(filename)
-    assert result == (variables, loop, init_time, background)
+    result = diag.parse_diag_filename(filename, prefix=prefix)
+    assert result == (
+        variables,
+        loop,
+        init_time,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+    )
 
 
 @pytest.mark.parametrize(
-    "filename,errmsg",
+    "filename,prefix,errmsg",
     [
-        ("ncdiag_s_anl.2022050514.nc4", "Invalid diagnostics filename"),
-        ("ncdiag_conv_ps_anl.nc4.20220505", "Invalid diagnostics filename"),
+        ("ncdiag_s_anl.2022050514.nc4", None, "Invalid diagnostics filename"),
+        ("ncdiag_conv_ps_anl.nc4.20220505", None, "Invalid diagnostics filename"),
+        (
+            "diag_ps_anl.202205051400.nc4",
+            "/prefix",
+            "'diag_ps_anl.202205051400.nc4' is not in the subpath of '/prefix'",
+        ),
+        (
+            "/different/prefix/diag_ps_anl.202205051400.nc4",
+            "/prefix",
+            (
+                "'/different/prefix/diag_ps_anl.202205051400.nc4' "
+                "is not in the subpath of '/prefix'"
+            ),
+        ),
     ],
 )
-def test_parse_diag_filename_invalid(filename, errmsg):
+def test_parse_diag_filename_invalid(filename, prefix, errmsg):
     """diag.parse_diag_filename should raise a ValueError if the filename can't
     be parsed
     """
     with pytest.raises(ValueError) as excinfo:
-        diag.parse_diag_filename(filename)
+        diag.parse_diag_filename(filename, prefix)
 
     assert errmsg in str(excinfo.value)
 

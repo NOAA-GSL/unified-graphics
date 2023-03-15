@@ -1,11 +1,14 @@
 import re
 from collections import namedtuple
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import xarray as xr
 
-DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time background")
+DiagMeta = namedtuple(
+    "DiagMeta",
+    "variables loop initialization_time model system domain frequency background",
+)
 
 diag_filename_regex = re.compile(
     (
@@ -15,7 +18,9 @@ diag_filename_regex = re.compile(
 )
 
 
-def parse_diag_filename(filename: str) -> DiagMeta:
+def parse_diag_filename(
+    path: Union[Path, str], prefix: Optional[str] = None
+) -> DiagMeta:
     """Parse the variable, loop, and initialization time from a diag file name
 
     The filename is expected to be of the form
@@ -36,9 +41,18 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     DiagMeta
         A DiagMeta named tuple containing the variable, loop, and initialization time
     """
-    filename_match = diag_filename_regex.match(filename)
+    if not isinstance(path, Path):
+        path = Path(path)
+
+    if prefix:
+        path = path.relative_to(prefix)
+
+    print(path)
+    (model, system, domain, frequency) = (list(path.parent.parts) + ([None] * 4))[:4]
+
+    filename_match = diag_filename_regex.match(path.name)
     if not filename_match:
-        raise ValueError(f"Invalid diagnostics filename: {filename}")
+        raise ValueError(f"Invalid diagnostics filename: {path.name}")
 
     variable, loop, year, month, day, hour, minute, background = filename_match.groups()
     # A uv diag file (wind) actually contains two variables -- u and v -- for
@@ -48,7 +62,9 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     if minute:
         init_time += ":" + minute
 
-    return DiagMeta(variables, loop, init_time, background)
+    return DiagMeta(
+        variables, loop, init_time, model, system, domain, frequency, background
+    )
 
 
 def get_adjusted(ds: xr.Dataset):
@@ -101,7 +117,16 @@ def load(path: Path) -> xr.Dataset:
         adjusted/unadjusted, and difference adjusted/unadjusted variables from
         the diag file.
     """
-    diag_variables, loop, init_time, background = parse_diag_filename(path.name)
+    (
+        diag_variables,
+        loop,
+        init_time,
+        model,
+        system,
+        domain,
+        frequence,
+        background,
+    ) = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 
