@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, List, Union
+from typing import Generator, Iterator, List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -266,22 +266,29 @@ def wind(
     ]
 
 
-def magnitude(dataset: List[Observation]) -> List[Observation]:
-    return [
-        Observation(
+def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
+    for obs in dataset:
+        if isinstance(obs.adjusted, Vector):
+            adjusted = vector_magnitude(obs.adjusted.u, obs.adjusted.v)
+        else:
+            adjusted = abs(obs.adjusted)
+
+        if isinstance(obs.unadjusted, Vector):
+            unadjusted = vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
+        else:
+            unadjusted = abs(obs.unadjusted)
+
+        if isinstance(obs.observed, Vector):
+            observed = vector_magnitude(obs.observed.u, obs.observed.v)
+        else:
+            observed = abs(obs.observed)
+
+        yield Observation(
             obs.variable,
             obs.variable_type,
             obs.loop,
-            adjusted=vector_magnitude(obs.adjusted.u, obs.adjusted.v)
-            if isinstance(obs.adjusted, Vector)
-            else obs.adjusted,
-            unadjusted=vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
-            if isinstance(obs.unadjusted, Vector)
-            else obs.unadjusted,
-            observed=vector_magnitude(obs.observed.u, obs.observed.v)
-            if isinstance(obs.observed, Vector)
-            else obs.observed,
+            adjusted=adjusted,
+            unadjusted=unadjusted,
+            observed=observed,
             position=obs.position,
         )
-        for obs in dataset
-    ]
