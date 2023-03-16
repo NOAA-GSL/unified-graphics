@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, List, Union
+from typing import Generator, Iterator, List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -264,3 +264,31 @@ def wind(
         )
         for idx in range(data.dims["nobs"])
     ]
+
+
+def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
+    for obs in dataset:
+        if isinstance(obs.adjusted, Vector):
+            adjusted = vector_magnitude(obs.adjusted.u, obs.adjusted.v)
+        else:
+            adjusted = abs(obs.adjusted)
+
+        if isinstance(obs.unadjusted, Vector):
+            unadjusted = vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
+        else:
+            unadjusted = abs(obs.unadjusted)
+
+        if isinstance(obs.observed, Vector):
+            observed = vector_magnitude(obs.observed.u, obs.observed.v)
+        else:
+            observed = abs(obs.observed)
+
+        yield Observation(
+            obs.variable,
+            obs.variable_type,
+            obs.loop,
+            adjusted=adjusted,
+            unadjusted=unadjusted,
+            observed=observed,
+            position=obs.position,
+        )

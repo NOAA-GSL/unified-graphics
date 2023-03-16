@@ -9,6 +9,8 @@ import {
   schemePurples,
 } from "../vendor/d3.js";
 
+import { get } from "../vendor/lodash.js";
+
 import ChartElement from "./ChartElement.js";
 
 /**
@@ -25,19 +27,11 @@ import ChartElement from "./ChartElement.js";
  */
 
 /**
- * Return the value used as the radius for each datum.
- * @callback radiusAccessor
- * @param {object} datum The observation being plotted on the map
- * @return {number} The value that will be mapped to the bubble's radius for
- *   `datum`
- */
-
-/**
  * A bubble map component.
  *
  * @property {object[]} data A GeoJSON object to be plotted on the map
- * @property {radiusAccessor} radius An accessor function to
- *   retrieve the radius value for each datum
+ * @property {string} fill A JavaScript object path used to retrieve the fill
+ *  value for the data
  * @property {[number, number][]} selection A bounding box for the map
  *   selection consisting of two tuples, the first of which is the left, top
  *   corner, and the second of which is the right, bottom corner
@@ -69,11 +63,8 @@ export default class ChartMap extends ChartElement {
   #borders = null;
   #data = null;
 
-  /** @type radiusAccessor */
-  #radiusAccessor = () => 1;
-
   static get observedAttributes() {
-    return ["src"].concat(ChartElement.observedAttributes);
+    return ["fill", "src"].concat(ChartElement.observedAttributes);
   }
 
   constructor() {
@@ -102,6 +93,9 @@ export default class ChartMap extends ChartElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
+      case "fill":
+        this.update();
+        break;
       case "src":
         fetch(newValue)
           .then((response) => response.json())
@@ -137,12 +131,16 @@ export default class ChartMap extends ChartElement {
     this.update();
   }
 
-  get radius() {
-    return this.#radiusAccessor;
+  get fill() {
+    return this.getAttribute("fill") ?? "";
   }
 
-  set radius(fn) {
-    this.#radiusAccessor = fn;
+  set fill(value) {
+    if (!value) {
+      this.removeAttribute("fill");
+    } else {
+      this.setAttribute("fill", value);
+    }
   }
 
   get scale() {
@@ -151,7 +149,9 @@ export default class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(observations.features, this.#radiusAccessor);
+    const [lower, upper] = extent(observations.features, (feature) =>
+      get(feature, this.fill)
+    );
 
     const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));
@@ -224,15 +224,14 @@ export default class ChartMap extends ChartElement {
       ctx.restore();
     }
 
-    if (!(observations && this.#radiusAccessor)) return;
+    if (!observations) return;
 
-    const fill = () => "#aaa";
-
-    const r = () => 1.5;
+    const fillProp = this.fill;
+    const fill = this.scale;
+    const radius = 2;
 
     observations.features.forEach((feature) => {
-      const value = this.#radiusAccessor(feature);
-      const radius = r(Math.abs(value));
+      const value = get(feature, fillProp);
       const [x, y] = this.#projection(feature.geometry.coordinates);
 
       ctx.save();
