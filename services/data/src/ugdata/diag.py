@@ -185,5 +185,12 @@ def save(path: Union[Path, str], *args: xr.Dataset):
         The path to the location of the Zarr
     """
     for ds in args:
-        group = f"{ds.name}/{ds.initialization_time}/{ds.loop}"
+        model = ds.model or "Unknown"
+        system = ds.system or "Unknown"
+        domain = ds.domain or "Unknown"
+        frequency = ds.frequency or "Unknown"
+        group = (
+            f"{model}/{system}/{domain}/{frequency}/"
+            f"{ds.name}/{ds.initialization_time}/{ds.loop}"
+        )
         ds.to_zarr(path, group=group, mode="a")
