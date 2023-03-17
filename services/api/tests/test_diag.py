@@ -62,22 +62,55 @@ def test_open_diagnostic(app, diag_dataset, diag_zarr):
     variable = diag.Variable.PRESSURE
     init_time = "2022-05-13T06:00"
     loop = diag.MinimLoop.ANALYSIS
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
+    background = "HRRR"
 
-    diag_zarr([variable.value], init_time, loop.value)
+    diag_zarr(
+        [variable.value],
+        init_time,
+        loop.value,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+    )
 
     with app.app_context():
-        result = diag.open_diagnostic(variable, init_time, loop)
+        result = diag.open_diagnostic(
+            model, system, domain, frequency, variable, init_time, loop
+        )
 
-    xr.testing.assert_equal(result, diag_dataset(str(variable), init_time, str(loop)))
+    xr.testing.assert_equal(
+        result,
+        diag_dataset(
+            str(variable), init_time, str(loop), model, system, frequency, background
+        ),
+    )
 
 
 def test_open_diagnostic_local_does_not_exist(app):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     expected = r"No such file or directory: '.*test_diag.zarr'$"
 
     with app.app_context():
         with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(
+                model,
+                system,
+                domain,
+                frequency,
+                diag.Variable.WIND,
+                init_time,
+                diag.MinimLoop.GUESS,
+            )
 
 
 @pytest.mark.parametrize(
@@ -94,12 +127,24 @@ def test_open_diagnostic_local_does_not_exist(app):
     ],
 )
 def test_open_diagnostic_unknown_uri(uri, expected, app):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     app.config["DIAG_ZARR"] = uri
 
     with app.app_context():
         with pytest.raises(ValueError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(
+                model,
+                system,
+                domain,
+                frequency,
+                diag.Variable.WIND,
+                init_time,
+                diag.MinimLoop.GUESS,
+            )
 
 
 @pytest.mark.aws

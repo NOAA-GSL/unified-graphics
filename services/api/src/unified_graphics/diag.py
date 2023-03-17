@@ -73,6 +73,13 @@ class Observation:
         }
 
 
+def models() -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    return z.group_keys()
+
+
 def initialization_times(variable: str) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
@@ -121,10 +128,19 @@ def get_store(url: str) -> Union[str, S3Map]:
 
 
 def open_diagnostic(
-    variable: Variable, initialization_time: str, loop: MinimLoop
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    variable: Variable,
+    initialization_time: str,
+    loop: MinimLoop,
 ) -> xr.Dataset:
     store = get_store(current_app.config["DIAG_ZARR"])
-    group = f"/{variable.value}/{initialization_time}/{loop.value}"
+    group = (
+        f"/{model}/{system}/{domain}/{frequency}"
+        f"/{variable.value}/{initialization_time}/{loop.value}"
+    )
     return xr.open_zarr(store, group=group)
 
 
@@ -171,9 +187,18 @@ def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
 
 
 def scalar(
-    variable: Variable, initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    variable: Variable,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    data = open_diagnostic(variable, initialization_time, loop)
+    data = open_diagnostic(
+        model, system, domain, frequency, variable, initialization_time, loop
+    )
     data = apply_filters(data, filters)
 
     return [
@@ -194,21 +219,66 @@ def scalar(
 
 
 def temperature(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.TEMPERATURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        frequency,
+        Variable.TEMPERATURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def moisture(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.MOISTURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        frequency,
+        Variable.MOISTURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def pressure(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.PRESSURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        frequency,
+        Variable.PRESSURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def vector_direction(u, v):
@@ -234,9 +304,17 @@ def vector_magnitude(u, v):
 
 
 def wind(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    data = open_diagnostic(Variable.WIND, initialization_time, loop)
+    data = open_diagnostic(
+        model, system, domain, frequency, Variable.WIND, initialization_time, loop
+    )
     data = apply_filters(data, filters)
 
     omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values

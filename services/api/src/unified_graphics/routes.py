@@ -73,6 +73,22 @@ def serviceworker():
 
 
 @bp.route("/diag/")
+def list_models():
+    models = diag.models()
+
+    return jsonify(
+        [
+            {"name": model, "url": url_for(".list_systems", model=model)}
+            for model in models
+        ]
+    )
+
+
+@bp.route("/diag/<model>/")
+def list_systems(model: str):
+    return "Not implemented", 404
+
+
 def list_variables():
     variables = [v.name.lower() for v in diag.Variable]
 
@@ -121,13 +137,24 @@ def list_loops(variable, initialization_time):
     )
 
 
-@bp.route("/diag/<variable>/<initialization_time>/<loop>/")
-def diagnostics(variable, initialization_time, loop):
+@bp.route(
+    "/diag/<model>/<system>/<domain>/<frequency>"
+    "/<variable>/<initialization_time>/<loop>/"
+)
+def diagnostics(model, system, domain, frequency, variable, initialization_time, loop):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
     variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics(initialization_time, diag.MinimLoop(loop), request.args)
+    data = variable_diagnostics(
+        model,
+        system,
+        domain,
+        frequency,
+        initialization_time,
+        diag.MinimLoop(loop),
+        request.args,
+    )
 
     response = jsonify(
         {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
