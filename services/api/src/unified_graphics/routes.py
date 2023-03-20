@@ -86,54 +86,132 @@ def list_models():
 
 @bp.route("/diag/<model>/")
 def list_systems(model: str):
-    return "Not implemented", 404
-
-
-def list_variables():
-    variables = [v.name.lower() for v in diag.Variable]
+    systems = diag.systems(model)
 
     return jsonify(
         [
             {
-                "name": v,
-                "url": url_for(".list_model_runs", variable=v),
+                "name": system,
+                "url": url_for(".list_domains", model=model, system=system),
+            }
+            for system in systems
+        ]
+    )
+
+
+@bp.route("/diag/<model>/<system>/")
+def list_domains(model: str, system: str):
+    domains = diag.domains(model, system)
+
+    return jsonify(
+        [
+            {
+                "name": domain,
+                "url": url_for(
+                    ".list_frequency", model=model, system=system, domain=domain
+                ),
+            }
+            for domain in domains
+        ]
+    )
+
+
+@bp.route("/diag/<model>/<system>/<domain>/")
+def list_frequency(model: str, system: str, domain: str):
+    frequencies = diag.frequency(model, system, domain)
+
+    return jsonify(
+        [
+            {
+                "name": freq,
+                "url": url_for(
+                    ".list_variables",
+                    model=model,
+                    system=system,
+                    domain=domain,
+                    frequency=freq,
+                ),
+            }
+            for freq in frequencies
+        ]
+    )
+
+
+@bp.route("/diag/<model>/<system>/<domain>/<frequency>/")
+def list_variables(model, system, domain, frequency):
+    variables = [
+        diag.Variable(var) for var in diag.variables(model, system, domain, frequency)
+    ]
+
+    return jsonify(
+        [
+            {
+                "name": v.name.lower(),
+                "url": url_for(
+                    ".list_model_runs",
+                    model=model,
+                    system=system,
+                    domain=domain,
+                    frequency=frequency,
+                    variable=v.name.lower(),
+                ),
                 # FIXME: We need to be able to look up variable types
-                "type": "vector" if v == "wind" else "scalar",
+                "type": "vector" if v == diag.Variable.WIND else "scalar",
             }
             for v in variables
         ]
     )
 
 
-@bp.route("/diag/<variable>/")
-def list_model_runs(variable):
+@bp.route("/diag/<model>/<system>/<domain>/<frequency>/<variable>/")
+def list_model_runs(model, system, domain, frequency, variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    init_times = diag.initialization_times(variable)
+    init_times = diag.initialization_times(model, system, domain, frequency, variable)
 
     return jsonify(
-        {
-            t: url_for(".list_loops", variable=variable, initialization_time=t)
+        [
+            {
+                "name": t,
+                "url": url_for(
+                    ".list_loops",
+                    model=model,
+                    system=system,
+                    domain=domain,
+                    frequency=frequency,
+                    variable=variable,
+                    initialization_time=t,
+                ),
+            }
             for t in init_times
-        }
+        ]
     )
 
 
-@bp.route("/diag/<variable>/<initialization_time>/")
-def list_loops(variable, initialization_time):
-    loops = diag.loops(variable, initialization_time)
+@bp.route(
+    "/diag/<model>/<system>/<domain>/<frequency>/<variable>/<initialization_time>/"
+)
+def list_loops(model, system, domain, frequency, variable, initialization_time):
+    loops = diag.loops(model, system, domain, frequency, variable, initialization_time)
 
     return jsonify(
-        {
-            loop: url_for(
-                ".diagnostics",
-                variable=variable,
-                initialization_time=initialization_time,
-                loop=loop,
-            )
+        [
+            {
+                "name": loop,
+                "url": url_for(
+                    ".diagnostics",
+                    model=model,
+                    system=system,
+                    domain=domain,
+                    frequency=frequency,
+                    variable=variable,
+                    initialization_time=initialization_time,
+                    loop=loop,
+                ),
+            }
             for loop in loops
-        }
+        ]
     )
 
 

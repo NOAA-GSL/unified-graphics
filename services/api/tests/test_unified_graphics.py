@@ -27,21 +27,103 @@ def test_list_models(diag_zarr, client):
     ]
 
 
-@pytest.mark.xfail
-def test_list_variables(client):
-    response = client.get("/diag/")
+def test_list_systems(diag_zarr, client):
+    systems = sorted([("RTMA", "WCOSS"), ("RTMA", "JET"), ("HRRR", "JET")])
+    for model, system in systems:
+        diag_zarr(["ps"], "2023-03-17T14:00", "anl", model=model, system=system)
+
+    response = client.get("/diag/RTMA/")
 
     assert response.status_code == 200
     assert response.json == [
-        {"name": "moisture", "url": "/diag/moisture/", "type": "scalar"},
-        {"name": "pressure", "url": "/diag/pressure/", "type": "scalar"},
-        {"name": "temperature", "url": "/diag/temperature/", "type": "scalar"},
-        {"name": "wind", "url": "/diag/wind/", "type": "vector"},
+        {"name": system, "url": f"/diag/{model}/{system}/"}
+        for model, system in systems
+        if model == "RTMA"
     ]
 
 
-@pytest.mark.xfail
+def test_list_domains(diag_zarr, client):
+    model = "RTMA"
+    domains = sorted([("WCOSS", "CONUS"), ("WCOSS", "ALASKA"), ("JET", "CONUS")])
+    for system, domain in domains:
+        diag_zarr(
+            ["ps"], "2023-03-17T14:00", "anl", model=model, system=system, domain=domain
+        )
+
+    response = client.get("/diag/RTMA/WCOSS/")
+
+    assert response.status_code == 200
+    assert response.json == [
+        {"name": domain, "url": f"/diag/{model}/{system}/{domain}/"}
+        for system, domain in domains
+        if system == "WCOSS"
+    ]
+
+
+def test_list_frequency(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    frequencies = sorted(
+        [
+            ("CONUS", "REALTIME"),
+            ("CONUS", "RETRO"),
+            ("ALASKA", "REALTIME"),
+            ("ALASKA", "RETRO"),
+        ]
+    )
+    for domain, freq in frequencies:
+        diag_zarr(
+            ["ps"],
+            "2023-03-17T14:00",
+            "anl",
+            model=model,
+            system=system,
+            domain=domain,
+            frequency=freq,
+        )
+
+    response = client.get("/diag/RTMA/WCOSS/CONUS/")
+
+    assert response.status_code == 200
+    assert response.json == [
+        {"name": freq, "url": f"/diag/{model}/{system}/{domain}/{freq}/"}
+        for domain, freq in frequencies
+        if domain == "CONUS"
+    ]
+
+
+def test_list_variables(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    freq = "REALTIME"
+    diag_zarr(
+        ["ps", "uv"],
+        "2023-03-17T14:00",
+        "anl",
+        model=model,
+        system=system,
+        domain=domain,
+        frequency=freq,
+    )
+
+    base_url = "/" + "/".join(["diag", model, system, domain, freq]) + "/"
+
+    response = client.get(base_url)
+
+    assert response.status_code == 200
+    assert response.json == [
+        {"name": "pressure", "url": f"{base_url}pressure/", "type": "scalar"},
+        {"name": "wind", "url": f"{base_url}wind/", "type": "vector"},
+    ]
+
+
 def test_list_init_times(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    freq = "REALTIME"
+    variable = "moisture"
     init_times = [
         "2022-05-05T14:00",
         "2022-05-05T15:00",
@@ -49,42 +131,62 @@ def test_list_init_times(diag_zarr, client):
         "2022-05-05T17:00",
         "2022-05-05T18:00",
     ]
+    base_url = "/" + "/".join(["diag", model, system, domain, freq, variable]) + "/"
 
     for t in init_times:
-        diag_zarr(["q"], t, "anl")
+        diag_zarr(
+            ["q"], t, "anl", model=model, system=system, domain=domain, frequency=freq
+        )
 
-    response = client.get("/diag/moisture/")
+    response = client.get(base_url)
 
     assert response.status_code == 200
-    assert response.json == {t: f"/diag/moisture/{t}/" for t in init_times}
+    assert response.json == [{"name": t, "url": f"{base_url}{t}/"} for t in init_times]
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     "loops",
     [
         ["ges"],
-        ["ges", "anl"],
+        ["anl", "ges"],
     ],
 )
 def test_list_loops(loops, diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    freq = "REALTIME"
+    variable = "moisture"
     init_time = "2022-05-16T04:00"
-    for loop in loops:
-        diag_zarr(["q"], init_time, loop)
 
-    response = client.get(f"/diag/moisture/{init_time}/")
+    base_url = (
+        "/" + "/".join(["diag", model, system, domain, freq, variable, init_time]) + "/"
+    )
+
+    for loop in loops:
+        diag_zarr(
+            ["q"],
+            init_time,
+            loop,
+            model=model,
+            system=system,
+            domain=domain,
+            frequency=freq,
+        )
+
+    response = client.get(base_url)
 
     assert response.status_code == 200
-    assert response.json == {
-        loop: f"/diag/moisture/{init_time}/{loop}/" for loop in loops
-    }
+    assert response.json == [
+        {"name": loop, "url": base_url + loop + "/"} for loop in loops
+    ]
 
 
 # TODO: modify this to test all 404s for all endpoints
 def test_list_init_times_missing(diag_zarr, client):
     diag_zarr(["ps"], "2022-05-05T15:00", "anl")
 
-    response = client.get("/diag/moisture/")
+    response = client.get("/diag/RTMA/WCOSS/CONUS/REALTIME/moisture/")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
@@ -523,7 +625,7 @@ def test_diag_read_error(variable_name, variable_code, app, client):
 @pytest.mark.parametrize(
     "url",
     [
-        pytest.param("not_a_variable/", marks=pytest.mark.xfail),
+        "not_a_variable/",
         "not_a_variable/2022-05-05T14:00/ges/",
     ],
 )

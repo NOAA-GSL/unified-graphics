@@ -80,32 +80,71 @@ def models() -> Iterator[str]:
     return z.group_keys()
 
 
-def initialization_times(variable: str) -> Iterator[str]:
+def systems(model: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    return z[model].group_keys()
+
+
+def domains(model: str, system: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    return z[model][system].group_keys()
+
+
+def frequency(model: str, system: str, domain: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    return z[model][system][domain].group_keys()
+
+
+def variables(model: str, system: str, domain: str, frequency: str) -> Iterator[str]:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    return z[model][system][domain][frequency].group_keys()
+
+
+def initialization_times(
+    model: str, system: str, domain: str, frequency: str, variable: str
+) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     v = getattr(Variable, variable.upper())
 
-    if v.value not in z:
+    if v.value not in z[model][system][domain][frequency]:
         raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
 
-    return z[v.value].group_keys()
+    return z[model][system][domain][frequency][v.value].group_keys()
 
 
-def loops(variable: str, initialization_time: str) -> Iterator[str]:
+def loops(
+    model: str,
+    system: str,
+    domain: str,
+    frequency: str,
+    variable: str,
+    initialization_time: str,
+) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
     v = getattr(Variable, variable.upper())
 
-    if v.value not in z:
+    if v.value not in z[model][system][domain][frequency]:
         raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
 
-    if initialization_time not in z[v.value]:
+    if initialization_time not in z[model][system][domain][frequency][v.value]:
         raise FileNotFoundError(
             f"Initialization time '{initialization_time}' not found in diagnostic file"
         )
 
-    return z[v.value][initialization_time].group_keys()
+    return z[model][system][domain][frequency][v.value][
+        initialization_time
+    ].group_keys()
 
 
 def get_store(url: str) -> Union[str, S3Map]:
