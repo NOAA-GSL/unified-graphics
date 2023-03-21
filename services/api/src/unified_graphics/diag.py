@@ -73,42 +73,44 @@ class Observation:
         }
 
 
-def models() -> Iterator[str]:
+def get_model_list() -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     return z.group_keys()
 
 
-def systems(model: str) -> Iterator[str]:
+def get_system_list(model: str) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     return z[model].group_keys()
 
 
-def domains(model: str, system: str) -> Iterator[str]:
+def get_domain_list(model: str, system: str) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     return z[model][system].group_keys()
 
 
-def frequency(model: str, system: str, domain: str) -> Iterator[str]:
+def get_frequency_list(model: str, system: str, domain: str) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     return z[model][system][domain].group_keys()
 
 
-def variables(model: str, system: str, domain: str, frequency: str) -> Iterator[str]:
+def get_variable_list(
+    model: str, system: str, domain: str, frequency: str
+) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
     return z[model][system][domain][frequency].group_keys()
 
 
-def initialization_times(
+def get_initialization_time_list(
     model: str, system: str, domain: str, frequency: str, variable: str
 ) -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
@@ -122,7 +124,7 @@ def initialization_times(
     return z[model][system][domain][frequency][v.value].group_keys()
 
 
-def loops(
+def get_loop_list(
     model: str,
     system: str,
     domain: str,

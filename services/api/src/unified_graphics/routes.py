@@ -74,7 +74,7 @@ def serviceworker():
 
 @bp.route("/diag/")
 def list_models():
-    models = diag.models()
+    models = diag.get_model_list()
 
     return jsonify(
         [
@@ -86,7 +86,7 @@ def list_models():
 
 @bp.route("/diag/<model>/")
 def list_systems(model: str):
-    systems = diag.systems(model)
+    systems = diag.get_system_list(model)
 
     return jsonify(
         [
@@ -101,7 +101,7 @@ def list_systems(model: str):
 
 @bp.route("/diag/<model>/<system>/")
 def list_domains(model: str, system: str):
-    domains = diag.domains(model, system)
+    domains = diag.get_domain_list(model, system)
 
     return jsonify(
         [
@@ -118,7 +118,7 @@ def list_domains(model: str, system: str):
 
 @bp.route("/diag/<model>/<system>/<domain>/")
 def list_frequency(model: str, system: str, domain: str):
-    frequencies = diag.frequency(model, system, domain)
+    frequencies = diag.get_frequency_list(model, system, domain)
 
     return jsonify(
         [
@@ -140,7 +140,8 @@ def list_frequency(model: str, system: str, domain: str):
 @bp.route("/diag/<model>/<system>/<domain>/<frequency>/")
 def list_variables(model, system, domain, frequency):
     variables = [
-        diag.Variable(var) for var in diag.variables(model, system, domain, frequency)
+        diag.Variable(var)
+        for var in diag.get_variable_list(model, system, domain, frequency)
     ]
 
     return jsonify(
@@ -168,7 +169,9 @@ def list_model_runs(model, system, domain, frequency, variable):
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    init_times = diag.initialization_times(model, system, domain, frequency, variable)
+    init_times = diag.get_initialization_time_list(
+        model, system, domain, frequency, variable
+    )
 
     return jsonify(
         [
@@ -193,7 +196,9 @@ def list_model_runs(model, system, domain, frequency, variable):
     "/diag/<model>/<system>/<domain>/<frequency>/<variable>/<initialization_time>/"
 )
 def list_loops(model, system, domain, frequency, variable, initialization_time):
-    loops = diag.loops(model, system, domain, frequency, variable, initialization_time)
+    loops = diag.get_loop_list(
+        model, system, domain, frequency, variable, initialization_time
+    )
 
     return jsonify(
         [
