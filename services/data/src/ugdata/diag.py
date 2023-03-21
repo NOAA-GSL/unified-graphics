@@ -188,9 +188,10 @@ def save(path: Union[Path, str], *args: xr.Dataset):
         model = ds.model or "Unknown"
         system = ds.system or "Unknown"
         domain = ds.domain or "Unknown"
+        background = ds.background or "Unknown"
         frequency = ds.frequency or "Unknown"
         group = (
-            f"{model}/{system}/{domain}/{frequency}/"
+            f"{model}/{system}/{domain}/{background}/{frequency}/"
             f"{ds.name}/{ds.initialization_time}/{ds.loop}"
         )
         ds.to_zarr(path, group=group, mode="a")

@@ -12,9 +12,12 @@ def test_save_new(tmp_path, diag_dataset):
     system = "WCOSS"
     domain = "CONUS"
     frequency = "REALTIME"
+    background = "HRRR"
     loop = "anl"
 
-    ps = diag_dataset("ps", init_time, loop, model, system, domain, frequency)
+    ps = diag_dataset(
+        "ps", init_time, loop, model, system, domain, frequency, background
+    )
 
     zarr_file = tmp_path / "unified_graphics.zarr"
     diag.save(zarr_file, ps)
@@ -24,22 +27,36 @@ def test_save_new(tmp_path, diag_dataset):
     assert (zarr_file / model / system).exists(), "system group is missing"
     assert (zarr_file / model / system / domain).exists(), "domain group is missing"
     assert (
-        zarr_file / model / system / domain / frequency
+        zarr_file / model / system / domain / background
+    ).exists(), "background group is missing"
+    assert (
+        zarr_file / model / system / domain / background / frequency
     ).exists(), "frequency group is missing"
     assert (
-        zarr_file / model / system / domain / frequency / "ps"
+        zarr_file / model / system / domain / background / frequency / "ps"
     ).exists(), "variable group is missing"
     assert (
-        zarr_file / model / system / domain / frequency / "ps" / init_time
+        zarr_file / model / system / domain / background / frequency / "ps" / init_time
     ).exists(), "initialization time group is missing"
     assert (
-        zarr_file / model / system / domain / frequency / "ps" / init_time / loop
+        zarr_file
+        / model
+        / system
+        / domain
+        / background
+        / frequency
+        / "ps"
+        / init_time
+        / loop
     ).exists(), "loop group is missing"
 
     xr.testing.assert_equal(
         xr.open_zarr(
             zarr_file,
-            group=f"{model}/{system}/{domain}/{frequency}/ps/{init_time}/{loop}",
+            group=(
+                f"{model}/{system}/{domain}/{background}/{frequency}/"
+                f"ps/{init_time}/{loop}"
+            ),
         ),
         ps,
     )
@@ -58,13 +75,16 @@ def test_add_loop(diag_zarr, diag_dataset):
     diag.save(zarr_file, ps)
 
     assert (
-        zarr_file / "Unknown/Unknown/Unknown/Unknown/ps" / init_time / loop
+        zarr_file / "Unknown/Unknown/Unknown/Unknown/Unknown/ps" / init_time / loop
     ).exists(), "Loop group is missing"
 
     xr.testing.assert_equal(
         xr.open_zarr(
             zarr_file,
-            group=f"/Unknown/Unknown/Unknown/Unknown/{variables[0]}/{init_time}/{loop}",
+            group=(
+                f"/Unknown/Unknown/Unknown/Unknown/Unknown/"
+                f"{variables[0]}/{init_time}/{loop}"
+            ),
         ),
         ps,
     )
@@ -83,7 +103,8 @@ def test_add_variable(diag_zarr, diag_dataset):
 
     xr.testing.assert_equal(
         xr.open_zarr(
-            zarr_file, group=f"/Unknown/Unknown/Unknown/Unknown/t/{init_time}/{loop}"
+            zarr_file,
+            group=f"/Unknown/Unknown/Unknown/Unknown/Unknown/t/{init_time}/{loop}",
         ),
         diag_dataset("t", init_time, loop),
     )
