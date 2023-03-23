@@ -2,7 +2,6 @@ from flask import (
     Blueprint,
     jsonify,
     make_response,
-    redirect,
     request,
     send_from_directory,
     stream_template,
@@ -33,37 +32,39 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    variables = [v for v in diag.Variable]
-    should_redirect = False
+    show_dialog = False
+    context = {}
 
-    if "variable" in request.args:
-        variable = diag.Variable(request.args["variable"])
-    else:
-        variable = variables[0]
-        should_redirect = True
+    # Contains the values supplied by the query parameters in the request that
+    # are used to load the data.
+    form = {}
 
-    init_times = list(diag.initialization_times(variable.name.lower()))
+    for param in [
+        "model",
+        "system",
+        "domain",
+        "frequency",
+        "initialization_time",
+        "variable",
+    ]:
+        collection_name = f"{param}_list"
+        collection = getattr(diag, f"get_{collection_name}")(**form)
+        form[collection_name] = collection
 
-    if "initialization_time" in request.args:
-        init_time = request.args["initialization_time"]
-    else:
-        init_time = init_times[0]
-        should_redirect = True
-
-    if should_redirect:
-        return redirect(
-            url_for(".index", variable=variable.value, initialization_time=init_time)
-        )
+        if param in request.args:
+            form[param] = request.args[param]
+        else:
+            # Because these values are hierarchical, we can't build a set of
+            # options for one if its parent value isn't specified. This means
+            # that if someone sets ?model=RTMA&domain=CONUS, only the model
+            # select will be populated, because we have no way of knowing if
+            # their domain selection is valid for that model. Therefore, we stop
+            # processing the parameters as soon as we find one that is missing.
+            show_dialog = True
+            break
 
     return stream_template(
-        "layouts/diag.html",
-        variables=variables,
-        initialization_times=init_times,
-        form={
-            "variable": variable,
-            "initialization_time": init_time,
-            "is_used": request.args.get("is_used", "off") == "on",
-        },
+        "layouts/diag.html", form=form, show_dialog=show_dialog, **context
     )
 
 

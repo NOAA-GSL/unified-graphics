@@ -1,21 +1,28 @@
+{%- macro metadataSelect(name, label, options=[], current=None) -%}
+<label for="{{ name }}">{{ label }}</label>
+<select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
+  {% for opt in options -%}
+  <option value="{{ opt }}" {% if opt.value==current %} selected{% endif %}>
+    {{- opt -}}
+  </option>
+  {%- endfor %}
+</select>
+{%- endmacro -%}
+
 <header class="cluster justify padding-2 bg-primary-darker text-white">
   <h1>Unified Graphics</h1>
+  <button>Configure</button>
+</header>
+<dialog id="model-dialog">
   <form class="cluster" method="GET">
-    <select name="variable">
-      {% for variable in variables -%}
-      {%- set selected = " selected" if variable.value == form.variable.value else "" -%}
-      <option value="{{ variable.value }}" {{ selected }}>
-        {{- variable.name.lower() -}}
-      </option>
-      {%- endfor %}
-    </select>
-
-    <select name="initialization_time">
-      {% for time in initialization_times -%}
-      {%- set selected = " selected" if time == form.initialization_time else "" -%}
-      <option{{ selected }}>{{ time }}</option>
-        {%- endfor %}
-    </select>
+    {{ metadataSelect("model", "Model", form.get("model_list", []), form.get("model", None))}}
+    {{ metadataSelect("system", "System", form.get("system_list", []), form.get("system", None))}}
+    {{ metadataSelect("domain", "Domain", form.get("domain_list", []), form.get("domain", None))}}
+    {{ metadataSelect("frequency", "Frequency", form.get("frequency_list", []), form.get("frequency", None))}}
+    {{ metadataSelect("background", "Background", form.get("background_list", []), form.get("background", None))}}
+    {{ metadataSelect("initialization_time", "Initialization_time", form.get("initialization_time_list", []),
+    form.get("initialization_time", None))}}
+    {{ metadataSelect("variable", "Variable", form.get("variable_list", []), form.get("variable", None))}}
 
     <label>
       {%- set checked = " checked" if form.is_used else "" -%}
@@ -24,4 +31,7 @@
     </label>
     <button>Load</button>
   </form>
-</header>
+</dialog>
+{% if show_dialog -%}
+<script>document.getElementById("model-dialog").show()</script>
+{%- endif %}
