@@ -5,14 +5,13 @@ from ugdata import diag
 
 
 @pytest.mark.parametrize(
-    "filename,variables,loop,init_time,prefix,model,system,domain,frequency,background",
+    "filename,variables,loop,init_time,model,system,domain,frequency,background",
     [
         (
             "diag_ps_anl.202205051400.nc4",
             ["ps"],
             "anl",
             "2022-05-05T14:00",
-            None,
             None,
             None,
             None,
@@ -29,44 +28,32 @@ from ugdata import diag
             None,
             None,
             None,
-            None,
         ),
         (
-            "/RTMA/WCOSS/CONUS/RETRO/diag_uv_ges.202301020400.nc4",
+            (
+                "2a563509-3785-486a-b0d4-2810e3820abf-"
+                "RTMA_WCOSS_CONUS_RETRO_diag_uv_ges.202301020400.HRRR.nc4"
+            ),
             ["u", "v"],
             "ges",
             "2023-01-02T04:00",
-            "/",
             "RTMA",
             "WCOSS",
             "CONUS",
             "RETRO",
-            None,
-        ),
-        (
-            "/prefix/RTMA/WCOSS/CONUS/REALTIME/diag_ps_anl.202205051400.HRRR.nc4",
-            ["ps"],
-            "anl",
-            "2022-05-05T14:00",
-            "/prefix",
-            "RTMA",
-            "WCOSS",
-            "CONUS",
-            "REALTIME",
             "HRRR",
         ),
         (
-            # In this test the model is missing from the path; after the prefix we have
-            # the system, domain, and frequency. It is expected behavior that everything
-            # is shifted because we don't do any validation of these values, they are
-            # interpreted based on position. Therefore, WCOSS is interpreted as the
-            # model, and the frequency ends up as None, despite the fact that it's
-            # actually the model that's missing.
-            "/prefix/WCOSS/CONUS/REALTIME/diag_ps_anl.202205051400.HRRR.nc4",
+            # In this test the model is missing from the filename It is expected
+            # behavior that everything is shifted because we don't do any
+            # validation of these values, they are interpreted based on
+            # position. Therefore, WCOSS is interpreted as the model, and the
+            # frequency ends up as None, despite the fact that it's actually the
+            # model that's missing.
+            "WCOSS_CONUS_REALTIME_diag_ps_anl.202205051400.HRRR.nc4",
             ["ps"],
             "anl",
             "2022-05-05T14:00",
-            "/prefix",
             "WCOSS",
             "CONUS",
             "REALTIME",
@@ -83,29 +70,12 @@ from ugdata import diag
             None,
             None,
             None,
-            None,
         ),
         (
             "ncdiag_conv_uv_ges.2023010204.nc4",
             ["u", "v"],
             "ges",
             "2023-01-02T04",
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ),
-        (
-            (
-                "2a563509-3785-486a-b0d4-2810e3820abf-UDD_3DRTMA_HRRR_DIAG_"
-                "diag_uv_ges.202302011400.nc4"
-            ),
-            ["u", "v"],
-            "ges",
-            "2023-02-01T14:00",
-            None,
             None,
             None,
             None,
@@ -119,7 +89,6 @@ def test_parse_diag_filename(
     variables,
     loop,
     init_time,
-    prefix,
     model,
     system,
     domain,
@@ -129,7 +98,7 @@ def test_parse_diag_filename(
     """diag.parse_diag_filename should return the variable, loop, and
     initialization time from a diag filename
     """
-    result = diag.parse_diag_filename(filename, prefix=prefix)
+    result = diag.parse_diag_filename(filename)
     assert result == (
         variables,
         loop,
@@ -143,31 +112,18 @@ def test_parse_diag_filename(
 
 
 @pytest.mark.parametrize(
-    "filename,prefix,errmsg",
+    "filename,errmsg",
     [
-        ("ncdiag_s_anl.2022050514.nc4", None, "Invalid diagnostics filename"),
-        ("ncdiag_conv_ps_anl.nc4.20220505", None, "Invalid diagnostics filename"),
-        (
-            "diag_ps_anl.202205051400.nc4",
-            "/prefix",
-            "'diag_ps_anl.202205051400.nc4' is not in the subpath of '/prefix'",
-        ),
-        (
-            "/different/prefix/diag_ps_anl.202205051400.nc4",
-            "/prefix",
-            (
-                "'/different/prefix/diag_ps_anl.202205051400.nc4' "
-                "is not in the subpath of '/prefix'"
-            ),
-        ),
+        ("ncdiag_s_anl.2022050514.nc4", "Invalid diagnostics filename"),
+        ("ncdiag_conv_ps_anl.nc4.20220505", "Invalid diagnostics filename"),
     ],
 )
-def test_parse_diag_filename_invalid(filename, prefix, errmsg):
+def test_parse_diag_filename_invalid(filename, errmsg):
     """diag.parse_diag_filename should raise a ValueError if the filename can't
     be parsed
     """
     with pytest.raises(ValueError) as excinfo:
-        diag.parse_diag_filename(filename, prefix)
+        diag.parse_diag_filename(filename)
 
     assert errmsg in str(excinfo.value)
 
@@ -251,7 +207,101 @@ def test_load(
         **coords,
     )
 
-    result = diag.load(test_file, prefix=str(tmp_path))
+    result = diag.load(test_file)
+
+    xr.testing.assert_equal(result, expected)
+    assert result.attrs == expected.attrs
+
+
+def test_no_forecast_scalar(diag_dataset, tmp_path):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
+    background = "HRRR"
+    init_time = "202303171400"
+    expected_init_time = "2023-03-17T14:00"
+    variable = "ps"
+    loop = "ges"
+
+    # FIXME: This test data should be created by a fixture
+    filename = (
+        f"{model}_{system}_{domain}_{frequency}_"
+        f"ncdiag_conv_{variable}_{loop}.{init_time}.{background}.nc4"
+    )
+    ds = xr.Dataset(
+        {
+            "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
+            "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
+            "Observation": (["nobs"], np.zeros((2,))),
+            "Analysis_Use_Flag": (["nobs"], np.array([1, -1], dtype=np.int8)),
+            "Latitude": (["nobs"], np.array([22, 25], dtype=np.float64)),
+            "Longitude": (["nobs"], np.array([90, 200], dtype=np.float64)),
+        }
+    )
+    ds.to_netcdf(tmp_path / filename)
+
+    expected = diag_dataset(
+        variable,
+        expected_init_time,
+        loop,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+    )
+
+    result = diag.load(tmp_path / filename)
+
+    xr.testing.assert_equal(result, expected)
+    assert result.attrs == expected.attrs
+
+
+def test_no_forecast_vector(diag_dataset, tmp_path):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
+    background = "HRRR"
+    init_time = "202303171400"
+    expected_init_time = "2023-03-17T14:00"
+    variable = "uv"
+    loop = "ges"
+
+    # FIXME: This test data should be created by a fixture
+    filename = (
+        f"{model}_{system}_{domain}_{frequency}_"
+        f"ncdiag_conv_{variable}_{loop}.{init_time}.{background}.nc4"
+    )
+    ds = xr.Dataset(
+        {
+            "u_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
+            "v_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
+            "u_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
+            "v_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
+            "u_Observation": (["nobs"], np.zeros((2,))),
+            "v_Observation": (["nobs"], np.zeros((2,))),
+            "Analysis_Use_Flag": (["nobs"], np.array([1, -1], dtype=np.int8)),
+            "Latitude": (["nobs"], np.array([22, 25], dtype=np.float64)),
+            "Longitude": (["nobs"], np.array([90, 200], dtype=np.float64)),
+        }
+    )
+    ds.to_netcdf(tmp_path / filename)
+
+    expected = diag_dataset(
+        variable,
+        expected_init_time,
+        loop,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+        component=["u", "v"],
+    )
+
+    result = diag.load(tmp_path / filename)
 
     xr.testing.assert_equal(result, expected)
     assert result.attrs == expected.attrs

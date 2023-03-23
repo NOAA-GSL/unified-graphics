@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -23,7 +22,7 @@ def diag_dataset():
         background: Optional[str] = None,
         **kwargs,
     ):
-        dims = [*kwargs.keys(), "nobs"]
+        dims = ["nobs", *kwargs.keys()]
         shape = [*map(len, kwargs.values()), 2]
         variables = [
             "observation",
@@ -91,18 +90,14 @@ def diag_file(tmp_path):
             filename += f".{background}"
         filename += ".nc4"
 
-        diag_file = tmp_path
-        if model:
-            diag_file /= model
-        if system:
-            diag_file /= system
-        if domain:
-            diag_file /= domain
         if frequency:
-            diag_file /= frequency
-
-        os.makedirs(diag_file, exist_ok=True)
-        diag_file /= filename
+            filename = f"{frequency}_{filename}"
+        if domain:
+            filename = f"{domain}_{filename}"
+        if system:
+            filename = f"{system}_{filename}"
+        if model:
+            filename = f"{model}_{filename}"
 
         ds = xr.Dataset(
             {
@@ -117,6 +112,7 @@ def diag_file(tmp_path):
             }
         )
 
+        diag_file = tmp_path / filename
         ds.to_netcdf(diag_file)
 
         return diag_file

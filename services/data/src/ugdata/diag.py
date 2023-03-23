@@ -1,7 +1,7 @@
 import re
 from collections import namedtuple
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import xarray as xr
 
@@ -12,15 +12,17 @@ DiagMeta = namedtuple(
 
 diag_filename_regex = re.compile(
     (
-        r".*?(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges|\d+)\..*?"
+        # Ignore optional UUID and capture model, system, domain, and frequency
+        r"(?:[a-z0-9][a-z0-9-]*-)?(?:(\w+)_)?"
+        # Capture variable and loop
+        r"(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges|\d+)\..*?"
+        # capture initialization time and background
         r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?(?:\.(\w+))?\.nc4"
     )
 )
 
 
-def parse_diag_filename(
-    path: Union[Path, str], prefix: Optional[str] = None
-) -> DiagMeta:
+def parse_diag_filename(filename: str) -> DiagMeta:
     """Parse the variable, loop, and initialization time from a diag file name
 
     The filename is expected to be of the form
@@ -41,20 +43,28 @@ def parse_diag_filename(
     DiagMeta
         A DiagMeta named tuple containing the variable, loop, and initialization time
     """
-    if not isinstance(path, Path):
-        path = Path(path)
 
-    if prefix:
-        path = path.relative_to(prefix)
-
-    print(path)
-    (model, system, domain, frequency) = (list(path.parent.parts) + ([None] * 4))[:4]
-
-    filename_match = diag_filename_regex.match(path.name)
+    filename_match = diag_filename_regex.match(filename)
     if not filename_match:
-        raise ValueError(f"Invalid diagnostics filename: {path.name}")
+        raise ValueError(f"Invalid diagnostics filename: {filename}")
 
-    variable, loop, year, month, day, hour, minute, background = filename_match.groups()
+    (
+        meta,
+        variable,
+        loop,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        background,
+    ) = filename_match.groups()
+
+    if meta:
+        model, system, domain, frequency = (meta.split("_") + [None] * 4)[:4]
+    else:
+        model, system, domain, frequency = [None] * 4
+
     # A uv diag file (wind) actually contains two variables -- u and v -- for
     # the vectors
     variables = list(variable) if variable == "uv" else [variable]
@@ -98,7 +108,33 @@ def get_data_array(
     return da
 
 
-def load(path: Path, prefix: Optional[str] = None) -> xr.Dataset:
+def compute_forecast(
+    suffix: str, ds: xr.Dataset, component_list: list[str] = []
+) -> xr.Dataset:
+    if component_list:
+        key_list = [
+            (
+                f"{component}_Observation",
+                f"{component}_Obs_Minus_Forecast_{suffix}",
+                f"{component}_Forecast_{suffix}",
+            )
+            for component in component_list
+        ]
+    else:
+        key_list = [
+            ("Observation", f"Obs_Minus_Forecast_{suffix}", f"Forecast_{suffix}")
+        ]
+
+    for obs_key, delta_key, forecast_key in key_list:
+        obs = ds[obs_key]
+        delta = ds[delta_key]
+        forecast = obs - delta
+        ds[forecast_key] = forecast
+
+    return ds
+
+
+def load(path: Path) -> xr.Dataset:
     """Load a NetCDF diag file into xarray Datasets for observations,
     forecasts, and differences
 
@@ -126,7 +162,7 @@ def load(path: Path, prefix: Optional[str] = None) -> xr.Dataset:
         domain,
         frequency,
         background,
-    ) = parse_diag_filename(path, prefix)
+    ) = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 
@@ -145,6 +181,13 @@ def load(path: Path, prefix: Optional[str] = None) -> xr.Dataset:
     if len(diag_variables) > 1:
         coords["component"] = diag_variables
         components = diag_variables
+
+    # Some diag files do not include the forecast variables, so before we
+    # transform the input, we compute the forecast if it's missing.
+    if "Forecast_adjusted" not in ds:
+        compute_forecast("adjusted", ds, components)
+    if "Forecast_unadjusted" not in ds:
+        compute_forecast("unadjusted", ds, components)
 
     variables = [
         "Observation",
