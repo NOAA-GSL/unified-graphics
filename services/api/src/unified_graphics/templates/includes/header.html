@@ -1,20 +1,25 @@
 {%- macro metadataSelect(name, label, options=[], current=None) -%}
-<label for="{{ name }}">{{ label }}</label>
-<select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
-  {% for opt in options -%}
-  <option value="{{ opt }}" {% if opt.value==current %} selected{% endif %}>
-    {{- opt -}}
-  </option>
-  {%- endfor %}
-</select>
+<p>
+  <label for="{{ name }}">{{ label }}</label>
+  <select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
+    <option></option>
+    {% for opt in options -%}
+    <option value="{{ opt }}" {% if opt.value==current %} selected{% endif %}>
+      {{- opt -}}
+    </option>
+    {%- endfor %}
+  </select>
+</p>
 {%- endmacro -%}
 
 <header class="cluster justify padding-2 bg-primary-darker text-white">
   <h1>Unified Graphics</h1>
   <button>Configure</button>
 </header>
+
 <dialog id="model-dialog">
-  <form class="cluster" method="GET">
+  <h2>Select Data</h2>
+  <form id="model-form" class="scrollable" method="GET">
     {{ metadataSelect("model", "Model", form.get("model_list", []), form.get("model", None))}}
     {{ metadataSelect("system", "System", form.get("system_list", []), form.get("system", None))}}
     {{ metadataSelect("domain", "Domain", form.get("domain_list", []), form.get("domain", None))}}
@@ -29,9 +34,11 @@
       <input type="checkbox" name="is_used" {{ checked }} />
       Include unused observations
     </label>
-    <button>Load</button>
+
   </form>
+  <button form="model-form">Load</button>
 </dialog>
+
 {% if show_dialog -%}
-<script>document.getElementById("model-dialog").show()</script>
+<script>document.getElementById("model-dialog").showModal()</script>
 {%- endif %}
