@@ -32,38 +32,27 @@ def handle_diag_file_read_error(e):
 @bp.route("/")
 def index():
     show_dialog = False
-    context = {}
+    context = {
+        "model_metadata": diag.get_model_metadata(),
+    }
 
-    # Contains the values supplied by the query parameters in the request that
-    # are used to load the data.
-    form = {}
-
-    for param in [
-        "model",
-        "system",
-        "domain",
-        "frequency",
-        "initialization_time",
-        "variable",
-    ]:
-        collection_name = f"{param}_list"
-        collection = getattr(diag, f"get_{collection_name}")(**form)
-        form[collection_name] = collection
-
-        if param in request.args:
-            form[param] = request.args[param]
-        else:
-            # Because these values are hierarchical, we can't build a set of
-            # options for one if its parent value isn't specified. This means
-            # that if someone sets ?model=RTMA&domain=CONUS, only the model
-            # select will be populated, because we have no way of knowing if
-            # their domain selection is valid for that model. Therefore, we stop
-            # processing the parameters as soon as we find one that is missing.
-            show_dialog = True
-            break
+    # True if any of the listed parameters are not supplied in the query string. Without
+    # all of these parameters, we are unable to show any data.
+    show_dialog = any(
+        param not in request.args
+        for param in [
+            "model",
+            "system",
+            "domain",
+            "background",
+            "frequency",
+            "initialization_time",
+            "variable",
+        ]
+    )
 
     return stream_template(
-        "layouts/diag.html", form=form, show_dialog=show_dialog, **context
+        "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
     )
 
 

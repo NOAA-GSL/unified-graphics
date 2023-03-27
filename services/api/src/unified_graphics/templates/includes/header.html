@@ -20,14 +20,14 @@
 <dialog id="model-dialog">
   <h2>Select Data</h2>
   <form id="model-form" class="scrollable" method="GET">
-    {{ metadataSelect("model", "Model", form.get("model_list", []), form.get("model", None))}}
-    {{ metadataSelect("system", "System", form.get("system_list", []), form.get("system", None))}}
-    {{ metadataSelect("domain", "Domain", form.get("domain_list", []), form.get("domain", None))}}
-    {{ metadataSelect("frequency", "Frequency", form.get("frequency_list", []), form.get("frequency", None))}}
-    {{ metadataSelect("background", "Background", form.get("background_list", []), form.get("background", None))}}
-    {{ metadataSelect("initialization_time", "Initialization_time", form.get("initialization_time_list", []),
+    {{ metadataSelect("model", "Model", model_metadata.model_list, form.get("model", None))}}
+    {{ metadataSelect("system", "System", model_metadata.system_list, form.get("system", None))}}
+    {{ metadataSelect("domain", "Domain", model_metadata.domain_list, form.get("domain", None))}}
+    {{ metadataSelect("frequency", "Frequency", model_metadata.frequency_list, form.get("frequency", None))}}
+    {{ metadataSelect("background", "Background", model_metadata.background_list, form.get("background", None))}}
+    {{ metadataSelect("initialization_time", "Initialization_time", model_metadata.init_time_list,
     form.get("initialization_time", None))}}
-    {{ metadataSelect("variable", "Variable", form.get("variable_list", []), form.get("variable", None))}}
+    {{ metadataSelect("variable", "Variable", model_metadata.variable_list, form.get("variable", None))}}
 
     <label>
       {%- set checked = " checked" if form.is_used else "" -%}
