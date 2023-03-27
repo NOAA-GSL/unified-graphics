@@ -172,6 +172,7 @@ def open_diagnostic(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     variable: Variable,
     initialization_time: str,
@@ -179,7 +180,7 @@ def open_diagnostic(
 ) -> xr.Dataset:
     store = get_store(current_app.config["DIAG_ZARR"])
     group = (
-        f"/{model}/{system}/{domain}/{frequency}"
+        f"/{model}/{system}/{domain}/{background}/{frequency}"
         f"/{variable.value}/{initialization_time}/{loop.value}"
     )
     return xr.open_zarr(store, group=group)
@@ -231,6 +232,7 @@ def scalar(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     variable: Variable,
     initialization_time: str,
@@ -238,7 +240,14 @@ def scalar(
     filters: MultiDict,
 ) -> List[Observation]:
     data = open_diagnostic(
-        model, system, domain, frequency, variable, initialization_time, loop
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        variable,
+        initialization_time,
+        loop,
     )
     data = apply_filters(data, filters)
 
@@ -263,6 +272,7 @@ def temperature(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     initialization_time: str,
     loop: MinimLoop,
@@ -272,6 +282,7 @@ def temperature(
         model,
         system,
         domain,
+        background,
         frequency,
         Variable.TEMPERATURE,
         initialization_time,
@@ -284,6 +295,7 @@ def moisture(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     initialization_time: str,
     loop: MinimLoop,
@@ -293,6 +305,7 @@ def moisture(
         model,
         system,
         domain,
+        background,
         frequency,
         Variable.MOISTURE,
         initialization_time,
@@ -305,6 +318,7 @@ def pressure(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     initialization_time: str,
     loop: MinimLoop,
@@ -314,6 +328,7 @@ def pressure(
         model,
         system,
         domain,
+        background,
         frequency,
         Variable.PRESSURE,
         initialization_time,
@@ -348,13 +363,21 @@ def wind(
     model: str,
     system: str,
     domain: str,
+    background: str,
     frequency: str,
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
 ) -> List[Observation]:
     data = open_diagnostic(
-        model, system, domain, frequency, Variable.WIND, initialization_time, loop
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        Variable.WIND,
+        initialization_time,
+        loop,
     )
     data = apply_filters(data, filters)
 

@@ -159,8 +159,8 @@ def diag_zarr(app, diag_dataset):
 
         if data:
             group = (
-                f"/{data.model}/{data.system}/{data.domain}/{data.frequency}"
-                f"/{data.attrs['name']}/{initialization_time}/{loop}"
+                f"/{data.model}/{data.system}/{data.domain}/{data.background}"
+                f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
             )
             data.to_zarr(store, group=group)
             return zarr_file
@@ -181,9 +181,10 @@ def diag_zarr(app, diag_dataset):
             )
             try:
                 group = (
-                    f"/{ds.model}/{ds.system}/{ds.domain}/{ds.frequency}"
-                    f"/{variable}/{initialization_time}/{loop}"
+                    f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
+                    f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
                 )
+                print(f"Group: {group}")
                 ds.to_zarr(store, group=group)
             except Exception as e:
                 print(e)

@@ -65,8 +65,8 @@ def test_open_diagnostic(app, diag_dataset, diag_zarr):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
-    frequency = "REALTIME"
     background = "HRRR"
+    frequency = "REALTIME"
 
     diag_zarr(
         [variable.value],
@@ -81,7 +81,7 @@ def test_open_diagnostic(app, diag_dataset, diag_zarr):
 
     with app.app_context():
         result = diag.open_diagnostic(
-            model, system, domain, frequency, variable, init_time, loop
+            model, system, domain, background, frequency, variable, init_time, loop
         )
 
     xr.testing.assert_equal(
@@ -96,6 +96,7 @@ def test_open_diagnostic_local_does_not_exist(app):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     expected = r"No such file or directory: '.*test_diag.zarr'$"
@@ -106,6 +107,7 @@ def test_open_diagnostic_local_does_not_exist(app):
                 model,
                 system,
                 domain,
+                background,
                 frequency,
                 diag.Variable.WIND,
                 init_time,
@@ -130,6 +132,7 @@ def test_open_diagnostic_unknown_uri(uri, expected, app):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     app.config["DIAG_ZARR"] = uri
@@ -140,6 +143,7 @@ def test_open_diagnostic_unknown_uri(uri, expected, app):
                 model,
                 system,
                 domain,
+                background,
                 frequency,
                 diag.Variable.WIND,
                 init_time,

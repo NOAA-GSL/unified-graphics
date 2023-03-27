@@ -200,12 +200,13 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     diag_zarr([variable_code], init_time, loop)
 
     response = client.get(
-        f"/diag/{model}/{system}/{domain}/{frequency}"
+        f"/diag/{model}/{system}/{domain}/{background}/{frequency}"
         f"/{variable_name}/{init_time}/{loop}/"
     )
 
@@ -245,13 +246,15 @@ def test_wind_diag(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     diag_zarr(["uv"], init_time, loop)
 
     response = client.get(
-        f"/diag/{model}/{system}/{domain}/{frequency}/wind/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/wind/{init_time}/{loop}/"
     )
 
     assert response.status_code == 200
@@ -290,6 +293,7 @@ def test_region_filter_scalar(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
@@ -298,8 +302,8 @@ def test_region_filter_scalar(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
@@ -361,8 +365,8 @@ def test_range_filter_scalar(diag_zarr, client):
     diag_zarr([variable], init_time, loop, model, system, domain, frequency, data=data)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     query = "obs_minus_forecast_adjusted=1.5::1"
     response = client.get(f"{url}?{query}")
@@ -391,6 +395,7 @@ def test_region_filter_vector(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
@@ -399,8 +404,8 @@ def test_region_filter_vector(diag_zarr, client):
     diag_zarr([variable], init_time, loop)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
@@ -466,8 +471,8 @@ def test_range_filter_vector(diag_zarr, client):
     diag_zarr([variable], init_time, loop, data=data)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     # This query is designed so that both observations v components fall within the
     # selected region, but only the first observation's u component does, so only the
@@ -499,6 +504,7 @@ def test_unused_filter(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     variable_code = "t"
     variable_name = "temperature"
@@ -507,8 +513,8 @@ def test_unused_filter(diag_zarr, client):
     diag_zarr([variable_code], init_time, loop)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     query = "is_used=false"
     response = client.get(f"{url}?{query}")
@@ -537,6 +543,7 @@ def test_all_obs_filter(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
+    background = "HRRR"
     frequency = "REALTIME"
     variable_code = "t"
     variable_name = "temperature"
@@ -545,8 +552,8 @@ def test_all_obs_filter(diag_zarr, client):
     diag_zarr([variable_code], init_time, loop)
 
     url = (
-        f"/diag/{model}/{system}/{domain}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
     )
     query = "is_used=true::false"
     response = client.get(f"{url}?{query}")
@@ -600,7 +607,7 @@ def test_all_obs_filter(diag_zarr, client):
 )
 def test_diag_not_found(variable_name, client):
     response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
     )
 
     assert response.status_code == 404
@@ -615,7 +622,7 @@ def test_diag_read_error(variable_name, variable_code, app, client):
     Path(app.config["DIAG_ZARR"]).touch()
 
     response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
     )
 
     assert response.status_code == 500
@@ -625,12 +632,11 @@ def test_diag_read_error(variable_name, variable_code, app, client):
 @pytest.mark.parametrize(
     "url",
     [
-        "not_a_variable/",
         "not_a_variable/2022-05-05T14:00/ges/",
     ],
 )
 def test_unknown_variable(url, client):
-    response = client.get(f"/diag/RTMA/WCOSS/CONUS/REALTIME/{url}")
+    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{url}")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Variable not found: 'not_a_variable'"}

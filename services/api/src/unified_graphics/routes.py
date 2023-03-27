@@ -222,10 +222,13 @@ def list_loops(model, system, domain, frequency, variable, initialization_time):
 
 
 @bp.route(
-    "/diag/<model>/<system>/<domain>/<frequency>"
+    "/diag/<model>/<system>/<domain>/<background>/<frequency>"
     "/<variable>/<initialization_time>/<loop>/"
 )
-def diagnostics(model, system, domain, frequency, variable, initialization_time, loop):
+def diagnostics(
+    model, system, domain, background, frequency, variable, initialization_time, loop
+):
+    print(variable)
     if not hasattr(diag, variable):
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
@@ -234,6 +237,7 @@ def diagnostics(model, system, domain, frequency, variable, initialization_time,
         model,
         system,
         domain,
+        background,
         frequency,
         initialization_time,
         diag.MinimLoop(loop),
