@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, List, Union
+from typing import List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -113,82 +113,6 @@ def get_model_metadata() -> ModelMetadata:
         variable_list,
         init_time_list,
     )
-
-
-def get_model_list() -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    return z.group_keys()
-
-
-def get_system_list(model: str) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    return z[model].group_keys()
-
-
-def get_domain_list(model: str, system: str) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    return z[model][system].group_keys()
-
-
-def get_frequency_list(model: str, system: str, domain: str) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    return z[model][system][domain].group_keys()
-
-
-def get_variable_list(
-    model: str, system: str, domain: str, frequency: str
-) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    return z[model][system][domain][frequency].group_keys()
-
-
-def get_initialization_time_list(
-    model: str, system: str, domain: str, frequency: str, variable: str
-) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-
-    v = getattr(Variable, variable.upper())
-
-    if v.value not in z[model][system][domain][frequency]:
-        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
-
-    return z[model][system][domain][frequency][v.value].group_keys()
-
-
-def get_loop_list(
-    model: str,
-    system: str,
-    domain: str,
-    frequency: str,
-    variable: str,
-    initialization_time: str,
-) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-    v = getattr(Variable, variable.upper())
-
-    if v.value not in z[model][system][domain][frequency]:
-        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
-
-    if initialization_time not in z[model][system][domain][frequency][v.value]:
-        raise FileNotFoundError(
-            f"Initialization time '{initialization_time}' not found in diagnostic file"
-        )
-
-    return z[model][system][domain][frequency][v.value][
-        initialization_time
-    ].group_keys()
 
 
 def get_store(url: str) -> Union[str, S3Map]:
