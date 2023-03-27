@@ -18,6 +18,39 @@ def test_key_prefix():
     return f"/test/{uuid.uuid4()}/"
 
 
+def test_get_model_metadata(app, diag_zarr):
+    model_run_list = [
+        ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00", "anl"),
+        ("3DRTMA", "JET", "CONUS", "RETRO", "RRFS", "2023-03-17T15:00", "ges"),
+    ]
+
+    variable_list = ["ps", "q", "t", "uv"]
+
+    for model, system, domain, freq, bg, init_time, loop in model_run_list:
+        diag_zarr(
+            variable_list,
+            init_time,
+            loop,
+            model=model,
+            system=system,
+            domain=domain,
+            background=bg,
+            frequency=freq,
+        )
+
+    with app.app_context():
+        result = diag.get_model_metadata()
+
+    assert result
+    assert result.model_list == set(["3DRTMA", "RTMA"])
+    assert result.system_list == set(["JET", "WCOSS"])
+    assert result.domain_list == set(["CONUS"])
+    assert result.frequency_list == set(["REALTIME", "RETRO"])
+    assert result.background_list == set(["HRRR", "RRFS"])
+    assert result.init_time_list == set(["2023-03-17T14:00", "2023-03-17T15:00"])
+    assert result.variable_list == set(variable_list)
+
+
 @pytest.mark.parametrize(
     "uri,expected",
     [

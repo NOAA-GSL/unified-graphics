@@ -73,6 +73,48 @@ class Observation:
         }
 
 
+ModelMetadata = namedtuple(
+    "ModelMetadata",
+    (
+        "model_list system_list domain_list background_list frequency_list "
+        "variable_list init_time_list"
+    ),
+)
+
+
+def get_model_metadata() -> ModelMetadata:
+    store = get_store(current_app.config["DIAG_ZARR"])
+    z = zarr.open(store)
+
+    model_list = set()
+    system_list = set()
+    domain_list = set()
+    frequency_list = set()
+    background_list = set()
+    init_time_list = set()
+    variable_list = set()
+
+    for _, arr in z.arrays(True):
+        model, system, domain, bg, freq, variable, init_time = arr.path.split("/")[:-2]
+        model_list.add(model)
+        system_list.add(system)
+        domain_list.add(domain)
+        frequency_list.add(freq)
+        background_list.add(bg)
+        variable_list.add(variable)
+        init_time_list.add(init_time)
+
+    return ModelMetadata(
+        model_list,
+        system_list,
+        domain_list,
+        background_list,
+        frequency_list,
+        variable_list,
+        init_time_list,
+    )
+
+
 def get_model_list() -> Iterator[str]:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
