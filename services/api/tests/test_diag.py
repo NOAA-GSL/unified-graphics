@@ -18,6 +18,39 @@ def test_key_prefix():
     return f"/test/{uuid.uuid4()}/"
 
 
+def test_get_model_metadata(app, diag_zarr):
+    model_run_list = [
+        ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00", "anl"),
+        ("3DRTMA", "JET", "CONUS", "RETRO", "RRFS", "2023-03-17T15:00", "ges"),
+    ]
+
+    variable_list = ["ps", "q", "t", "uv"]
+
+    for model, system, domain, freq, bg, init_time, loop in model_run_list:
+        diag_zarr(
+            variable_list,
+            init_time,
+            loop,
+            model=model,
+            system=system,
+            domain=domain,
+            background=bg,
+            frequency=freq,
+        )
+
+    with app.app_context():
+        result = diag.get_model_metadata()
+
+    assert result
+    assert result.model_list == set(["3DRTMA", "RTMA"])
+    assert result.system_list == set(["JET", "WCOSS"])
+    assert result.domain_list == set(["CONUS"])
+    assert result.frequency_list == set(["REALTIME", "RETRO"])
+    assert result.background_list == set(["HRRR", "RRFS"])
+    assert result.init_time_list == set(["2023-03-17T14:00", "2023-03-17T15:00"])
+    assert result.variable_list == set(variable_list)
+
+
 @pytest.mark.parametrize(
     "uri,expected",
     [
@@ -62,22 +95,57 @@ def test_open_diagnostic(app, diag_dataset, diag_zarr):
     variable = diag.Variable.PRESSURE
     init_time = "2022-05-13T06:00"
     loop = diag.MinimLoop.ANALYSIS
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
 
-    diag_zarr([variable.value], init_time, loop.value)
+    diag_zarr(
+        [variable.value],
+        init_time,
+        loop.value,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+    )
 
     with app.app_context():
-        result = diag.open_diagnostic(variable, init_time, loop)
+        result = diag.open_diagnostic(
+            model, system, domain, background, frequency, variable, init_time, loop
+        )
 
-    xr.testing.assert_equal(result, diag_dataset(str(variable), init_time, str(loop)))
+    xr.testing.assert_equal(
+        result,
+        diag_dataset(
+            str(variable), init_time, str(loop), model, system, frequency, background
+        ),
+    )
 
 
 def test_open_diagnostic_local_does_not_exist(app):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     expected = r"No such file or directory: '.*test_diag.zarr'$"
 
     with app.app_context():
         with pytest.raises(FileNotFoundError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(
+                model,
+                system,
+                domain,
+                background,
+                frequency,
+                diag.Variable.WIND,
+                init_time,
+                diag.MinimLoop.GUESS,
+            )
 
 
 @pytest.mark.parametrize(
@@ -94,12 +162,26 @@ def test_open_diagnostic_local_does_not_exist(app):
     ],
 )
 def test_open_diagnostic_unknown_uri(uri, expected, app):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     app.config["DIAG_ZARR"] = uri
 
     with app.app_context():
         with pytest.raises(ValueError, match=expected):
-            diag.open_diagnostic(diag.Variable.WIND, init_time, diag.MinimLoop.GUESS)
+            diag.open_diagnostic(
+                model,
+                system,
+                domain,
+                background,
+                frequency,
+                diag.Variable.WIND,
+                init_time,
+                diag.MinimLoop.GUESS,
+            )
 
 
 @pytest.mark.aws

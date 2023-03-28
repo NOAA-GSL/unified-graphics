@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterator, List, Union
+from typing import List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -73,32 +73,46 @@ class Observation:
         }
 
 
-def initialization_times(variable: str) -> Iterator[str]:
+ModelMetadata = namedtuple(
+    "ModelMetadata",
+    (
+        "model_list system_list domain_list background_list frequency_list "
+        "variable_list init_time_list"
+    ),
+)
+
+
+def get_model_metadata() -> ModelMetadata:
     store = get_store(current_app.config["DIAG_ZARR"])
     z = zarr.open(store)
 
-    v = getattr(Variable, variable.upper())
+    model_list = set()
+    system_list = set()
+    domain_list = set()
+    frequency_list = set()
+    background_list = set()
+    init_time_list = set()
+    variable_list = set()
 
-    if v.value not in z:
-        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
+    for _, arr in z.arrays(True):
+        model, system, domain, bg, freq, variable, init_time = arr.path.split("/")[:-2]
+        model_list.add(model)
+        system_list.add(system)
+        domain_list.add(domain)
+        frequency_list.add(freq)
+        background_list.add(bg)
+        variable_list.add(variable)
+        init_time_list.add(init_time)
 
-    return z[v.value].group_keys()
-
-
-def loops(variable: str, initialization_time: str) -> Iterator[str]:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
-    v = getattr(Variable, variable.upper())
-
-    if v.value not in z:
-        raise FileNotFoundError(f"Variable '{v.value}' not found in diagnostic file")
-
-    if initialization_time not in z[v.value]:
-        raise FileNotFoundError(
-            f"Initialization time '{initialization_time}' not found in diagnostic file"
-        )
-
-    return z[v.value][initialization_time].group_keys()
+    return ModelMetadata(
+        model_list,
+        system_list,
+        domain_list,
+        background_list,
+        frequency_list,
+        variable_list,
+        init_time_list,
+    )
 
 
 def get_store(url: str) -> Union[str, S3Map]:
@@ -121,10 +135,20 @@ def get_store(url: str) -> Union[str, S3Map]:
 
 
 def open_diagnostic(
-    variable: Variable, initialization_time: str, loop: MinimLoop
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    variable: Variable,
+    initialization_time: str,
+    loop: MinimLoop,
 ) -> xr.Dataset:
     store = get_store(current_app.config["DIAG_ZARR"])
-    group = f"/{variable.value}/{initialization_time}/{loop.value}"
+    group = (
+        f"/{model}/{system}/{domain}/{background}/{frequency}"
+        f"/{variable.value}/{initialization_time}/{loop.value}"
+    )
     return xr.open_zarr(store, group=group)
 
 
@@ -171,9 +195,26 @@ def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
 
 
 def scalar(
-    variable: Variable, initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    variable: Variable,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    data = open_diagnostic(variable, initialization_time, loop)
+    data = open_diagnostic(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        variable,
+        initialization_time,
+        loop,
+    )
     data = apply_filters(data, filters)
 
     return [
@@ -194,21 +235,72 @@ def scalar(
 
 
 def temperature(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.TEMPERATURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        Variable.TEMPERATURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def moisture(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.MOISTURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        Variable.MOISTURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def pressure(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    return scalar(Variable.PRESSURE, initialization_time, loop, filters)
+    return scalar(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        Variable.PRESSURE,
+        initialization_time,
+        loop,
+        filters,
+    )
 
 
 def vector_direction(u, v):
@@ -234,9 +326,25 @@ def vector_magnitude(u, v):
 
 
 def wind(
-    initialization_time: str, loop: MinimLoop, filters: MultiDict
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    initialization_time: str,
+    loop: MinimLoop,
+    filters: MultiDict,
 ) -> List[Observation]:
-    data = open_diagnostic(Variable.WIND, initialization_time, loop)
+    data = open_diagnostic(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        Variable.WIND,
+        initialization_time,
+        loop,
+    )
     data = apply_filters(data, filters)
 
     omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values

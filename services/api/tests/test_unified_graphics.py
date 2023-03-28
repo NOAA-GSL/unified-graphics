@@ -11,75 +11,23 @@ def test_root_endpoint(client):
     assert response.status_code == 200
 
 
-def test_list_variables(client):
-    response = client.get("/diag/")
-
-    assert response.status_code == 200
-    assert response.json == [
-        {"name": "moisture", "url": "/diag/moisture/", "type": "scalar"},
-        {"name": "pressure", "url": "/diag/pressure/", "type": "scalar"},
-        {"name": "temperature", "url": "/diag/temperature/", "type": "scalar"},
-        {"name": "wind", "url": "/diag/wind/", "type": "vector"},
-    ]
-
-
-def test_list_init_times(diag_zarr, client):
-    init_times = [
-        "2022-05-05T14:00",
-        "2022-05-05T15:00",
-        "2022-05-05T16:00",
-        "2022-05-05T17:00",
-        "2022-05-05T18:00",
-    ]
-
-    for t in init_times:
-        diag_zarr(["q"], t, "anl")
-
-    response = client.get("/diag/moisture/")
-
-    assert response.status_code == 200
-    assert response.json == {t: f"/diag/moisture/{t}/" for t in init_times}
-
-
-@pytest.mark.parametrize(
-    "loops",
-    [
-        ["ges"],
-        ["ges", "anl"],
-    ],
-)
-def test_list_loops(loops, diag_zarr, client):
-    init_time = "2022-05-16T04:00"
-    for loop in loops:
-        diag_zarr(["q"], init_time, loop)
-
-    response = client.get(f"/diag/moisture/{init_time}/")
-
-    assert response.status_code == 200
-    assert response.json == {
-        loop: f"/diag/moisture/{init_time}/{loop}/" for loop in loops
-    }
-
-
-# TODO: modify this to test all 404s for all endpoints
-def test_list_init_times_missing(diag_zarr, client):
-    diag_zarr(["ps"], "2022-05-05T15:00", "anl")
-
-    response = client.get("/diag/moisture/")
-
-    assert response.status_code == 404
-    assert response.json == {"msg": "Diagnostic file not found"}
-
-
 @pytest.mark.parametrize(
     "variable_name,variable_code,loop",
     [("temperature", "t", "anl"), ("moisture", "q", "ges")],
 )
 def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     diag_zarr([variable_code], init_time, loop)
 
-    response = client.get(f"/diag/{variable_name}/{init_time}/{loop}/")
+    response = client.get(
+        f"/diag/{model}/{system}/{domain}/{background}/{frequency}"
+        f"/{variable_code}/{init_time}/{loop}/"
+    )
 
     assert response.status_code == 200
     assert response.json == {
@@ -114,11 +62,19 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
 
 
 def test_wind_diag(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     diag_zarr(["uv"], init_time, loop)
 
-    response = client.get(f"/diag/wind/{init_time}/{loop}/")
+    response = client.get(
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/uv/{init_time}/{loop}/"
+    )
 
     assert response.status_code == 200
     assert response.json == {
@@ -153,13 +109,21 @@ def test_wind_diag(diag_zarr, client):
 
 
 def test_region_filter_scalar(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     variable = "t"
     variable_name = "temperature"
     diag_zarr([variable], init_time, loop)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
+    )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
@@ -184,6 +148,11 @@ def test_region_filter_scalar(diag_zarr, client):
 
 
 def test_range_filter_scalar(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
+    background = "HRRR"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     variable = "t"
@@ -205,11 +174,19 @@ def test_range_filter_scalar(diag_zarr, client):
             "name": variable,
             "loop": loop,
             "initialization_time": init_time,
+            "model": model,
+            "system": system,
+            "domain": domain,
+            "frequency": frequency,
+            "background": background,
         },
     )
-    diag_zarr([variable], init_time, loop, data=data)
+    diag_zarr([variable], init_time, loop, model, system, domain, frequency, data=data)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
+    )
     query = "obs_minus_forecast_adjusted=1.5::1"
     response = client.get(f"{url}?{query}")
 
@@ -234,13 +211,21 @@ def test_range_filter_scalar(diag_zarr, client):
 
 
 def test_region_filter_vector(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     variable = "uv"
     variable_name = "wind"
     diag_zarr([variable], init_time, loop)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
+    )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
@@ -252,7 +237,7 @@ def test_region_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": "wind",
+                    "variable": variable_name,
                     "loop": loop,
                     "adjusted": {"u": 0.0, "v": 0.0},
                     "unadjusted": {"u": 0.0, "v": 0.0},
@@ -265,6 +250,11 @@ def test_region_filter_vector(diag_zarr, client):
 
 
 def test_range_filter_vector(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    frequency = "REALTIME"
+    background = "HRRR"
     init_time = "2022-05-16T04:00"
     loop = "ges"
     variable = "uv"
@@ -290,11 +280,19 @@ def test_range_filter_vector(diag_zarr, client):
             "name": variable,
             "loop": loop,
             "initialization_time": init_time,
+            "model": model,
+            "system": system,
+            "domain": domain,
+            "frequency": frequency,
+            "background": background,
         },
     )
     diag_zarr([variable], init_time, loop, data=data)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
+    )
     # This query is designed so that both observations v components fall within the
     # selected region, but only the first observation's u component does, so only the
     # first observation should be returned
@@ -309,7 +307,7 @@ def test_range_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": "wind",
+                    "variable": variable_name,
                     "loop": loop,
                     "adjusted": {"u": 0, "v": 1},
                     "unadjusted": {"u": 0, "v": 2},
@@ -322,13 +320,21 @@ def test_range_filter_vector(diag_zarr, client):
 
 
 def test_unused_filter(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     variable_code = "t"
     variable_name = "temperature"
     loop = "ges"
     init_time = "2022-05-16T04:00"
     diag_zarr([variable_code], init_time, loop)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
+    )
     query = "is_used=false"
     response = client.get(f"{url}?{query}")
 
@@ -353,13 +359,21 @@ def test_unused_filter(diag_zarr, client):
 
 
 def test_all_obs_filter(diag_zarr, client):
+    model = "RTMA"
+    system = "WCOSS"
+    domain = "CONUS"
+    background = "HRRR"
+    frequency = "REALTIME"
     variable_code = "t"
     variable_name = "temperature"
     loop = "ges"
     init_time = "2022-05-16T04:00"
     diag_zarr([variable_code], init_time, loop)
 
-    url = f"/diag/{variable_name}/{init_time}/{loop}/"
+    url = (
+        f"/diag/{model}/{system}/{domain}/{background}"
+        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
+    )
     query = "is_used=true::false"
     response = client.get(f"{url}?{query}")
 
@@ -407,24 +421,26 @@ def test_all_obs_filter(diag_zarr, client):
     }
 
 
-@pytest.mark.parametrize(
-    "variable_name", ["temperature", "moisture", "pressure", "wind"]
-)
-def test_diag_not_found(variable_name, client):
-    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00/ges/")
+@pytest.mark.parametrize("variable", ["t", "q", "ps", "uv"])
+def test_diag_not_found(variable, client):
+    response = client.get(
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
+    )
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
 
 
 @pytest.mark.parametrize(
-    "variable_name,variable_code",
-    [("temperature", "t"), ("moisture", "q"), ("pressure", "ps"), ("wind", "uv")],
+    "variable",
+    ["t", "q", "ps", "uv"],
 )
-def test_diag_read_error(variable_name, variable_code, app, client):
+def test_diag_read_error(variable, app, client):
     Path(app.config["DIAG_ZARR"]).touch()
 
-    response = client.get(f"/diag/{variable_name}/2022-05-05T14:00/ges/")
+    response = client.get(
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
+    )
 
     assert response.status_code == 500
     assert response.json == {"msg": "Unable to read diagnostic file"}
@@ -433,12 +449,11 @@ def test_diag_read_error(variable_name, variable_code, app, client):
 @pytest.mark.parametrize(
     "url",
     [
-        "not_a_variable/",
         "not_a_variable/2022-05-05T14:00/ges/",
     ],
 )
 def test_unknown_variable(url, client):
-    response = client.get(f"/diag/{url}")
+    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{url}")
 
     assert response.status_code == 404
     assert response.json == {"msg": "Variable not found: 'not_a_variable'"}
