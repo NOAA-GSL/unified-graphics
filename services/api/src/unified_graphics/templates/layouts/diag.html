@@ -10,13 +10,13 @@
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
   {% if not show_dialog -%}
-    {% set data_url %}/diag/{{ form.variable.name.lower() }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
+    {% set data_url %}/diag/{{ form.variable }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
   {%- else -%}
     {% set data_url = "" %}
   {%- endif %}
   <div class="grid" style="--row-size: minmax(20rem, 1fr)">
     <chart-container class="padding-2 radius-md bg-white shadow-1">
-      {% if form.variable.value == "uv" -%}
+      {% if form.variable == "uv" -%}
         <span class="axis-y title" slot="title-y">v (Observation &minus; Forecast)</span>
         <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-2dhistogram>
         <span class="axis-x title" slot="title-x">u (Observation &minus; Forecast)</span>

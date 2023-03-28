@@ -88,7 +88,6 @@
     border: none;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-4);
-    display: grid;
     gap: var(--space, var(--space-2));
     grid-template-rows: auto 1fr auto;
     inline-size: min(90vi, var(--size-mobile-lg));
@@ -98,6 +97,10 @@
     max-block-size: 90dvb;
     overflow: clip;
     position: fixed;
+  }
+
+  dialog[open] {
+    display: grid;
   }
 
   dialog::backdrop {
