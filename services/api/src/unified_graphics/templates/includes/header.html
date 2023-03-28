@@ -4,7 +4,7 @@
   <select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
     <option></option>
     {% for opt in options|sort(reverse_sort) -%}
-    <option value="{{ opt }}" {% if opt==current %} selected{% endif %}>
+    <option value="{{ opt }}" {% if opt==current or loop.length==1 %} selected{% endif %}>
       {{- opt -}}
     </option>
     {%- endfor %}
