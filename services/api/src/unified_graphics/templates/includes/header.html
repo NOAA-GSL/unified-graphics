@@ -1,9 +1,9 @@
-{%- macro metadataSelect(name, label, options=[], current=None) -%}
+{%- macro metadataSelect(name, label, options=[], current=None, reverse_sort=False) -%}
 <p>
   <label for="{{ name }}">{{ label }}</label>
   <select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
     <option></option>
-    {% for opt in options -%}
+    {% for opt in options|sort(reverse_sort) -%}
     <option value="{{ opt }}" {% if opt==current %} selected{% endif %}>
       {{- opt -}}
     </option>
@@ -26,7 +26,7 @@
     {{ metadataSelect("frequency", "Frequency", model_metadata.frequency_list, form.get("frequency", None))}}
     {{ metadataSelect("background", "Background", model_metadata.background_list, form.get("background", None))}}
     {{ metadataSelect("initialization_time", "Initialization_time", model_metadata.init_time_list,
-    form.get("initialization_time", None))}}
+    form.get("initialization_time", None), True)}}
     {{ metadataSelect("variable", "Variable", model_metadata.variable_list, form.get("variable", None))}}
 
     <label>
