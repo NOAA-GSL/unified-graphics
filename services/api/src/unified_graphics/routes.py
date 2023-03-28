@@ -2,7 +2,6 @@ from flask import (
     Blueprint,
     jsonify,
     make_response,
-    redirect,
     request,
     send_from_directory,
     stream_template,
@@ -33,37 +32,36 @@ def handle_diag_file_read_error(e):
 
 @bp.route("/")
 def index():
-    variables = [v for v in diag.Variable]
-    should_redirect = False
+    show_dialog = False
+    context = {
+        "model_metadata": diag.get_model_metadata(),
+        "data_url": {
+            "anl": "",
+            "ges": "",
+        },
+    }
 
-    if "variable" in request.args:
-        variable = diag.Variable(request.args["variable"])
-    else:
-        variable = variables[0]
-        should_redirect = True
+    # True if any of the listed parameters are not supplied in the query string. Without
+    # all of these parameters, we are unable to show any data.
+    show_dialog = any(
+        param not in request.args
+        for param in [
+            "model",
+            "system",
+            "domain",
+            "background",
+            "frequency",
+            "initialization_time",
+            "variable",
+        ]
+    )
 
-    init_times = list(diag.initialization_times(variable.name.lower()))
-
-    if "initialization_time" in request.args:
-        init_time = request.args["initialization_time"]
-    else:
-        init_time = init_times[0]
-        should_redirect = True
-
-    if should_redirect:
-        return redirect(
-            url_for(".index", variable=variable.value, initialization_time=init_time)
-        )
+    if not show_dialog:
+        context["data_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
+        context["data_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
 
     return stream_template(
-        "layouts/diag.html",
-        variables=variables,
-        initialization_times=init_times,
-        form={
-            "variable": variable,
-            "initialization_time": init_time,
-            "is_used": request.args.get("is_used", "off") == "on",
-        },
+        "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
     )
 
 
@@ -72,62 +70,29 @@ def serviceworker():
     return make_response(send_from_directory("static", path="serviceworker.js"))
 
 
-@bp.route("/diag/")
-def list_variables():
-    variables = [v.name.lower() for v in diag.Variable]
-
-    return jsonify(
-        [
-            {
-                "name": v,
-                "url": url_for(".list_model_runs", variable=v),
-                # FIXME: We need to be able to look up variable types
-                "type": "vector" if v == "wind" else "scalar",
-            }
-            for v in variables
-        ]
-    )
-
-
-@bp.route("/diag/<variable>/")
-def list_model_runs(variable):
-    if not hasattr(diag, variable):
+@bp.route(
+    "/diag/<model>/<system>/<domain>/<background>/<frequency>"
+    "/<variable>/<initialization_time>/<loop>/"
+)
+def diagnostics(
+    model, system, domain, background, frequency, variable, initialization_time, loop
+):
+    try:
+        v = diag.Variable(variable)
+    except ValueError:
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    init_times = diag.initialization_times(variable)
-
-    return jsonify(
-        {
-            t: url_for(".list_loops", variable=variable, initialization_time=t)
-            for t in init_times
-        }
+    variable_diagnostics = getattr(diag, v.name.lower())
+    data = variable_diagnostics(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        initialization_time,
+        diag.MinimLoop(loop),
+        request.args,
     )
-
-
-@bp.route("/diag/<variable>/<initialization_time>/")
-def list_loops(variable, initialization_time):
-    loops = diag.loops(variable, initialization_time)
-
-    return jsonify(
-        {
-            loop: url_for(
-                ".diagnostics",
-                variable=variable,
-                initialization_time=initialization_time,
-                loop=loop,
-            )
-            for loop in loops
-        }
-    )
-
-
-@bp.route("/diag/<variable>/<initialization_time>/<loop>/")
-def diagnostics(variable, initialization_time, loop):
-    if not hasattr(diag, variable):
-        return jsonify(msg=f"Variable not found: '{variable}'"), 404
-
-    variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics(initialization_time, diag.MinimLoop(loop), request.args)
 
     response = jsonify(
         {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
@@ -136,13 +101,29 @@ def diagnostics(variable, initialization_time, loop):
     return response
 
 
-@bp.route("/diag/<variable>/<initialization_time>/<loop>/magnitude/")
-def magnitude(variable, initialization_time, loop):
-    if not hasattr(diag, variable):
+@bp.route(
+    "/diag/<model>/<system>/<domain>/<background>/<frequency>"
+    "/<variable>/<initialization_time>/<loop>/magnitude/"
+)
+def magnitude(
+    model, system, domain, background, frequency, variable, initialization_time, loop
+):
+    try:
+        v = diag.Variable(variable)
+    except ValueError:
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics(initialization_time, diag.MinimLoop(loop), request.args)
+    variable_diagnostics = getattr(diag, v.name.lower())
+    data = variable_diagnostics(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        initialization_time,
+        diag.MinimLoop(loop),
+        request.args,
+    )
     data = diag.magnitude(data)
 
     response = jsonify(

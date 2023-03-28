@@ -5,12 +5,19 @@ from typing import Union
 
 import xarray as xr
 
-DiagMeta = namedtuple("DiagMeta", "variables loop initialization_time")
+DiagMeta = namedtuple(
+    "DiagMeta",
+    "variables loop initialization_time model system domain frequency background",
+)
 
 diag_filename_regex = re.compile(
     (
-        r".*?(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges|\d+)\..*?"
-        r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?.*"
+        # Ignore optional UUID and capture model, system, domain, and frequency
+        r"(?:[a-z0-9][a-z0-9-]*-)?(?:(\w+)_)?"
+        # Capture variable and loop
+        r"(?:nc)?diag_(?:conv_)?(ps|q|t|uv)_(anl|ges|\d+)\..*?"
+        # capture initialization time and background
+        r"(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})?(?:\.(\w+))?\.nc4"
     )
 )
 
@@ -19,9 +26,12 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     """Parse the variable, loop, and initialization time from a diag file name
 
     The filename is expected to be of the form
-    X_Y_VARIABLE_LOOP.EXT.YYYYMMDDHH. `X`, `Y`, and `EXT` aren't used, so it
-    doesn't really matter what those are, as long as they're present in the
-    file name.
+
+    diag_VARIABLE_LOOP.YYYYMMDDHHmm.BACKGROUND.nc4
+
+    `diag` may also be `ncdiag`, and the string `conv_` may come before `VARIABLE` or
+    may be omitted. `BACKGROUND` is also optional, as are the minutes (`mm`) in the
+    initialization time.
 
     Parameters
     ----------
@@ -33,11 +43,28 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     DiagMeta
         A DiagMeta named tuple containing the variable, loop, and initialization time
     """
+
     filename_match = diag_filename_regex.match(filename)
     if not filename_match:
         raise ValueError(f"Invalid diagnostics filename: {filename}")
 
-    variable, loop, year, month, day, hour, minute = filename_match.groups()
+    (
+        meta,
+        variable,
+        loop,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        background,
+    ) = filename_match.groups()
+
+    if meta:
+        model, system, domain, frequency = (meta.split("_") + [None] * 4)[:4]
+    else:
+        model, system, domain, frequency = [None] * 4
+
     # A uv diag file (wind) actually contains two variables -- u and v -- for
     # the vectors
     variables = list(variable) if variable == "uv" else [variable]
@@ -45,7 +72,9 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     if minute:
         init_time += ":" + minute
 
-    return DiagMeta(variables, loop, init_time)
+    return DiagMeta(
+        variables, loop, init_time, model, system, domain, frequency, background
+    )
 
 
 def get_adjusted(ds: xr.Dataset):
@@ -79,6 +108,32 @@ def get_data_array(
     return da
 
 
+def compute_forecast(
+    suffix: str, ds: xr.Dataset, component_list: list[str] = []
+) -> xr.Dataset:
+    if component_list:
+        key_list = [
+            (
+                f"{component}_Observation",
+                f"{component}_Obs_Minus_Forecast_{suffix}",
+                f"{component}_Forecast_{suffix}",
+            )
+            for component in component_list
+        ]
+    else:
+        key_list = [
+            ("Observation", f"Obs_Minus_Forecast_{suffix}", f"Forecast_{suffix}")
+        ]
+
+    for obs_key, delta_key, forecast_key in key_list:
+        obs = ds[obs_key]
+        delta = ds[delta_key]
+        forecast = obs - delta
+        ds[forecast_key] = forecast
+
+    return ds
+
+
 def load(path: Path) -> xr.Dataset:
     """Load a NetCDF diag file into xarray Datasets for observations,
     forecasts, and differences
@@ -98,7 +153,16 @@ def load(path: Path) -> xr.Dataset:
         adjusted/unadjusted, and difference adjusted/unadjusted variables from
         the diag file.
     """
-    diag_variables, loop, init_time = parse_diag_filename(path.name)
+    (
+        diag_variables,
+        loop,
+        init_time,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+    ) = parse_diag_filename(path.name)
 
     ds = xr.open_dataset(path)
 
@@ -118,6 +182,13 @@ def load(path: Path) -> xr.Dataset:
         coords["component"] = diag_variables
         components = diag_variables
 
+    # Some diag files do not include the forecast variables, so before we
+    # transform the input, we compute the forecast if it's missing.
+    if "Forecast_adjusted" not in ds:
+        compute_forecast("adjusted", ds, components)
+    if "Forecast_unadjusted" not in ds:
+        compute_forecast("unadjusted", ds, components)
+
     variables = [
         "Observation",
         "Forecast_unadjusted",
@@ -133,6 +204,11 @@ def load(path: Path) -> xr.Dataset:
             "name": "".join(diag_variables),
             "loop": loop,
             "initialization_time": init_time,
+            "model": model or "Unknown",
+            "system": system or "Unknown",
+            "domain": domain or "Unknown",
+            "frequency": frequency or "Unknown",
+            "background": background or "Unknown",
         },
     )
 
@@ -152,5 +228,13 @@ def save(path: Union[Path, str], *args: xr.Dataset):
         The path to the location of the Zarr
     """
     for ds in args:
-        group = f"{ds.name}/{ds.initialization_time}/{ds.loop}"
+        model = ds.model or "Unknown"
+        system = ds.system or "Unknown"
+        domain = ds.domain or "Unknown"
+        background = ds.background or "Unknown"
+        frequency = ds.frequency or "Unknown"
+        group = (
+            f"{model}/{system}/{domain}/{background}/{frequency}/"
+            f"{ds.name}/{ds.initialization_time}/{ds.loop}"
+        )
         ds.to_zarr(path, group=group, mode="a")

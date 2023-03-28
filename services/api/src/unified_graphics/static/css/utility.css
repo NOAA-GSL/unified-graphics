@@ -46,4 +46,10 @@
   .shadow-1 {
     box-shadow: var(--shadow-1);
   }
+
+  /* Misc */
+  .scrollable {
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
 }

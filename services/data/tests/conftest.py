@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 # Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
 # https://github.com/pydata/xarray/issues/7259
@@ -10,8 +11,18 @@ import xarray as xr
 
 @pytest.fixture
 def diag_dataset():
-    def factory(variable: str, initialization_time: str, loop: str, **kwargs):
-        dims = [*kwargs.keys(), "nobs"]
+    def factory(
+        variable: str,
+        initialization_time: str,
+        loop: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
+        **kwargs,
+    ):
+        dims = ["nobs", *kwargs.keys()]
         shape = [*map(len, kwargs.values()), 2]
         variables = [
             "observation",
@@ -33,6 +44,11 @@ def diag_dataset():
                 "name": variable,
                 "loop": loop,
                 "initialization_time": initialization_time,
+                "model": model or "Unknown",
+                "system": system or "Unknown",
+                "domain": domain or "Unknown",
+                "frequency": frequency or "Unknown",
+                "background": background or "Unknown",
             },
         )
 
@@ -59,9 +75,29 @@ def diag_zarr(tmp_path, diag_dataset):
 
 @pytest.fixture
 def diag_file(tmp_path):
-    def factory(variable: str, loop: str, init_time: str) -> Path:
-        filename = f"ncdiag_conv_{variable}_{loop}.nc4.{init_time}"
-        diag_file = tmp_path / filename
+    def factory(
+        variable: str,
+        loop: str,
+        init_time: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
+    ) -> Path:
+        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
+        if background:
+            filename += f".{background}"
+        filename += ".nc4"
+
+        if frequency:
+            filename = f"{frequency}_{filename}"
+        if domain:
+            filename = f"{domain}_{filename}"
+        if system:
+            filename = f"{system}_{filename}"
+        if model:
+            filename = f"{model}_{filename}"
 
         ds = xr.Dataset(
             {
@@ -76,6 +112,7 @@ def diag_file(tmp_path):
             }
         )
 
+        diag_file = tmp_path / filename
         ds.to_netcdf(diag_file)
 
         return diag_file

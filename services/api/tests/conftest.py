@@ -75,6 +75,11 @@ def diag_dataset():
         variable: str,
         initialization_time: str,
         loop: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
         data: Optional[xr.Dataset] = None,
         **kwargs,
     ):
@@ -106,6 +111,11 @@ def diag_dataset():
                     "name": variable,
                     "loop": loop,
                     "initialization_time": initialization_time,
+                    "model": model or "Unknown",
+                    "system": system or "Unknown",
+                    "domain": domain or "Unknown",
+                    "frequency": frequency or "Unknown",
+                    "background": background or "Unknown",
                 },
             )
 
@@ -120,6 +130,11 @@ def diag_zarr(app, diag_dataset):
         variables: list[str],
         initialization_time: str,
         loop: str,
+        model: Optional[str] = "RTMA",
+        system: Optional[str] = "WCOSS",
+        domain: Optional[str] = "CONUS",
+        frequency: Optional[str] = "REALTIME",
+        background: Optional[str] = "HRRR",
         zarr_file: str = "",
         data: Optional[xr.Dataset] = None,
     ):
@@ -143,17 +158,34 @@ def diag_zarr(app, diag_dataset):
             store = result.path
 
         if data:
-            data.to_zarr(
-                store, group=f"/{data.attrs['name']}/{initialization_time}/{loop}"
+            group = (
+                f"/{data.model}/{data.system}/{data.domain}/{data.background}"
+                f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
             )
+            data.to_zarr(store, group=group)
             return zarr_file
 
         for variable in variables:
             coords = {"component": ["u", "v"]} if variable == "uv" else {}
 
-            ds = diag_dataset(variable, initialization_time, loop, **coords)
+            ds = diag_dataset(
+                variable,
+                initialization_time,
+                loop,
+                model,
+                system,
+                domain,
+                frequency,
+                background,
+                **coords,
+            )
             try:
-                ds.to_zarr(store, group=f"/{variable}/{initialization_time}/{loop}")
+                group = (
+                    f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
+                    f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
+                )
+                print(f"Group: {group}")
+                ds.to_zarr(store, group=group)
             except Exception as e:
                 print(e)
                 raise e

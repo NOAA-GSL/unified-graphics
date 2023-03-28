@@ -68,7 +68,7 @@ def lambda_handler(event, context):
 
     # Only fetch the first (ges) and last (anl) minimization loops, ignore
     # all intermediate loops.
-    if diag.parse_diag_filename(key).loop not in ["anl", "ges"]:
+    if diag.parse_diag_filename(key.replace("/", "_")).loop not in ["anl", "ges"]:
         print(f"Skipping loop: {key}")
         return ""
 
