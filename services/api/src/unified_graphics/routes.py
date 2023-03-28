@@ -5,6 +5,7 @@ from flask import (
     request,
     send_from_directory,
     stream_template,
+    url_for,
 )
 
 from unified_graphics import diag
@@ -34,6 +35,10 @@ def index():
     show_dialog = False
     context = {
         "model_metadata": diag.get_model_metadata(),
+        "data_url": {
+            "anl": "",
+            "ges": "",
+        },
     }
 
     # True if any of the listed parameters are not supplied in the query string. Without
@@ -50,6 +55,10 @@ def index():
             "variable",
         ]
     )
+
+    if not show_dialog:
+        context["data_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
+        context["data_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
 
     return stream_template(
         "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context

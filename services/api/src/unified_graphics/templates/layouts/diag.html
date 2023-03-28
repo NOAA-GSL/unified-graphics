@@ -9,27 +9,22 @@
 
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
-  {% if not show_dialog -%}
-    {% set data_url %}/diag/{{ form.variable }}/{{ form.initialization_time }}/{{ minim_loop }}/{% endset -%}
-  {%- else -%}
-    {% set data_url = "" %}
-  {%- endif %}
   <div class="grid" style="--row-size: minmax(20rem, 1fr)">
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       {% if form.variable == "uv" -%}
         <span class="axis-y title" slot="title-y">v (Observation &minus; Forecast)</span>
-        <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-2dhistogram>
+        <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-2dhistogram>
         <span class="axis-x title" slot="title-x">u (Observation &minus; Forecast)</span>
         <color-ramp slot="legend" for="distribution-{{ minim_loop }}" class="font-ui-3xs" format="s"
           >Observation &minus; Forecast</color-ramp>
       {%- else -%}
         <span class="axis-y title" slot="title-y">Observation Count</span>
-        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ data_url }}"></chart-histogram>
+        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-histogram>
         <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
       {%- endif %}
     </chart-container>
     <chart-container class="padding-2 radius-md bg-white shadow-1">
-      <chart-map id="observations-{{ minim_loop }}" src="{{ data_url }}"></chart-map>
+      <chart-map id="observations-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-map>
       <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
         >Observation &minus; Forecast</color-ramp>
     </chart-container>
