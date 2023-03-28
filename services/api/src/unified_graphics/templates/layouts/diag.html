@@ -9,6 +9,7 @@
 
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
+  <h2 class="heading-2 flex-0">{% if minim_loop == "ges" %}Guess{% else %}Analysis{% endif %}</h2>
   <div class="grid" style="--row-size: minmax(20rem, 1fr)">
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       {% if form.variable == "uv" -%}
@@ -24,7 +25,9 @@
       {%- endif %}
     </chart-container>
     <chart-container class="padding-2 radius-md bg-white shadow-1">
-      <chart-map id="observations-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-map>
+      <chart-map id="observations-{{ minim_loop }}"
+        src="{{ data_url[minim_loop] }}{% if form.variable == "uv" %}magnitude/">
+        fill="properties.adjusted"></chart-map>
       <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
         >Observation &minus; Forecast</color-ramp>
     </chart-container>

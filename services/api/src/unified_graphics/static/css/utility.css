@@ -14,12 +14,25 @@
     color: var(--gray-0);
   }
 
+  /* Typography */
+  .body-1 {
+    font: var(--body-1);
+  }
+
+  .heading-2 {
+    font: var(--heading-2);
+  }
+
   /* Spacing */
   .padding-2 {
     padding: var(--space-2);
   }
 
   /* Layout */
+  .flex-0 {
+    flex: 0 0 auto;
+  }
+
   .justify {
     justify-content: space-between;
   }

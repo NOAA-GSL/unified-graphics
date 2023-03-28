@@ -108,6 +108,45 @@ def test_wind_diag(diag_zarr, client):
     }
 
 
+def test_vector_magnitude(diag_zarr, client):
+    init_time = "2022-05-16T04:00"
+    loop = "ges"
+    diag_zarr(["uv"], init_time, loop)
+
+    response = client.get(f"/diag/wind/{init_time}/{loop}/magnitude/")
+
+    assert response.status_code == 200
+    assert response.json == {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "vector",
+                    "variable": "wind",
+                    "loop": loop,
+                    "adjusted": 0.0,
+                    "unadjusted": 0.0,
+                    "observed": 0.0,
+                },
+                "geometry": {"type": "Point", "coordinates": [90, 22]},
+            },
+            {
+                "type": "Feature",
+                "properties": {
+                    "type": "vector",
+                    "variable": "wind",
+                    "loop": loop,
+                    "adjusted": 0.0,
+                    "unadjusted": 0.0,
+                    "observed": 0.0,
+                },
+                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
+            },
+        ],
+    }
+
+
 def test_region_filter_scalar(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
