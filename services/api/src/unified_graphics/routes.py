@@ -101,13 +101,29 @@ def diagnostics(
     return response
 
 
-@bp.route("/diag/<variable>/<initialization_time>/<loop>/magnitude/")
-def magnitude(variable, initialization_time, loop):
-    if not hasattr(diag, variable):
+@bp.route(
+    "/diag/<model>/<system>/<domain>/<background>/<frequency>"
+    "/<variable>/<initialization_time>/<loop>/magnitude/"
+)
+def magnitude(
+    model, system, domain, background, frequency, variable, initialization_time, loop
+):
+    try:
+        v = diag.Variable(variable)
+    except ValueError:
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    variable_diagnostics = getattr(diag, variable)
-    data = variable_diagnostics(initialization_time, diag.MinimLoop(loop), request.args)
+    variable_diagnostics = getattr(diag, v.name.lower())
+    data = variable_diagnostics(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        initialization_time,
+        diag.MinimLoop(loop),
+        request.args,
+    )
     data = diag.magnitude(data)
 
     response = jsonify(

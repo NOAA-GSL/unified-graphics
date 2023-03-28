@@ -113,7 +113,9 @@ def test_vector_magnitude(diag_zarr, client):
     loop = "ges"
     diag_zarr(["uv"], init_time, loop)
 
-    response = client.get(f"/diag/wind/{init_time}/{loop}/magnitude/")
+    response = client.get(
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/uv/{init_time}/{loop}/magnitude/"
+    )
 
     assert response.status_code == 200
     assert response.json == {
