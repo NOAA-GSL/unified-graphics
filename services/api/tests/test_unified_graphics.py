@@ -26,7 +26,7 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
 
     response = client.get(
         f"/diag/{model}/{system}/{domain}/{background}/{frequency}"
-        f"/{variable_name}/{init_time}/{loop}/"
+        f"/{variable_code}/{init_time}/{loop}/"
     )
 
     assert response.status_code == 200
@@ -73,7 +73,7 @@ def test_wind_diag(diag_zarr, client):
 
     response = client.get(
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/wind/{init_time}/{loop}/"
+        f"/{frequency}/uv/{init_time}/{loop}/"
     )
 
     assert response.status_code == 200
@@ -122,7 +122,7 @@ def test_region_filter_scalar(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
     )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
@@ -185,7 +185,7 @@ def test_range_filter_scalar(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
     )
     query = "obs_minus_forecast_adjusted=1.5::1"
     response = client.get(f"{url}?{query}")
@@ -224,7 +224,7 @@ def test_region_filter_vector(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
     )
     query = "longitude=-160.1::-159.9&latitude=27::22"
     response = client.get(f"{url}?{query}")
@@ -237,7 +237,7 @@ def test_region_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": "wind",
+                    "variable": variable_name,
                     "loop": loop,
                     "adjusted": {"u": 0.0, "v": 0.0},
                     "unadjusted": {"u": 0.0, "v": 0.0},
@@ -291,7 +291,7 @@ def test_range_filter_vector(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable}/{init_time}/{loop}/"
     )
     # This query is designed so that both observations v components fall within the
     # selected region, but only the first observation's u component does, so only the
@@ -307,7 +307,7 @@ def test_range_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": "wind",
+                    "variable": variable_name,
                     "loop": loop,
                     "adjusted": {"u": 0, "v": 1},
                     "unadjusted": {"u": 0, "v": 2},
@@ -333,7 +333,7 @@ def test_unused_filter(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
     )
     query = "is_used=false"
     response = client.get(f"{url}?{query}")
@@ -372,7 +372,7 @@ def test_all_obs_filter(diag_zarr, client):
 
     url = (
         f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_name}/{init_time}/{loop}/"
+        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
     )
     query = "is_used=true::false"
     response = client.get(f"{url}?{query}")
@@ -421,12 +421,10 @@ def test_all_obs_filter(diag_zarr, client):
     }
 
 
-@pytest.mark.parametrize(
-    "variable_name", ["temperature", "moisture", "pressure", "wind"]
-)
-def test_diag_not_found(variable_name, client):
+@pytest.mark.parametrize("variable", ["t", "q", "ps", "uv"])
+def test_diag_not_found(variable, client):
     response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
     )
 
     assert response.status_code == 404
@@ -434,14 +432,14 @@ def test_diag_not_found(variable_name, client):
 
 
 @pytest.mark.parametrize(
-    "variable_name,variable_code",
-    [("temperature", "t"), ("moisture", "q"), ("pressure", "ps"), ("wind", "uv")],
+    "variable",
+    ["t", "q", "ps", "uv"],
 )
-def test_diag_read_error(variable_name, variable_code, app, client):
+def test_diag_read_error(variable, app, client):
     Path(app.config["DIAG_ZARR"]).touch()
 
     response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable_name}/2022-05-05T14:00/ges/"
+        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
     )
 
     assert response.status_code == 500

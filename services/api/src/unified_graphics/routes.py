@@ -68,11 +68,12 @@ def serviceworker():
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    print(variable)
-    if not hasattr(diag, variable):
+    try:
+        v = diag.Variable(variable)
+    except ValueError:
         return jsonify(msg=f"Variable not found: '{variable}'"), 404
 
-    variable_diagnostics = getattr(diag, variable)
+    variable_diagnostics = getattr(diag, v.name.lower())
     data = variable_diagnostics(
         model,
         system,
