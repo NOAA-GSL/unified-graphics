@@ -26,7 +26,7 @@
     </chart-container>
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       <chart-map id="observations-{{ minim_loop }}"
-        src="{{ data_url[minim_loop] }}{% if form.variable == "uv" %}magnitude/">
+        src="{{ data_url[minim_loop] }}{% if form.variable == "uv" %}magnitude/{% endif %}"
         fill="properties.adjusted"></chart-map>
       <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
         >Observation &minus; Forecast</color-ramp>
