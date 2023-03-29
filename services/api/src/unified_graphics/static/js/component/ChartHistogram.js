@@ -284,9 +284,12 @@ export default class ChartHistogram extends ChartElement {
       .removeEventListener("mousemove", this.onMouseMove);
 
     // Set the selection to null if this.#selection.datum()the range is 0.
+    // FIXME: We should not hardcode obs_minus_forecast_adjusted
     let detail = structuredClone(this.#selection.datum());
     if (detail && detail[0] === detail[1]) {
-      detail = null;
+      detail = { obs_minus_forecast_adjusted: null };
+    } else {
+      detail = { obs_minus_forecast_adjusted: detail };
     }
 
     // Update the brush one last time because, in the event of a click with no
