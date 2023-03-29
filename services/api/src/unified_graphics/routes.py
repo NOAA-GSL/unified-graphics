@@ -35,7 +35,11 @@ def index():
     show_dialog = False
     context = {
         "model_metadata": diag.get_model_metadata(),
-        "data_url": {
+        "dist_url": {
+            "anl": "",
+            "ges": "",
+        },
+        "map_url": {
             "anl": "",
             "ges": "",
         },
@@ -57,8 +61,16 @@ def index():
     )
 
     if not show_dialog:
-        context["data_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
-        context["data_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
+        # For the wind variable, we have to use the /magnitude endpoint because it's a
+        # vector. For everything else, we can use the same URL as the distribution
+        # displays.
+        map_endpoint = (
+            ".magnitude" if request.args["variable"] == "uv" else ".diagnostics"
+        )
+        context["dist_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
+        context["dist_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
+        context["map_url"]["anl"] = url_for(map_endpoint, **request.args, loop="anl")
+        context["map_url"]["ges"] = url_for(map_endpoint, **request.args, loop="ges")
 
     return stream_template(
         "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context

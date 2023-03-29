@@ -299,10 +299,10 @@ export default class ChartMap extends ChartElement {
       detail:
         this.#selection === null
           ? null
-          : [
-              [left, top],
-              [right, bottom],
-            ],
+          : {
+              longitude: [left, right],
+              latitude: [bottom, top],
+            },
     });
     this.dispatchEvent(brush);
   };
