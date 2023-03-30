@@ -47,18 +47,22 @@ def index():
 
     # True if any of the listed parameters are not supplied in the query string. Without
     # all of these parameters, we are unable to show any data.
-    show_dialog = any(
-        param not in request.args
-        for param in [
-            "model",
-            "system",
-            "domain",
-            "background",
-            "frequency",
-            "initialization_time",
-            "variable",
-        ]
-    )
+    query = request.args.copy()
+    model_meta = {}
+    for param in [
+        "model",
+        "system",
+        "domain",
+        "background",
+        "frequency",
+        "initialization_time",
+        "variable",
+    ]:
+        if param not in query:
+            show_dialog = True
+            continue
+
+        model_meta[param] = query.pop(param)
 
     if not show_dialog:
         # For the wind variable, we have to use the /magnitude endpoint because it's a
@@ -67,10 +71,18 @@ def index():
         map_endpoint = (
             ".magnitude" if request.args["variable"] == "uv" else ".diagnostics"
         )
-        context["dist_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
-        context["dist_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
-        context["map_url"]["anl"] = url_for(map_endpoint, **request.args, loop="anl")
-        context["map_url"]["ges"] = url_for(map_endpoint, **request.args, loop="ges")
+        context["dist_url"]["anl"] = url_for(
+            ".diagnostics", **model_meta, **query.to_dict(False), loop="anl"
+        )
+        context["dist_url"]["ges"] = url_for(
+            ".diagnostics", **model_meta, **query.to_dict(False), loop="ges"
+        )
+        context["map_url"]["anl"] = url_for(
+            map_endpoint, **model_meta, **query.to_dict(False), loop="anl"
+        )
+        context["map_url"]["ges"] = url_for(
+            map_endpoint, **model_meta, **query.to_dict(False), loop="ges"
+        )
 
     return stream_template(
         "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
