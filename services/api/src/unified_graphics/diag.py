@@ -335,6 +335,7 @@ def wind(
     loop: MinimLoop,
     filters: MultiDict,
 ) -> List[Observation]:
+    print("diag.wind")
     data = open_diagnostic(
         model,
         system,
@@ -345,6 +346,8 @@ def wind(
         initialization_time,
         loop,
     )
+
+    print(filters)
     data = apply_filters(data, filters)
 
     omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values

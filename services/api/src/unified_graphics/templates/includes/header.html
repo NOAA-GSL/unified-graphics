@@ -14,7 +14,11 @@
 
 <header class="cluster justify padding-2 bg-primary-darker text-white">
   <h1>Unified Graphics</h1>
-  <button onclick="document.getElementById('model-dialog').showModal()">Configure</button>
+  <div class="cluster">
+    {% if has_filters %}<button onclick="document.getElementById('model-form').submit()">Clear Selection</button>{%
+    endif %}
+    <button onclick="document.getElementById('model-dialog').showModal()">Configure</button>
+  </div>
 </header>
 
 <dialog id="model-dialog">

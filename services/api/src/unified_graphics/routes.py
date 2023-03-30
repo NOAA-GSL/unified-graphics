@@ -64,6 +64,8 @@ def index():
 
         model_meta[param] = query.pop(param)
 
+    has_filters = len(query) > 0
+
     if not show_dialog:
         # For the wind variable, we have to use the /magnitude endpoint because it's a
         # vector. For everything else, we can use the same URL as the distribution
@@ -85,7 +87,11 @@ def index():
         )
 
     return stream_template(
-        "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
+        "layouts/diag.html",
+        form=request.args,
+        show_dialog=show_dialog,
+        has_filters=has_filters,
+        **context,
     )
 
 
