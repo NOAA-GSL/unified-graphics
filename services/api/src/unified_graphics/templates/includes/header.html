@@ -26,13 +26,13 @@
         Please Select a Model Run
         {%- endif -%}
       </h1>
-      <p class="heading-2 text-base-dark text-title">{{ form.frequency.lower() }}</p>
+      <p class="heading-2 text-base-dark text-title">{{ form.get(frequency, "").lower() }}</p>
     </hgroup>
     <dl class="cluster">
       {% for meta in ["system", "domain", "background"] -%}
       <div>
         <dt class="small-1 text-base-dark text-title font-bold line-height-1">{{ meta }}</dt>
-        <dd>{{ form[meta] or "None selected"}}</dd>
+        <dd>{{ form.get(meta, "None selected") }}</dd>
       </div>
       {% endfor -%}
     </dl>
