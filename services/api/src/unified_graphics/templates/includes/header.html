@@ -15,7 +15,10 @@
 <header class="cluster justify padding-2">
   <div class="vbox">
     <hgroup>
-      <p class="text-upper text-base-dark font-weight-bold line-height-1">Unified Graphics</p>
+      <p class="text-upper text-base-dark font-weight-bold line-height-1">
+        <img class="icon" src="{{ url_for('static', filename='icon.svg') }}" alt="NOAA" width="360"
+          height="360">&nbsp;Unified Graphics
+      </p>
       <h1>
         {%- if form.model -%}
         {{ form.model }} {{ form.initialization_time }}

@@ -201,6 +201,14 @@
     --button-face-hover: var(--primary-dark);
   }
 
+  .icon {
+    aspect-ratio: 1 / 1;
+    display: inline-block;
+    height: auto;
+    vertical-align: middle;
+    width: 2em;
+  }
+
   :focus {
     outline: var(--border-width-05) solid var(--primary-light);
     outline-offset: var(--border-width-05);
