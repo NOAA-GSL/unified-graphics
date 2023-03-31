@@ -13,20 +13,22 @@
 {%- endmacro -%}
 
 <header class="cluster justify padding-2">
-  <div>
-    <p>Unified Graphics</p>
-    <h1>
-      {%- if form.model -%}
-      {{ form.model }} {{ form.initialization_time }}
-      {%- else -%}
-      Please Select a Model Run
-      {%- endif -%}
-    </h1>
-    <p>{{ form.frequency }}</p>
-    <dl>
+  <div class="vbox">
+    <hgroup>
+      <p class="text-upper text-base-dark font-weight-bold line-height-1">Unified Graphics</p>
+      <h1>
+        {%- if form.model -%}
+        {{ form.model }} {{ form.initialization_time }}
+        {%- else -%}
+        Please Select a Model Run
+        {%- endif -%}
+      </h1>
+      <p class="heading-2 text-base-dark text-title">{{ form.frequency.lower() }}</p>
+    </hgroup>
+    <dl class="cluster">
       {% for meta in ["system", "domain", "background"] -%}
       <div>
-        <dt>{{ meta }}</dt>
+        <dt class="small-1 text-base-dark text-title font-bold line-height-1">{{ meta }}</dt>
         <dd>{{ form[meta] or "None selected"}}</dd>
       </div>
       {% endfor -%}
