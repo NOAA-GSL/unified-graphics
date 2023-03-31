@@ -12,8 +12,26 @@
 </p>
 {%- endmacro -%}
 
-<header class="cluster justify padding-2 bg-primary-darker text-white">
-  <h1>Unified Graphics</h1>
+<header class="cluster justify padding-2">
+  <div>
+    <p>Unified Graphics</p>
+    <h1>
+      {%- if form.model -%}
+      {{ form.model }} {{ form.initialization_time }}
+      {%- else -%}
+      Please Select a Model Run
+      {%- endif -%}
+    </h1>
+    <p>{{ form.frequency }}</p>
+    <dl>
+      {% for meta in ["system", "domain", "background"] -%}
+      <div>
+        <dt>{{ meta }}</dt>
+        <dd>{{ form[meta] or "None selected"}}</dd>
+      </div>
+      {% endfor -%}
+    </dl>
+  </div>
   <button onclick="document.getElementById('model-dialog').showModal()">Configure</button>
 </header>
 
