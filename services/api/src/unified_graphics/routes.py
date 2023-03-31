@@ -59,6 +59,10 @@ def index():
     if not show_dialog:
         context["data_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
         context["data_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
+        context["title"] = (
+            f"{request.args['variable']} "
+            f"({request.args['model']} {request.args['initialization_time']}) - "
+        )
 
     return stream_template(
         "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
