@@ -31,7 +31,8 @@
     --base-darkest: var(--gray-90);
 
     /* Border Tokens */
-    --radius-lg: 8px;
+    --radius-md: 0.25rem;
+    --radius-lg: 0.5rem;
 
     /* Typography */
     --font-family-system: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
@@ -57,6 +58,8 @@
 
     /* Size Tokens */
     --space-05: 0.25rem;
+    --space-105: 0.75rem;
+    --space-205: 1.25rem;
     --space-2: 1rem;
 
     --size-mobile-lg: 30rem;
@@ -152,5 +155,47 @@
 
   h2 {
     font: var(--heading-2);
+  }
+
+  button {
+    --_border: var(--button-border, var(--_face));
+    --_border-active: var(--button-border-active, var(--_button-border));
+    --_border-hover: var(--button-border-hover, var(--_button-border));
+    --_border-width: var(--button-border-width, 0);
+    --_face: var(--button-face, var(--base));
+    --_face-active: var(--button-face-active, var(--_face));
+    --_face-hover: var(--button-face-hover, var(--_face));
+    --_padding-block: var(--space-105);
+    --_padding-inline: var(--space-205);
+    --_text: var(--button-text, var(--gray-0));
+    --_text-active: var(--button-text-active, var(--_text));
+    --_text-hover: var(--button-text-hover, var(--_text));
+
+    background-color: var(--_face);
+    border: var(--_border-width) solid var(--_border);
+    border-radius: var(--radius-md);
+    color: var(--_text);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    padding-block: var(--_padding-block);
+    padding-inline: var(--_padding-inline);
+  }
+
+  button:hover {
+    background-color: var(--_face-hover);
+    border-color: var(--_border-hover);
+    color: var(--_text-hover);
+  }
+
+  button:active {
+    background-color: var(--_face-active);
+    border-color: var(--_border-active);
+    color: var(--_text-active);
+  }
+
+  button.primary {
+    --button-face: var(--primary);
+    --button-face-active: var(--primary-darker);
+    --button-face-hover: var(--primary-dark);
   }
 }
