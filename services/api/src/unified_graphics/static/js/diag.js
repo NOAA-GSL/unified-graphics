@@ -1,10 +1,10 @@
 function onChartBrush(event) {
-  let { searchParams } = new URL(window.location);
+  // Create a new set of search parameters with the currently selected model run from
+  // our model form.
+  const formData = new FormData(document.forms["model-form"]);
+  let searchParams = new URLSearchParams(formData);
 
   for (let [key, value] of Object.entries(event.detail)) {
-    // Clear out any existing params matching this key.
-    searchParams.delete(key);
-
     // If this key has no value, we're done
     if (!value) continue;
 
