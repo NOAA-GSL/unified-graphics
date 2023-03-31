@@ -31,6 +31,8 @@
     --base-darkest: var(--gray-90);
 
     /* Border Tokens */
+    --border-width-05: 0.25rem;
+
     --radius-md: 0.25rem;
     --radius-lg: 0.5rem;
 
@@ -197,5 +199,21 @@
     --button-face: var(--primary);
     --button-face-active: var(--primary-darker);
     --button-face-hover: var(--primary-dark);
+  }
+
+  :focus {
+    outline: var(--border-width-05) solid var(--primary-light);
+    outline-offset: var(--border-width-05);
+  }
+
+  :focus:not(:focus-visible) {
+    /* Ensures that the focus indicator is only visible if someone has focused the
+     * control using something other than a mouse. Without this, the focus ring
+     * will show any time someone clicks a button or link. We use this selector for
+     * backwards compatibility with browsers that don't support :focus-visible; in
+     * those cases, the focus ring will be shown even when the button is clicked,
+     * which is better than never.
+     */
+    outline-color: transparent;
   }
 }
