@@ -13,7 +13,7 @@
 {%- endmacro -%}
 
 <dialog id="model-dialog">
-  <h2>Select Data</h2>
+  <h2 class="heading-2">Select Data</h2>
   <form id="model-form" class="scrollable" method="GET">
     {{ metadataSelect("model", "Model", model_metadata.model_list, form.get("model", None))}}
     {{ metadataSelect("system", "System", model_metadata.system_list, form.get("system", None))}}
