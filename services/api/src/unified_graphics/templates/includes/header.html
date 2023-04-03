@@ -18,7 +18,7 @@
     <dl class="cluster">
       {% for meta in ["system", "domain", "background"] -%}
       <div>
-        <dt class="small-1 text-base-dark text-title font-bold line-height-1">{{ meta }}</dt>
+        <dt class="label-1">{{ meta }}</dt>
         <dd>{{ form.get(meta, "None selected") }}</dd>
       </div>
       {% endfor -%}

@@ -1,6 +1,6 @@
 {%- macro metadataSelect(name, label, options=[], current=None, reverse_sort=False) -%}
 <p>
-  <label for="{{ name }}">{{ label }}</label>
+  <label for="{{ name }}" class="label-1">{{ label }}</label>
   <select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
     <option></option>
     {% for opt in options|sort(reverse_sort) -%}
