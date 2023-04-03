@@ -64,6 +64,9 @@ def index():
             f"({request.args['model']} {request.args['initialization_time']}) - "
         )
 
+    if "variable" in request.args:
+        context["variable"] = diag.Variable(request.args["variable"]).name.lower()
+
     return stream_template(
         "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
     )
