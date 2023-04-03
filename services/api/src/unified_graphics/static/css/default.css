@@ -193,6 +193,10 @@
     --button-face-hover: var(--primary-dark);
   }
 
+  select {
+    padding: var(--space-05);
+  }
+
   .icon {
     aspect-ratio: 1 / 1;
     display: inline-block;
