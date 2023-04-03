@@ -27,7 +27,7 @@
         Please Select a Model Run
         {%- endif -%}
       </h1>
-      <p class="heading-2 text-base-dark text-title">{{ form.get(frequency, "").lower() }}</p>
+      <p class="heading-2 text-base-dark text-title">{{ form.get("frequency", "").lower() }}</p>
     </hgroup>
     <dl class="cluster">
       {% for meta in ["system", "domain", "background"] -%}
