@@ -151,14 +151,6 @@
     --space: var(--space-05);
   }
 
-  h1 {
-    font: var(--heading-1);
-  }
-
-  h2 {
-    font: var(--heading-2);
-  }
-
   button {
     --_border: var(--button-border, var(--_face));
     --_border-active: var(--button-border-active, var(--_button-border));

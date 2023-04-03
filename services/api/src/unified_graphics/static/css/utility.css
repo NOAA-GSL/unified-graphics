@@ -23,6 +23,10 @@
     font: var(--body-1);
   }
 
+  .heading-1 {
+    font: var(--heading-1);
+  }
+
   .heading-2 {
     font: var(--heading-2);
   }
