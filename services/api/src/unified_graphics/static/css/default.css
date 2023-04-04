@@ -163,8 +163,8 @@
   }
 
   dialog::backdrop {
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: contrast(0.75) saturate(0.3) blur(4px);
+    backdrop-filter: contrast(0.75) saturate(0.3) blur(4px);
   }
 
   form,
