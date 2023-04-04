@@ -3,9 +3,11 @@
   .bg-white {
     background-color: var(--gray-0);
   }
+
   .bg-primary-dark {
     background-color: var(--primary-dark);
   }
+
   .bg-primary-darker {
     background-color: var(--primary-darker);
   }
@@ -72,6 +74,10 @@
 
   .justify {
     justify-content: space-between;
+  }
+
+  .justify-end {
+    justify-content: end;
   }
 
   /* Border */

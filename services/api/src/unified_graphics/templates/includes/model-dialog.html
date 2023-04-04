@@ -13,7 +13,9 @@
 {%- endmacro -%}
 
 <dialog id="model-dialog">
-  <h2 class="heading-2">Select Data</h2>
+  <header>
+    <h2 class="heading-2">Select Data</h2>
+  </header>
   <form id="model-form" class="scrollable" method="GET">
     {{ metadataSelect("model", "Model", model_metadata.model_list, form.get("model", None))}}
     {{ metadataSelect("system", "System", model_metadata.system_list, form.get("system", None))}}
@@ -31,7 +33,10 @@
     </label>
 
   </form>
-  <button form="model-form">Load</button>
+  <footer class="cluster justify-end">
+    <button class="outline" onclick="this.closest('dialog').close('cancel')">Close</button>
+    <button class="primary" form="model-form">Load</button>
+  </footer>
 </dialog>
 
 {% if show_dialog -%}
