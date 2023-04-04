@@ -129,12 +129,24 @@
     max-block-size: 90dvb;
     overflow: clip;
     position: fixed;
-    transition: opacity 500ms ease;
+    transition-duration: 300ms;
+    transition-property: opacity, transform, visibility;
+    transition-timing-function: ease;
   }
 
   dialog:not([open]) {
     opacity: 0;
     visibility: hidden;
+  }
+
+  @media screen and (prefers-reduced-motion: no-preference) {
+    dialog {
+      transform: scale(1);
+    }
+
+    dialog:not([open]) {
+      transform: scale(0.9);
+    }
   }
 
   dialog::backdrop {
