@@ -182,14 +182,14 @@ def get_bounds(filters: MultiDict):
 def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
     for coord, lower, upper in get_bounds(filters):
         data_array = dataset[coord]
-        dataset = dataset.where(
-            (data_array >= lower) & (data_array <= upper), drop=True
+        dataset = dataset.where((data_array >= lower) & (data_array <= upper)).dropna(
+            dim="nobs"
         )
 
     # If the is_used filter is not passed, our default behavior is to include only used
     # observations.
     if "is_used" not in filters:
-        dataset = dataset.where(dataset["is_used"], drop=True)
+        dataset = dataset.where(dataset["is_used"]).dropna(dim="nobs")
 
     return dataset
 
@@ -335,6 +335,7 @@ def wind(
     loop: MinimLoop,
     filters: MultiDict,
 ) -> List[Observation]:
+    print("diag.wind")
     data = open_diagnostic(
         model,
         system,
@@ -345,6 +346,8 @@ def wind(
         initialization_time,
         loop,
     )
+
+    print(filters)
     data = apply_filters(data, filters)
 
     omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values
