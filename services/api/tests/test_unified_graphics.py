@@ -61,6 +61,24 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
     }
 
 
+def test_scalar_history(diag_zarr, client):
+    loop = "anl"
+    variable = "ps"
+    init_time_list = [
+        "2022-05-16T04:00",
+        "2022-05-16T05:00",
+        "2022-05-16T06:00",
+        "2022-05-16T07:00",
+    ]
+
+    for init_time in init_time_list:
+        diag_zarr([variable], init_time, loop)
+
+    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/{loop}/")
+
+    assert response.status_code == 200
+
+
 def test_wind_diag(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"

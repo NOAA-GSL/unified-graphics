@@ -109,6 +109,11 @@ def serviceworker():
     return make_response(send_from_directory("static", path="serviceworker.js"))
 
 
+@bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
+def history(model, system, domain, background, frequency, variable, loop):
+    return jsonify({"msg": "Not implemented"})
+
+
 @bp.route(
     "/diag/<model>/<system>/<domain>/<background>/<frequency>"
     "/<variable>/<initialization_time>/<loop>/"
