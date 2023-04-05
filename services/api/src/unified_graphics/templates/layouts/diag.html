@@ -5,6 +5,7 @@
     {%- set scriptname = "vectordiag.js" if form.variable == "uv" else "scalardiag.js" -%}
     <script type="module" src="{{ url_for('static', filename='js/' + scriptname) }}"></script>
   {%- endif %}
+  <script type="module" src="{{ url_for('static', filename='js/diag.js') }}"></script>
 {% endblock %}
 
 {% block main -%}
@@ -14,19 +15,19 @@
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       {% if form.variable == "uv" -%}
         <span class="axis-y title" slot="title-y">v (Observation &minus; Forecast)</span>
-        <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-2dhistogram>
+        <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-2dhistogram>
         <span class="axis-x title" slot="title-x">u (Observation &minus; Forecast)</span>
         <color-ramp slot="legend" for="distribution-{{ minim_loop }}" class="font-ui-3xs" format="s"
           >Observation &minus; Forecast</color-ramp>
       {%- else -%}
         <span class="axis-y title" slot="title-y">Observation Count</span>
-        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ data_url[minim_loop] }}"></chart-histogram>
+        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-histogram>
         <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
       {%- endif %}
     </chart-container>
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       <chart-map id="observations-{{ minim_loop }}"
-        src="{{ data_url[minim_loop] }}{% if form.variable == "uv" %}magnitude/{% endif %}"
+        src="{{ map_url[minim_loop] }}"
         fill="properties.adjusted"></chart-map>
       <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
         >Observation &minus; Forecast</color-ramp>

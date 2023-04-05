@@ -24,5 +24,9 @@
       {% endfor -%}
     </dl>
   </div>
-  <button class="primary" onclick="document.getElementById('model-dialog').showModal()">Select Data</button>
+  <div class="cluster">
+    {% if has_filters %}<button onclick="document.getElementById('model-form').submit()">Clear Selection</button>{%
+    endif %}
+    <button class="primary" onclick="document.getElementById('model-dialog').showModal()">Select Data</button>
+  </div>
 </header>

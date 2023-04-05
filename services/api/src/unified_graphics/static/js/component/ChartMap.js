@@ -298,11 +298,8 @@ export default class ChartMap extends ChartElement {
       bubbles: true,
       detail:
         this.#selection === null
-          ? null
-          : [
-              [left, top],
-              [right, bottom],
-            ],
+          ? { longitude: null, latitude: null }
+          : { longitude: [left, right], latitude: [bottom, top] },
     });
     this.dispatchEvent(brush);
   };

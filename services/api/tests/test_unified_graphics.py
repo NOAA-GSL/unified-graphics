@@ -290,6 +290,22 @@ def test_region_filter_vector(diag_zarr, client):
     }
 
 
+# BUG: This test is missing a test case
+#
+# I'm not sure why, but this test was passing when it probably should have failed. It
+# looked to me like in production when we applied a range filter, we would end up with
+# data that looked like this:
+#
+# [
+#     [1, 1],
+#     [1, NaN],
+# ]
+#
+# That second row should be filtered out. I thought this test was testing this case, but
+# the test was passing while in production we were getting JSON parse errors because of
+# the Nan values. You can see the fix in commit 7f92e15fbdcde7fd683143f6bf429f2b45fac3d2
+# that got this working in production, but I was unable to reproduce the issue in
+# the test.
 def test_range_filter_vector(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"

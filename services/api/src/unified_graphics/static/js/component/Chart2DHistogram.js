@@ -79,9 +79,6 @@ export default class Chart2DHistogram extends ChartElement {
 
   #selection = null;
 
-  #xScale = scaleLinear();
-  #yScale = scaleLinear();
-
   static get observedAttributes() {
     return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
   }
@@ -245,8 +242,8 @@ export default class Chart2DHistogram extends ChartElement {
 
   onMouseDown = ({ currentTarget, offsetX, offsetY }) => {
     const { left, top } = this.margin;
-    const x = this.#xScale.invert(offsetX - left);
-    const y = this.#yScale.invert(offsetY - top);
+    const x = this.xScale.invert(offsetX - left);
+    const y = this.yScale.invert(offsetY - top);
 
     this.#selection = [
       [x, y],
@@ -261,8 +258,8 @@ export default class Chart2DHistogram extends ChartElement {
     const { left, top } = this.margin;
 
     this.#selection[1] = [
-      this.#xScale.invert(offsetX - left),
-      this.#yScale.invert(offsetY - top),
+      this.xScale.invert(offsetX - left),
+      this.yScale.invert(offsetY - top),
     ];
 
     this.#brush();
@@ -275,9 +272,24 @@ export default class Chart2DHistogram extends ChartElement {
 
     this.#brush();
 
+    let selection = this.selection;
+    if (
+      (selection && selection[0][0] === selection[1][0]) ||
+      selection[0][1] === selection[1][1]
+    ) {
+      selection = null;
+    } else {
+      const [start, end] = selection;
+      selection = [
+        [start[0], end[0]],
+        [start[1], end[1]],
+      ];
+    }
+
+    // FIXME: We should not hardcode obs_minus_forecast_adjusted
     const brush = new CustomEvent("chart-brush", {
       bubbles: true,
-      detail: this.selection,
+      detail: { obs_minus_forecast_adjusted: selection },
     });
     this.dispatchEvent(brush);
   };
@@ -357,7 +369,7 @@ export default class Chart2DHistogram extends ChartElement {
 
     const [x0, y0, x1, y1] = this.#selection
       .flat()
-      .map((val, idx) => (idx % 2 === 0 ? this.#xScale(val) : this.#yScale(val)));
+      .map((val, idx) => (idx % 2 === 0 ? this.xScale(val) : this.yScale(val)));
 
     select(this.shadowRoot.querySelector("svg"))
       .select("#selection")

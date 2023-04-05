@@ -35,7 +35,11 @@ def index():
     show_dialog = False
     context = {
         "model_metadata": diag.get_model_metadata(),
-        "data_url": {
+        "dist_url": {
+            "anl": "",
+            "ges": "",
+        },
+        "map_url": {
             "anl": "",
             "ges": "",
         },
@@ -43,22 +47,46 @@ def index():
 
     # True if any of the listed parameters are not supplied in the query string. Without
     # all of these parameters, we are unable to show any data.
-    show_dialog = any(
-        param not in request.args
-        for param in [
-            "model",
-            "system",
-            "domain",
-            "background",
-            "frequency",
-            "initialization_time",
-            "variable",
-        ]
-    )
+    query = request.args.copy()
+    model_meta = {}
+    for param in [
+        "model",
+        "system",
+        "domain",
+        "background",
+        "frequency",
+        "initialization_time",
+        "variable",
+    ]:
+        if param not in query:
+            show_dialog = True
+            continue
+
+        model_meta[param] = query.pop(param)
+
+    has_filters = len(query) > 0
 
     if not show_dialog:
-        context["data_url"]["anl"] = url_for(".diagnostics", **request.args, loop="anl")
-        context["data_url"]["ges"] = url_for(".diagnostics", **request.args, loop="ges")
+        # For the wind variable, we have to use the /magnitude endpoint because it's a
+        # vector. For everything else, we can use the same URL as the distribution
+        # displays.
+        map_endpoint = (
+            ".magnitude" if request.args["variable"] == "uv" else ".diagnostics"
+        )
+        context["dist_url"]["anl"] = url_for(
+            ".diagnostics", **model_meta, **query.to_dict(False), loop="anl"
+        )
+        context["dist_url"]["ges"] = url_for(
+            ".diagnostics", **model_meta, **query.to_dict(False), loop="ges"
+        )
+        context["map_url"]["anl"] = url_for(
+            map_endpoint, **model_meta, **query.to_dict(False), loop="anl"
+        )
+        context["map_url"]["ges"] = url_for(
+            map_endpoint, **model_meta, **query.to_dict(False), loop="ges"
+        )
+
+        # Page title for the <title> tag
         context["title"] = (
             f"{request.args['variable']} "
             f"({request.args['model']} {request.args['initialization_time']}) - "
@@ -68,7 +96,11 @@ def index():
         context["variable"] = diag.Variable(request.args["variable"]).name.lower()
 
     return stream_template(
-        "layouts/diag.html", form=request.args, show_dialog=show_dialog, **context
+        "layouts/diag.html",
+        form=request.args,
+        show_dialog=show_dialog,
+        has_filters=has_filters,
+        **context,
     )
 
 
