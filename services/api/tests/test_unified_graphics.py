@@ -61,20 +61,25 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
     }
 
 
-def test_scalar_history(diag_zarr, client):
-    loop = "anl"
-    variable = "ps"
-    init_time_list = [
-        "2022-05-16T04:00",
-        "2022-05-16T05:00",
-        "2022-05-16T06:00",
-        "2022-05-16T07:00",
+def test_scalar_history(diag_zarr, test_dataset, client):
+    run_list = [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "observation": [10, 20],
+            "forecast_unadjusted": [5, 10],
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "observation": [1, 2],
+            "forecast_unadjusted": [5, 10],
+        },
     ]
 
-    for init_time in init_time_list:
-        diag_zarr([variable], init_time, loop)
+    for run in run_list:
+        data = test_dataset(**run)
+        diag_zarr([data.name], data.initialization_time, data.loop, data=data)
 
-    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/{loop}/")
+    response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
     assert response.status_code == 200
 
