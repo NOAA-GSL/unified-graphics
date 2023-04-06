@@ -69,6 +69,66 @@ def diag_file(app):
     yield factory
 
 
+# FIXME: Replace diag_dataset with this fixture
+@pytest.fixture
+def test_dataset():
+    def factory(
+        *,
+        model: str = "RTMA",
+        system: str = "WCOSS",
+        domain: str = "CONUS",
+        background: str = "HRRR",
+        frequency: str = "REALTIME",
+        initialization_time: str = "2022-05-16T04:00",
+        variable: str = "ps",
+        loop: str = "ges",
+        longitude: list[float] = [90, 91],
+        latitude: list[float] = [22, 23],
+        is_used: list[int] = [1, 0],
+        observation: list[float] = [1, 0],
+        forecast_unadjusted: list[float] = [0, 1],
+        forecast_adjusted: Optional[list[float]] = None,
+        **kwargs,
+    ):
+        assert len(observation) == len(forecast_unadjusted)
+        if forecast_adjusted:
+            assert len(forecast_adjusted) == len(forecast_unadjusted)
+
+        dims = ["nobs", *kwargs.keys()]
+
+        obs = np.array(observation, dtype=np.float64)
+        unadj = np.array(forecast_unadjusted, dtype=np.float64)
+        adj = np.array(forecast_adjusted or forecast_unadjusted, dtype=np.float64)
+
+        return xr.Dataset(
+            {
+                "observation": (dims, obs),
+                "forecast_unadjusted": (dims, unadj),
+                "forecast_adjusted": (dims, adj),
+                "obs_minus_forecast_unadjusted": (dims, obs - unadj),
+                "obs_minus_forecast_adjusted": (dims, obs - adj),
+            },
+            coords=dict(
+                longitude=(["nobs"], np.array(longitude, dtype=np.float64)),
+                latitude=(["nobs"], np.array(latitude, dtype=np.float64)),
+                is_used=(["nobs"], np.array(is_used, dtype=np.int8)),
+                **kwargs,
+            ),
+            attrs={
+                "name": variable,
+                "loop": loop,
+                "initialization_time": initialization_time,
+                "model": model,
+                "system": system,
+                "domain": domain,
+                "frequency": frequency,
+                "background": background,
+            },
+        )
+
+    return factory
+
+
 @pytest.fixture
 def diag_dataset():
     def factory(
