@@ -130,6 +130,73 @@ def test_scalar_history(diag_zarr, test_dataset, client):
     ]
 
 
+def test_scalar_history_unused(diag_zarr, test_dataset, client):
+    run_list = [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "observation": [10, 20],
+            "forecast_unadjusted": [5, 10],
+            "is_used": [1, 0],
+            # O - F [5, 10]
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "observation": [1, 2],
+            "forecast_unadjusted": [5, 10],
+            "is_used": [0, 1],
+            # O - F [-4, -8]
+        },
+    ]
+
+    for run in run_list:
+        data = test_dataset(**run)
+        diag_zarr([data.name], data.initialization_time, data.loop, data=data)
+
+    response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+
+    assert response.status_code == 200
+    assert response.json == [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "obs_minus_forecast_adjusted": {
+                "min": 5.0,
+                "max": 5.0,
+                "mean": 5.0,
+            },
+            "observation": {
+                "min": 10.0,
+                "max": 10.0,
+                "mean": 10.0,
+            },
+            "obs_minus_forecast_unadjusted": {
+                "min": 5.0,
+                "max": 5.0,
+                "mean": 5.0,
+            },
+            "obs_count": 1,
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "obs_minus_forecast_adjusted": {
+                "min": -8.0,
+                "max": -8.0,
+                "mean": -8.0,
+            },
+            "observation": {
+                "min": 2.0,
+                "max": 2.0,
+                "mean": 2.0,
+            },
+            "obs_minus_forecast_unadjusted": {
+                "min": -8.0,
+                "max": -8.0,
+                "mean": -8.0,
+            },
+            "obs_count": 1,
+        },
+    ]
+
+
 def test_wind_diag(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"

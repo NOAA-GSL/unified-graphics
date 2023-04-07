@@ -464,6 +464,7 @@ def summary(
     initialization_time: str,
     variable: Variable,
     loop: MinimLoop,
+    filters: MultiDict,
 ):
     store = get_store(current_app.config["DIAG_ZARR"])
     path = "/".join(
@@ -480,6 +481,7 @@ def summary(
     )
 
     ds = xr.open_zarr(store, group=path)
+    ds = apply_filters(ds, filters)
     return DiagSummary.from_dataset(ds)
 
 
@@ -491,12 +493,21 @@ def history(
     frequency: str,
     variable: Variable,
     loop: MinimLoop,
+    filters: MultiDict,
 ):
     for init_time in get_model_run_list(
         model, system, domain, background, frequency, variable
     ):
         result = summary(
-            model, system, domain, background, frequency, init_time, variable, loop
+            model,
+            system,
+            domain,
+            background,
+            frequency,
+            init_time,
+            variable,
+            loop,
+            filters,
         )
 
         if not result:

@@ -119,6 +119,7 @@ def history(model, system, domain, background, frequency, variable, loop):
         frequency,
         diag.Variable(variable),
         diag.MinimLoop(loop),
+        request.args,
     )
 
     return jsonify([d for d in data])
