@@ -67,11 +67,17 @@ def test_scalar_history(diag_zarr, test_dataset, client):
             "initialization_time": "2022-05-16T04:00",
             "observation": [10, 20],
             "forecast_unadjusted": [5, 10],
+            "is_used": [1, 1],
+            # O - F [5, 10]
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "observation": [1, 2],
-            "forecast_unadjusted": [5, 10],
+            "observation": [1, 2, 3],
+            "forecast_unadjusted": [5, 10, 3],
+            "longitude": [0, 0, 0],
+            "latitude": [0, 0, 0],
+            "is_used": [1, 1, 1],
+            # O - F [-4, -8, 0]
         },
     ]
 
@@ -82,6 +88,46 @@ def test_scalar_history(diag_zarr, test_dataset, client):
     response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
     assert response.status_code == 200
+    assert response.json == [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "obs_minus_forecast_adjusted": {
+                "min": 5.0,
+                "max": 10.0,
+                "mean": 7.5,
+            },
+            "observation": {
+                "min": 10.0,
+                "max": 20.0,
+                "mean": 15.0,
+            },
+            "obs_minus_forecast_unadjusted": {
+                "min": 5.0,
+                "max": 10.0,
+                "mean": 7.5,
+            },
+            "obs_count": 2,
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "obs_minus_forecast_adjusted": {
+                "min": -8.0,
+                "max": 0.0,
+                "mean": -4.0,
+            },
+            "observation": {
+                "min": 1.0,
+                "max": 3.0,
+                "mean": 2.0,
+            },
+            "obs_minus_forecast_unadjusted": {
+                "min": -8.0,
+                "max": 0.0,
+                "mean": -4.0,
+            },
+            "obs_count": 3,
+        },
+    ]
 
 
 def test_wind_diag(diag_zarr, client):

@@ -111,7 +111,17 @@ def serviceworker():
 
 @bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
 def history(model, system, domain, background, frequency, variable, loop):
-    return jsonify({"msg": "Not implemented"})
+    data = diag.history(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        diag.Variable(variable),
+        diag.MinimLoop(loop),
+    )
+
+    return jsonify([d for d in data])
 
 
 @bp.route(

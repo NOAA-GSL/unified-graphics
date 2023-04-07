@@ -73,6 +73,44 @@ class Observation:
         }
 
 
+@dataclass
+class SummaryStatistics:
+    min: float
+    max: float
+    mean: float
+
+    @classmethod
+    def from_data_array(cls, array: xr.DataArray) -> "SummaryStatistics":
+        return cls(
+            min=float(array.min()),
+            max=float(array.max()),
+            mean=float(array.mean()),
+        )
+
+
+@dataclass
+class DiagSummary:
+    initialization_time: str
+    obs_minus_forecast_adjusted: SummaryStatistics
+    obs_minus_forecast_unadjusted: SummaryStatistics
+    observation: SummaryStatistics
+    obs_count: int
+
+    @classmethod
+    def from_dataset(cls, dataset: xr.Dataset) -> "DiagSummary":
+        return cls(
+            initialization_time=dataset.attrs["initialization_time"],
+            obs_minus_forecast_adjusted=SummaryStatistics.from_data_array(
+                dataset["obs_minus_forecast_adjusted"]
+            ),
+            obs_minus_forecast_unadjusted=SummaryStatistics.from_data_array(
+                dataset["obs_minus_forecast_unadjusted"]
+            ),
+            observation=SummaryStatistics.from_data_array(dataset["observation"]),
+            obs_count=len(dataset["nobs"]),
+        )
+
+
 ModelMetadata = namedtuple(
     "ModelMetadata",
     (
@@ -401,3 +439,67 @@ def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
             observed=observed,
             position=obs.position,
         )
+
+
+def get_model_run_list(
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    variable: Variable,
+):
+    store = get_store(current_app.config["DIAG_ZARR"])
+    path = "/".join([model, system, domain, background, frequency, variable.value])
+    with zarr.open_group(store, mode="r", path=path) as group:
+        return group.group_keys()
+
+
+def summary(
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    initialization_time: str,
+    variable: Variable,
+    loop: MinimLoop,
+):
+    store = get_store(current_app.config["DIAG_ZARR"])
+    path = "/".join(
+        [
+            model,
+            system,
+            domain,
+            background,
+            frequency,
+            variable.value,
+            initialization_time,
+            loop.value,
+        ]
+    )
+
+    ds = xr.open_zarr(store, group=path)
+    return DiagSummary.from_dataset(ds)
+
+
+def history(
+    model: str,
+    system: str,
+    domain: str,
+    background: str,
+    frequency: str,
+    variable: Variable,
+    loop: MinimLoop,
+):
+    for init_time in get_model_run_list(
+        model, system, domain, background, frequency, variable
+    ):
+        result = summary(
+            model, system, domain, background, frequency, init_time, variable, loop
+        )
+
+        if not result:
+            continue
+
+        yield result
