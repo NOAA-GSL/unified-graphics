@@ -31,24 +31,37 @@
     --base-darkest: var(--gray-90);
 
     /* Border Tokens */
-    --radius-lg: 8px;
+    --border-width-05: 0.25rem;
+
+    --radius-md: 0.25rem;
+    --radius-lg: 0.5rem;
 
     /* Typography */
     --font-family-system: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
       Noto Sans, Ubuntu, Cantarell, Helvetica Neue;
 
+    --font-size-2xs: 0.875rem;
     --font-size-md: 1rem;
+    --font-size-lg: 1.375rem;
     --font-size-xl: 2rem;
 
+    --font-weight-bold: 700;
+
+    --line-height-1: 1;
     --line-height-2: 1.15;
     --line-height-4: 1.5;
 
-    --heading-2: bold var(--font-size-xl) / var(--line-height-2)
+    --heading-1: var(--font-weight-bold) var(--font-size-xl) / var(--line-height-1)
+      var(--font-family-system);
+    --heading-2: var(--font-weight-bold) var(--font-size-lg) / var(--line-height-2)
       var(--font-family-system);
     --body-1: var(--font-size-md) / var(--line-height-4) var(--font-family-system);
+    --small-1: var(--font-size-2xs) / var(--line-height-2) var(--font-family-system);
 
     /* Size Tokens */
     --space-05: 0.25rem;
+    --space-105: 0.75rem;
+    --space-205: 1.25rem;
     --space-2: 1rem;
 
     --size-mobile-lg: 30rem;
@@ -136,5 +149,71 @@
 
   form > p {
     --space: var(--space-05);
+  }
+
+  button {
+    --_border: var(--button-border, var(--_face));
+    --_border-active: var(--button-border-active, var(--_button-border));
+    --_border-hover: var(--button-border-hover, var(--_button-border));
+    --_border-width: var(--button-border-width, 0);
+    --_face: var(--button-face, var(--base));
+    --_face-active: var(--button-face-active, var(--_face));
+    --_face-hover: var(--button-face-hover, var(--_face));
+    --_padding-block: var(--space-105);
+    --_padding-inline: var(--space-205);
+    --_text: var(--button-text, var(--gray-0));
+    --_text-active: var(--button-text-active, var(--_text));
+    --_text-hover: var(--button-text-hover, var(--_text));
+
+    background-color: var(--_face);
+    border: var(--_border-width) solid var(--_border);
+    border-radius: var(--radius-md);
+    color: var(--_text);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    padding-block: var(--_padding-block);
+    padding-inline: var(--_padding-inline);
+  }
+
+  button:hover {
+    background-color: var(--_face-hover);
+    border-color: var(--_border-hover);
+    color: var(--_text-hover);
+  }
+
+  button:active {
+    background-color: var(--_face-active);
+    border-color: var(--_border-active);
+    color: var(--_text-active);
+  }
+
+  button.primary {
+    --button-face: var(--primary);
+    --button-face-active: var(--primary-darker);
+    --button-face-hover: var(--primary-dark);
+  }
+
+  .icon {
+    aspect-ratio: 1 / 1;
+    display: inline-block;
+    height: auto;
+    vertical-align: middle;
+    width: 2em;
+  }
+
+  :focus {
+    outline: var(--border-width-05) solid var(--primary-light);
+    outline-offset: var(--border-width-05);
+  }
+
+  :focus:not(:focus-visible) {
+    /* Ensures that the focus indicator is only visible if someone has focused the
+     * control using something other than a mouse. Without this, the focus ring
+     * will show any time someone clicks a button or link. We use this selector for
+     * backwards compatibility with browsers that don't support :focus-visible; in
+     * those cases, the focus ring will be shown even when the button is clicked,
+     * which is better than never.
+     */
+    outline-color: transparent;
   }
 }

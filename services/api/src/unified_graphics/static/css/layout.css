@@ -17,4 +17,10 @@
       var(--column-size, minmax(min(30rem, 100%), 1fr))
     );
   }
+
+  .vbox {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter, var(--space-2));
+  }
 }

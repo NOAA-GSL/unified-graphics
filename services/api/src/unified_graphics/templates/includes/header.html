@@ -1,48 +1,32 @@
-{%- macro metadataSelect(name, label, options=[], current=None, reverse_sort=False) -%}
-<p>
-  <label for="{{ name }}">{{ label }}</label>
-  <select id="{{ name }}" name="{{ name }}" {% if not options %} disabled{% endif %}>
-    <option></option>
-    {% for opt in options|sort(reverse_sort) -%}
-    <option value="{{ opt }}" {% if opt==current or loop.length==1 %} selected{% endif %}>
-      {{- opt -}}
-    </option>
-    {%- endfor %}
-  </select>
-</p>
-{%- endmacro -%}
-
-<header class="cluster justify padding-2 bg-primary-darker text-white">
-  <h1>Unified Graphics</h1>
+<header class="cluster justify padding-2">
+  <div class="vbox">
+    <hgroup>
+      <p class="text-upper text-base-dark font-weight-bold line-height-1">
+        <img class="icon" src="{{ url_for('static', filename='icon.svg') }}" alt="NOAA" width="360"
+          height="360">&nbsp;Unified Graphics
+      </p>
+      <h1 class="heading-1">
+        {%- if form.model -%}
+        {{ form.model }} {{ form.initialization_time }}
+        {%- if variable %} &horbar; <span class="text-title">{{ variable }}</span>{% endif %}
+        {%- else -%}
+        Please Select a Model Run
+        {%- endif -%}
+      </h1>
+      <p class="heading-2 text-base-dark text-title">{{ form.get("frequency", "").lower() }}</p>
+    </hgroup>
+    <dl class="cluster">
+      {% for meta in ["system", "domain", "background"] -%}
+      <div>
+        <dt class="small-1 text-base-dark text-title font-bold line-height-1">{{ meta }}</dt>
+        <dd>{{ form.get(meta, "None selected") }}</dd>
+      </div>
+      {% endfor -%}
+    </dl>
+  </div>
   <div class="cluster">
     {% if has_filters %}<button onclick="document.getElementById('model-form').submit()">Clear Selection</button>{%
     endif %}
-    <button onclick="document.getElementById('model-dialog').showModal()">Configure</button>
+    <button class="primary" onclick="document.getElementById('model-dialog').showModal()">Select Data</button>
   </div>
 </header>
-
-<dialog id="model-dialog">
-  <h2>Select Data</h2>
-  <form id="model-form" class="scrollable" method="GET">
-    {{ metadataSelect("model", "Model", model_metadata.model_list, form.get("model", None))}}
-    {{ metadataSelect("system", "System", model_metadata.system_list, form.get("system", None))}}
-    {{ metadataSelect("domain", "Domain", model_metadata.domain_list, form.get("domain", None))}}
-    {{ metadataSelect("frequency", "Frequency", model_metadata.frequency_list, form.get("frequency", None))}}
-    {{ metadataSelect("background", "Background", model_metadata.background_list, form.get("background", None))}}
-    {{ metadataSelect("initialization_time", "Initialization_time", model_metadata.init_time_list,
-    form.get("initialization_time", None), True)}}
-    {{ metadataSelect("variable", "Variable", model_metadata.variable_list, form.get("variable", None))}}
-
-    <label>
-      {%- set checked = " checked" if form.is_used else "" -%}
-      <input type="checkbox" name="is_used" {{ checked }} />
-      Include unused observations
-    </label>
-
-  </form>
-  <button form="model-form">Load</button>
-</dialog>
-
-{% if show_dialog -%}
-<script>document.getElementById("model-dialog").showModal()</script>
-{%- endif %}

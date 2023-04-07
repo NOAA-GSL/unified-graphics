@@ -10,6 +10,10 @@
     background-color: var(--primary-darker);
   }
 
+  .text-base-dark {
+    color: var(--base-dark);
+  }
+
   .text-white {
     color: var(--gray-0);
   }
@@ -19,8 +23,33 @@
     font: var(--body-1);
   }
 
+  .heading-1 {
+    font: var(--heading-1);
+  }
+
   .heading-2 {
     font: var(--heading-2);
+  }
+
+  .small-1 {
+    font: var(--small-1);
+  }
+
+  .text-upper {
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .text-title {
+    text-transform: capitalize;
+  }
+
+  .font-bold {
+    font-weight: var(--font-weight-bold);
+  }
+
+  .line-height-1 {
+    line-height: var(--line-height-1);
   }
 
   /* Spacing */
