@@ -184,10 +184,8 @@ def diag_zarr(app, diag_dataset):
                     f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
                     f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
                 )
-                print(f"Group: {group}")
                 ds.to_zarr(store, group=group)
             except Exception as e:
-                print(e)
                 raise e
 
         return zarr_file
