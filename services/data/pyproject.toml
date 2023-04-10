@@ -18,7 +18,7 @@ fsspec = "*"
 coverage = "^7.2.2"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.2.1"
+pytest = "^7.3.0"
 mypy = "^1.0"
 black = "^23.3.0"
 flake8 = "^6.0.0"
