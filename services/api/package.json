@@ -15,7 +15,7 @@
     "vendor:d3": "echo 'export * from \"d3\"' | rollup --plugin @rollup/plugin-node-resolve --file src/unified_graphics/static/js/vendor/d3.js --format es"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.2",
     "cssnano": "^6.0.0",
     "d3": "^7.8.4",
     "del-cli": "^5.0.0",
