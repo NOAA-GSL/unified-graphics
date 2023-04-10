@@ -28,7 +28,7 @@
     {% if form.variable != "uv" -%}
       <chart-container class="padding-2 radius-md bg-white shadow-1">
         <span class="axis-y title" slot="title-y">Observation &minus; Forecast</span>
-        <chart-timeseries id="history-{{ minim_loop }}"></chart-timeseries>
+        <chart-timeseries id="history-{{ minim_loop }}" src="{{ history_url[minim_loop] }}"></chart-timeseries>
         <span class="axis-x title" slot="title-x">Initialization Time</span>
       </chart-container>
     {%- endif %}
