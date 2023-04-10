@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generator, List, Union
+from typing import Generator, List, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -465,7 +465,7 @@ def summary(
     variable: Variable,
     loop: MinimLoop,
     filters: MultiDict,
-):
+) -> Optional[DiagSummary]:
     store = get_store(current_app.config["DIAG_ZARR"])
     path = "/".join(
         [
@@ -482,7 +482,7 @@ def summary(
 
     ds = xr.open_zarr(store, group=path)
     ds = apply_filters(ds, filters)
-    return DiagSummary.from_dataset(ds)
+    return DiagSummary.from_dataset(ds) if len(ds["nobs"]) > 0 else None
 
 
 def history(
