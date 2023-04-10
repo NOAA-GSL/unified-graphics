@@ -219,6 +219,11 @@ def test_scalar_history_empty(diag_zarr, test_dataset, client):
     assert response.json == []
 
 
+@pytest.mark.xfail
+def test_vectory_history():
+    assert 0, "Not implemented"
+
+
 def test_wind_diag(diag_zarr, client):
     model = "RTMA"
     system = "WCOSS"
