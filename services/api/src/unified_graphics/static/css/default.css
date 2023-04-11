@@ -59,6 +59,7 @@
     --small-1: var(--font-size-2xs) / var(--line-height-2) var(--font-family-system);
 
     /* Size Tokens */
+    --space-2px: 2px;
     --space-05: 0.25rem;
     --space-105: 0.75rem;
     --space-205: 1.25rem;
@@ -116,10 +117,11 @@
   }
 
   dialog {
+    background-color: var(--base-lightest);
     border: none;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-4);
-    gap: var(--space, var(--space-2));
+    display: grid;
     grid-template-rows: auto 1fr auto;
     inline-size: min(90vi, var(--size-mobile-lg));
     inset: 0;
@@ -127,16 +129,42 @@
     max-block-size: 90vb;
     max-block-size: 90dvb;
     overflow: clip;
+    padding: 0;
     position: fixed;
+    transition-duration: 300ms;
+    transition-property: opacity, transform, visibility;
+    transition-timing-function: ease;
   }
 
-  dialog[open] {
-    display: grid;
+  dialog:not([open]) {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  dialog > * {
+    background-color: var(--gray-0);
+    padding-block: var(--space, var(--space-105));
+    padding-inline: var(--space-105);
+  }
+
+  dialog > header,
+  dialog > footer {
+    background-color: transparent;
+  }
+
+  @media screen and (prefers-reduced-motion: no-preference) {
+    dialog {
+      transform: scale(1);
+    }
+
+    dialog:not([open]) {
+      transform: scale(0.9);
+    }
   }
 
   dialog::backdrop {
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: contrast(0.75) saturate(0.3) blur(4px);
+    backdrop-filter: contrast(0.75) saturate(0.3) blur(4px);
   }
 
   form,
@@ -155,7 +183,6 @@
     --_border: var(--button-border, var(--_face));
     --_border-active: var(--button-border-active, var(--_button-border));
     --_border-hover: var(--button-border-hover, var(--_button-border));
-    --_border-width: var(--button-border-width, 0);
     --_face: var(--button-face, var(--base));
     --_face-active: var(--button-face-active, var(--_face));
     --_face-hover: var(--button-face-hover, var(--_face));
@@ -166,8 +193,9 @@
     --_text-hover: var(--button-text-hover, var(--_text));
 
     background-color: var(--_face);
-    border: var(--_border-width) solid var(--_border);
+    border: none;
     border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 var(--space-2px) var(--_border);
     color: var(--_text);
     font-weight: var(--font-weight-bold);
     line-height: 1;
@@ -177,13 +205,13 @@
 
   button:hover {
     background-color: var(--_face-hover);
-    border-color: var(--_border-hover);
+    box-shadow: inset 0 0 0 var(--space-2px) var(--_border-hover);
     color: var(--_text-hover);
   }
 
   button:active {
     background-color: var(--_face-active);
-    border-color: var(--_border-active);
+    box-shadow: inset 0 0 0 var(--space-2px) var(--_border-active);
     color: var(--_text-active);
   }
 
@@ -191,6 +219,21 @@
     --button-face: var(--primary);
     --button-face-active: var(--primary-darker);
     --button-face-hover: var(--primary-dark);
+  }
+
+  button.outline {
+    --button-border: var(--primary);
+    --button-border-active: var(--primary-darker);
+    --button-border-hover: var(--primary-dark);
+    --button-border-width: var(--space-05);
+    --button-face: transparent;
+    --button-text: var(--primary);
+    --button-text-active: var(--primary-darker);
+    --button-text-hover: var(--primary-dark);
+  }
+
+  select {
+    padding: var(--space-05);
   }
 
   .icon {

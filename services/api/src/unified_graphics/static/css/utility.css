@@ -3,9 +3,11 @@
   .bg-white {
     background-color: var(--gray-0);
   }
+
   .bg-primary-dark {
     background-color: var(--primary-dark);
   }
+
   .bg-primary-darker {
     background-color: var(--primary-darker);
   }
@@ -29,6 +31,14 @@
 
   .heading-2 {
     font: var(--heading-2);
+  }
+
+  .label-1 {
+    color: var(--base-dark);
+    font: var(--small-1);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-1);
+    text-transform: capitalize;
   }
 
   .small-1 {
@@ -64,6 +74,10 @@
 
   .justify {
     justify-content: space-between;
+  }
+
+  .justify-end {
+    justify-content: end;
   }
 
   /* Border */
