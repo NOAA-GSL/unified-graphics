@@ -102,3 +102,4 @@ export default class ChartTimeSeries extends ChartElement {
 
   render() {}
 }
+customElements.define("chart-timeseries", ChartTimeSeries);
