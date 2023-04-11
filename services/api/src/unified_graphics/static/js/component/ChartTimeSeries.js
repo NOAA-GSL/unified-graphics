@@ -1,3 +1,5 @@
+import { extent, max, min, scaleLinear, scaleTime } from "../vendor/d3.js";
+
 import ChartElement from "./ChartElement.js";
 
 /**
@@ -100,6 +102,24 @@ export default class ChartTimeSeries extends ChartElement {
     }
   }
 
-  render() {}
+  get xScale() {
+    const domain = extent(this.#data, (d) => new Date(d.initialization_time));
+    console.log(domain);
+    return scaleTime().domain(domain).range([0, this.height]);
+  }
+
+  get yScale() {
+    const domain = [
+      min(this.#data, (d) => d.obs_minus_forecast_adjusted.min),
+      max(this.#data, (d) => d.obs_minus_forecast_adjusted.max),
+    ];
+
+    return scaleLinear().domain(domain).range([this.height, 0]);
+  }
+
+  render() {
+    if (!(this.width && this.height)) return;
+  }
 }
+
 customElements.define("chart-timeseries", ChartTimeSeries);
