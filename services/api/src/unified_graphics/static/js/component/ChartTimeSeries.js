@@ -1,4 +1,18 @@
-import { extent, max, min, scaleLinear, scaleTime } from "../vendor/d3.js";
+import {
+  area,
+  axisBottom,
+  axisLeft,
+  curveCatmullRom,
+  extent,
+  format,
+  line,
+  max,
+  min,
+  scaleLinear,
+  scaleTime,
+  select,
+  timeFormat,
+} from "../vendor/d3.js";
 
 import ChartElement from "./ChartElement.js";
 
@@ -22,12 +36,24 @@ export default class ChartTimeSeries extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="x-axis"></g>
     <g class="y-axis"></g>
-    <g class="data"></g>
+    <g class="data">
+      <path id="range"></path>
+      <path id="mean"></path>
+    </g>
   </svg>`;
 
   static #STYLE = `:host {
     display: block;
     user-select: none;
+  }
+
+  #range {
+    fill: #aaa;
+  }
+
+  #mean {
+    fill: transparent;
+    stroke: #000;
   }`;
 
   static get observedAttributes() {
@@ -35,6 +61,7 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   #data = [];
+  #svg = null;
 
   constructor() {
     super();
@@ -42,6 +69,7 @@ export default class ChartTimeSeries extends ChartElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `<style>${ChartTimeSeries.#STYLE}</style>
       ${ChartTimeSeries.#TEMPLATE}`;
+    this.#svg = select(root.querySelector("svg"));
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -53,6 +81,13 @@ export default class ChartTimeSeries extends ChartElement {
       case "src":
         fetch(newValue)
           .then((response) => response.json())
+          .then((data) => {
+            // Convert dates from strings to Date objects.
+            data.forEach((d) => {
+              d.initialization_time = new Date(d.initialization_time);
+            });
+            return data;
+          })
           .then((data) => (this.data = data));
         break;
       default:
@@ -70,7 +105,7 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   get formatX() {
-    return this.getAttribute("format-x") ?? ",";
+    return this.getAttribute("format-x") ?? "%Y-%m-%d";
   }
   set formatX(value) {
     if (!value) {
@@ -116,9 +151,9 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   get xScale() {
-    const domain = extent(this.#data, (d) => new Date(d.initialization_time));
+    const domain = extent(this.#data, (d) => d.initialization_time);
     const { left, right } = this.margin;
-    const width = width - left - right;
+    const width = this.width - left - right;
     return scaleTime().domain(domain).range([0, width]);
   }
 
@@ -128,13 +163,51 @@ export default class ChartTimeSeries extends ChartElement {
       max(this.#data, (d) => d.obs_minus_forecast_adjusted.max),
     ];
     const { top, bottom } = this.margin;
-    const height = height - top - bottom;
+    const height = this.height - top - bottom;
 
     return scaleLinear().domain(domain).range([height, 0]);
   }
 
   render() {
     if (!(this.width && this.height)) return;
+
+    const data = this.data;
+    if (!data) return;
+
+    const { xScale, yScale } = this;
+    const curve = curveCatmullRom.alpha(1);
+    const rangeArea = area()
+      .x((d) => xScale(d.initialization_time))
+      .y0((d) => yScale(d.obs_minus_forecast_adjusted.min))
+      .y1((d) => yScale(d.obs_minus_forecast_adjusted.max))
+      .curve(curve);
+    const meanLine = line()
+      .x((d) => xScale(d.initialization_time))
+      .y((d) => yScale(d.obs_minus_forecast_adjusted.mean))
+      .curve(curve);
+
+    this.#svg.attr("viewBox", `0 0 ${this.width} ${this.height}`);
+    this.#svg
+      .select(".data")
+      .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
+    this.#svg.select("#range").datum(data).attr("d", rangeArea);
+    this.#svg.select("#mean").datum(data).attr("d", meanLine);
+
+    const xAxis = axisBottom(xScale).tickFormat(timeFormat(this.formatX));
+    const yAxis = axisLeft(yScale).tickFormat(format(this.formatY));
+
+    this.#svg
+      .select(".x-axis")
+      .attr(
+        "transform",
+        `translate(${this.margin.left}, ${this.height - this.margin.bottom})`
+      )
+      .call(xAxis);
+
+    this.#svg
+      .select(".y-axis")
+      .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
+      .call(yAxis);
   }
 }
 
