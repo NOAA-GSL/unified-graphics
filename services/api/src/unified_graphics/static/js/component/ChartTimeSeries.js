@@ -91,6 +91,19 @@ export default class ChartTimeSeries extends ChartElement {
     }
   }
 
+  // FIXME: This is copied from Chart2DHistogram
+  // We should probably have a more uniform interface for all of our chart components.
+  get margin() {
+    const fontSize = parseInt(getComputedStyle(this).fontSize);
+
+    return {
+      top: fontSize,
+      right: fontSize,
+      bottom: fontSize,
+      left: fontSize * 3,
+    };
+  }
+
   get src() {
     return this.getAttribute("src");
   }
@@ -104,8 +117,9 @@ export default class ChartTimeSeries extends ChartElement {
 
   get xScale() {
     const domain = extent(this.#data, (d) => new Date(d.initialization_time));
-    console.log(domain);
-    return scaleTime().domain(domain).range([0, this.height]);
+    const { left, right } = this.margin;
+    const width = width - left - right;
+    return scaleTime().domain(domain).range([0, width]);
   }
 
   get yScale() {
@@ -113,8 +127,10 @@ export default class ChartTimeSeries extends ChartElement {
       min(this.#data, (d) => d.obs_minus_forecast_adjusted.min),
       max(this.#data, (d) => d.obs_minus_forecast_adjusted.max),
     ];
+    const { top, bottom } = this.margin;
+    const height = height - top - bottom;
 
-    return scaleLinear().domain(domain).range([this.height, 0]);
+    return scaleLinear().domain(domain).range([height, 0]);
   }
 
   render() {
