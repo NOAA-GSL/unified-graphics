@@ -154,7 +154,7 @@ export default class ChartTimeSeries extends ChartElement {
     const domain = extent(this.#data, (d) => d.initialization_time);
     const { left, right } = this.margin;
     const width = this.width - left - right;
-    return scaleTime().domain(domain).range([0, width]);
+    return scaleTime().domain(domain).range([0, width]).nice();
   }
 
   get yScale() {
@@ -165,7 +165,7 @@ export default class ChartTimeSeries extends ChartElement {
     const { top, bottom } = this.margin;
     const height = this.height - top - bottom;
 
-    return scaleLinear().domain(domain).range([height, 0]);
+    return scaleLinear().domain(domain).range([height, 0]).nice();
   }
 
   render() {
