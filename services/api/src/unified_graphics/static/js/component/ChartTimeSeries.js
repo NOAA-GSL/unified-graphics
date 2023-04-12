@@ -19,6 +19,7 @@ import ChartElement from "./ChartElement.js";
 /**
  * Time series chart
  *
+ * @property {string} current A UTC date string
  * @property {string} formatX
  *   A d3 format string used to format values along the x-axis. This property
  *   is reflected in an HTML attribute on the custom element called
@@ -37,6 +38,7 @@ export default class ChartTimeSeries extends ChartElement {
     <g class="data">
       <path id="range"></path>
       <path id="mean"></path>
+      <line id="current"></line>
     </g>
     <g class="x-axis"></g>
     <g class="y-axis"></g>
@@ -51,13 +53,16 @@ export default class ChartTimeSeries extends ChartElement {
     fill: #aaa;
   }
 
+  #current,
   #mean {
     fill: transparent;
     stroke: #000;
   }`;
 
   static get observedAttributes() {
-    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
+    return ["current", "format-x", "format-y", "src"].concat(
+      ChartElement.observedAttributes
+    );
   }
 
   #data = [];
@@ -74,6 +79,9 @@ export default class ChartTimeSeries extends ChartElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     switch (name) {
+      case "current":
+        this.update();
+        break;
       case "format-x":
       case "format-y":
         this.update();
@@ -93,6 +101,17 @@ export default class ChartTimeSeries extends ChartElement {
       default:
         super.attributeChangedCallback(name, oldValue, newValue);
         break;
+    }
+  }
+
+  get current() {
+    return this.getAttribute("current");
+  }
+  set current(value) {
+    if (!value) {
+      this.removeAttribute("current");
+    } else {
+      this.setAttribute("current", value);
     }
   }
 
@@ -191,6 +210,16 @@ export default class ChartTimeSeries extends ChartElement {
       .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
     this.#svg.select("#range").datum(data).attr("d", rangeArea);
     this.#svg.select("#mean").datum(data).attr("d", meanLine);
+
+    if (this.current) {
+      this.#svg
+        .select("#current")
+        .datum(new Date(this.current))
+        .attr("x1", xScale)
+        .attr("x2", xScale)
+        .attr("y1", yScale.range()[0])
+        .attr("y2", yScale.range()[1]);
+    }
 
     const xAxis = axisBottom(xScale).tickFormat(timeFormat(this.formatX));
     const yAxis = axisLeft(yScale).tickFormat(format(this.formatY));
