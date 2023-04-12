@@ -2,7 +2,7 @@ import {
   area,
   axisBottom,
   axisLeft,
-  curveCatmullRom,
+  curveBumpX,
   extent,
   format,
   line,
@@ -175,16 +175,15 @@ export default class ChartTimeSeries extends ChartElement {
     if (!data) return;
 
     const { xScale, yScale } = this;
-    const curve = curveCatmullRom.alpha(1);
     const rangeArea = area()
       .x((d) => xScale(d.initialization_time))
       .y0((d) => yScale(d.obs_minus_forecast_adjusted.min))
       .y1((d) => yScale(d.obs_minus_forecast_adjusted.max))
-      .curve(curve);
+      .curve(curveBumpX);
     const meanLine = line()
       .x((d) => xScale(d.initialization_time))
       .y((d) => yScale(d.obs_minus_forecast_adjusted.mean))
-      .curve(curve);
+      .curve(curveBumpX);
 
     this.#svg.attr("viewBox", `0 0 ${this.width} ${this.height}`);
     this.#svg
