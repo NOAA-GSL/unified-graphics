@@ -34,12 +34,12 @@ import ChartElement from "./ChartElement.js";
  */
 export default class ChartTimeSeries extends ChartElement {
   static #TEMPLATE = `<svg>
-    <g class="x-axis"></g>
-    <g class="y-axis"></g>
     <g class="data">
       <path id="range"></path>
       <path id="mean"></path>
     </g>
+    <g class="x-axis"></g>
+    <g class="y-axis"></g>
   </svg>`;
 
   static #STYLE = `:host {
