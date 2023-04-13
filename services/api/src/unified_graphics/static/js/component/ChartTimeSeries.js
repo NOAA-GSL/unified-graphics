@@ -50,13 +50,13 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   #range {
-    fill: #aaa;
+    fill: #dfe1e2;
   }
 
   #current,
   #mean {
     fill: transparent;
-    stroke: #000;
+    stroke: #1b1b1b;
   }`;
 
   static get observedAttributes() {
