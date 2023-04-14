@@ -11,20 +11,33 @@
 {% block main -%}
 {% for minim_loop in ["ges", "anl"] -%}
   <h2 class="heading-2 flex-0">{% if minim_loop == "ges" %}Guess{% else %}Analysis{% endif %}</h2>
+
   <div class="grid" style="--row-size: minmax(20rem, 1fr)">
-    <chart-container class="padding-2 radius-md bg-white shadow-1">
-      {% if form.variable == "uv" -%}
+    {% if form.variable == "uv" -%}
+      <chart-container class="padding-2 radius-md bg-white shadow-1">
         <span class="axis-y title" slot="title-y">v (Observation &minus; Forecast)</span>
         <chart-2dhistogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-2dhistogram>
         <span class="axis-x title" slot="title-x">u (Observation &minus; Forecast)</span>
         <color-ramp slot="legend" for="distribution-{{ minim_loop }}" class="font-ui-3xs" format="s"
           >Observation &minus; Forecast</color-ramp>
-      {%- else -%}
-        <span class="axis-y title" slot="title-y">Observation Count</span>
-        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-histogram>
-        <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
-      {%- endif %}
-    </chart-container>
+      </chart-container>
+    {%- else -%}
+      <div class="grid">
+        <chart-container class="padding-2 radius-md bg-white shadow-1">
+          <span class="axis-y title" slot="title-y">Observation Count</span>
+          <chart-histogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-histogram>
+          <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
+        </chart-container>
+
+        <chart-container class="padding-2 radius-md bg-white shadow-1">
+          <span class="axis-y title" slot="title-y">Observation &minus; Forecast</span>
+          <chart-timeseries id="history-{{ minim_loop }}" src="{{ history_url[minim_loop] }}"
+            current="{{ form.get("initialization_time") }}"></chart-timeseries>
+          <span class="axis-x title" slot="title-x">Initialization Time</span>
+        </chart-container>
+      </div>
+    {%- endif %}
+
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       <chart-map id="observations-{{ minim_loop }}"
         src="{{ map_url[minim_loop] }}"

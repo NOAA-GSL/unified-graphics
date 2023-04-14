@@ -43,6 +43,10 @@ def index():
             "anl": "",
             "ges": "",
         },
+        "history_url": {
+            "anl": "",
+            "ges": "",
+        },
     }
 
     # True if any of the listed parameters are not supplied in the query string. Without
@@ -85,6 +89,15 @@ def index():
         context["map_url"]["ges"] = url_for(
             map_endpoint, **model_meta, **query.to_dict(False), loop="ges"
         )
+        history_params = {
+            k: v for k, v in model_meta.items() if k != "initialization_time"
+        }
+        context["history_url"]["anl"] = url_for(
+            ".history", **history_params, **query.to_dict(False), loop="anl"
+        )
+        context["history_url"]["ges"] = url_for(
+            ".history", **history_params, **query.to_dict(False), loop="ges"
+        )
 
         # Page title for the <title> tag
         context["title"] = (
@@ -107,6 +120,22 @@ def index():
 @bp.route("/serviceworker.js")
 def serviceworker():
     return make_response(send_from_directory("static", path="serviceworker.js"))
+
+
+@bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
+def history(model, system, domain, background, frequency, variable, loop):
+    data = diag.history(
+        model,
+        system,
+        domain,
+        background,
+        frequency,
+        diag.Variable(variable),
+        diag.MinimLoop(loop),
+        request.args,
+    )
+
+    return jsonify([d for d in data])
 
 
 @bp.route(
