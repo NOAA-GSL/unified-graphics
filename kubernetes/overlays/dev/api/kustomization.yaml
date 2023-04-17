@@ -4,11 +4,16 @@ images:
   - name: unified-graphics/api
     newName: ghcr.io/noaa-gsl/unified-graphics/api
     newTag: main
+
 patchesStrategicMerge:
-  - patch_add_volume.yaml
+  - "deployment.yaml"
 
 configMapGenerator:
-  - name: unified-graphics-api
-    behavior: merge
+  - name: unified-graphics-api-config
     envs:
       - dev.api.env
+
+secretGenerator:
+  - name: unified-graphics-api-secret
+    envs:
+    - .env # Should contain AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_SECRET_TOKEN

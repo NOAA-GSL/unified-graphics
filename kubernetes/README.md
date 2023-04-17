@@ -8,7 +8,13 @@ We're using a Kustomize-style layout. `base` contains the default k8s manifests,
 
 ### Start app via CLI
 
-Currently, you will need to update the path used by the `hostPath` volume in `kubernetes/overlays/dev/api/patch_add_volume.yaml` to match where you've put data on your host system. (If you don't want to use `/tmp`)
+Currently, you will need to create a `kuberenetes/overlays/dev/api/.env` file with the required AWS keys to pass in to the container. That file should look like so:
+
+```shell
+AWS_ACCESS_KEY_ID=<aws access key value>
+AWS_SECRET_ACCESS_KEY=<aws secret access key value>
+AWS_SESSION_TOKEN=<aws session token value>
+```
 
 Rancher Desktop
 

@@ -28,7 +28,7 @@ In development, you can run the Flask development server.
 
 ```
 cd services/api
-FLASK_ENV=development FLASK_APP=unified_graphics.wsgi:app FLASK_DIAG_DIR=... poetry run flask run
+FLASK_DEBUG=true FLASK_APP=unified_graphics.wsgi:app FLASK_DIAG_ZARR=... poetry run flask run
 ```
 
 This will start up the Flask development server, which will watch the Python
@@ -48,8 +48,8 @@ The application is configured using environment variables. The environment
 variables are all prefixed with `FLASK_` so that Flask can find them and add
 them automatically to its config.
 
-- `FLASK_ENV` - Either “development” or “production” (default). When
-  `FLASK_ENV=development`, the server adds a CORS header permitting connections
+- `FLASK_DEBUG` - Either “true” or “false” (default). When
+  `FLASK_DEBUG=true`, the server adds a CORS header permitting connections
   from http://localhost:3000 so that the frontend can make requests without
   proxying
 - `FLASK_DIAG_ZARR` - The path to the local directory or S3 bucekt containing the
@@ -79,7 +79,8 @@ JavaScript services use `npm` as a task runner, so running tests in a JavaScript
 service is as simple as:
 
 ```
-cd services/ui
+cd services/api
+npm run vendor && npm run build
 npm test
 ```
 

@@ -23,19 +23,6 @@ spec:
         - image: unified-graphics/ui
           imagePullPolicy: Always # Since we're tracking a long-lived tag, we'll want to always check for updated images
           name: unified-graphics-ui
-          resources:
-            requests:
-              memory: "1Gi"
-              cpu: "0.5"
-            limits:
-              memory: "2Gi"
-              cpu: "1"
           ports:
             - containerPort: 80
               protocol: TCP
-          # FIXME - we should explore dissallowing privilege escalation
-          securityContext:
-            allowPrivilegeEscalation: true # Default behavior
-          envFrom:
-            - configMapRef:
-                name: unified-graphics-ui
