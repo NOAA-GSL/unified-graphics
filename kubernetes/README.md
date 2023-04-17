@@ -21,7 +21,7 @@ Rancher Desktop
 ```console
 kubectl create namespace ug
 kubectl -n ug apply -k kubernetes/overlays/dev                # Apply the Kustomize templates for the UI and API services
-# You should be able to visit the service on localhost:80 - if you're on Linux, see the note on allowing port 80 below
+# You should be able to visit the service at http://unified-graphics.127.0.0.1.nip.io - if you're on Linux, see the note on allowing port 80 below
 kubectl -n ug get -k kubernetes/overlays/dev                  # Get resource info
 kubectl -n ug delete -k kubernetes/overlays/dev               # Delete the resources
 ```
