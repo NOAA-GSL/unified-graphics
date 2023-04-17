@@ -5,8 +5,10 @@ images:
     newName: ghcr.io/noaa-gsl/unified-graphics/ui
     newTag: main
 
+patchesStrategicMerge:
+  - "deployment.yaml"
+
 configMapGenerator:
-  - name: unified-graphics-ui
-    behavior: merge
+  - name: unified-graphics-ui-config
     envs:
       - dev.ui.env

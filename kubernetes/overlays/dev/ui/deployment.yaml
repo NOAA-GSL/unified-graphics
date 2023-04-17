@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unified-graphics-ui
+spec:
+  template:
+    spec:
+      containers:
+        - name: unified-graphics-ui
+          envFrom:
+            - configMapRef:
+                name: unified-graphics-ui-config
+          # FIXME - we should explore dissallowing privilege escalation
+          securityContext:
+            allowPrivilegeEscalation: true # Default behavior
+            runAsNonRoot: false # Default behavior. VLab uses "true" in their environments
