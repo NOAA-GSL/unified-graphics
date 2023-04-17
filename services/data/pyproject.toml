@@ -17,7 +17,7 @@ s3fs = "*"
 fsspec = "*"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.3.0"
+pytest = "^7.3.1"
 mypy = "^1.2.0"
 black = "^23.3.0"
 flake8 = "^6.0.0"
