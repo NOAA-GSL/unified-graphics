@@ -122,7 +122,7 @@ ModelMetadata = namedtuple(
 
 def get_model_metadata() -> ModelMetadata:
     store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.open(store)
+    z = zarr.convenience.open_consolidated(store)
 
     model_list = set()
     system_list = set()
