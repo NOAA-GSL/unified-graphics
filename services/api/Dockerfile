@@ -13,4 +13,5 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
-CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:80", "--timeout=600"]
+# Gunicorn recommends setting the number of workers to be 2-4 * num_cores
+CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:80", "--timeout=600", "--workers=4"]
