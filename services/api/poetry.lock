@@ -1444,14 +1444,14 @@ files = [
 
 [[package]]
 name = "xarray"
-version = "2023.4.1"
+version = "2023.4.2"
 description = "N-D labeled arrays and datasets in Python"
 category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "xarray-2023.4.1-py3-none-any.whl", hash = "sha256:1c5b8d21e8a2416789e5458efeb635a2a7cf660b6d24af84aaf817224b9cabca"},
-    {file = "xarray-2023.4.1.tar.gz", hash = "sha256:f424c5d8ee283a8bfb3d481db4c9d8e006cbe3352489af434d1c110e6b806b39"},
+    {file = "xarray-2023.4.2-py3-none-any.whl", hash = "sha256:1b6d577c1217ad6bf7458426af19ed7a489ab6c41220ca791f55f5df9648173a"},
+    {file = "xarray-2023.4.2.tar.gz", hash = "sha256:958ec588220352343b910cbc05e54e7ab54d4e8c1c3a7783d6bfe7549d0bd0d2"},
 ]
 
 [package.dependencies]
@@ -1579,4 +1579,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5ab022c39ad13f4f4d430257eea8a02cfd413e1c69c73ac0aae2695cb68475b0"
+content-hash = "6cd420faef3deee7fa337c3e79622d9c9c3e05639a0e71ecd35d56fe7bf45b2e"
