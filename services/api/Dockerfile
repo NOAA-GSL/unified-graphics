@@ -12,6 +12,11 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
 
+RUN groupadd -g 1000 python && \
+    useradd -r -u 1000 -g python python
+
+USER 1000
+
 EXPOSE 80
 # Gunicorn recommends setting the number of workers to be 2-4 * num_cores
 CMD ["gunicorn", "unified_graphics.wsgi:app", "--bind=0.0.0.0:80", "--timeout=600", "--workers=4"]
