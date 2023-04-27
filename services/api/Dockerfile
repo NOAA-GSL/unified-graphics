@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.11-slim-bullseye
 
 WORKDIR /usr/src/app
 
@@ -7,10 +7,11 @@ RUN pip3 install --no-cache-dir gunicorn poetry \
 
 COPY . .
 
-RUN poetry install --no-interaction --no-ansi --no-dev
 RUN apt-get update \
+    && apt-get install -y build-essential \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
+RUN poetry install --no-interaction --no-ansi --no-dev
 
 RUN groupadd -g 1000 python && \
     useradd -r -u 1000 -g python python
