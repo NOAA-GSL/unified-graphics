@@ -12,6 +12,13 @@ updates:
     pull-request-branch-name:
       separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
 
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+
   - package-ecosystem: "pip"
     directory: "/services/api"
     schedule:
