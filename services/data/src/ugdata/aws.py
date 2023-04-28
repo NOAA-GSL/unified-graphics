@@ -29,9 +29,9 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
     pathlib.Path
         The path to the downloaded file
     """
-    tmp_key = key.replace("/", "_")
-    if key_prefix := os.environ.get("UG_DIAG_KEY_PREFIX"):
-        tmp_key = tmp_key.removeprefix(key_prefix).removeprefix("_")
+    key_prefix = os.environ.get("UG_DIAG_KEY_PREFIX")
+    tmp_key = key.removeprefix(key_prefix).removeprefix("/") if key_prefix else key
+    tmp_key = tmp_key.replace("/", "_")
 
     tmp_path = Path(download_path) / f"{uuid.uuid4()}-{tmp_key}"
     s3_client.download_file(bucket, key, str(tmp_path))

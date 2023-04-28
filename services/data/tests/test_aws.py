@@ -37,6 +37,12 @@ from ugdata import aws
             "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
             "diag",
         ),
+        (
+            "diag/RTMA/foo/ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "diag/",
+        ),
     ],
 )
 def test_fetch_record(
