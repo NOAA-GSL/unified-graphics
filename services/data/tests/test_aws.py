@@ -11,17 +11,31 @@ from ugdata import aws
 @mock.patch("ugdata.aws.s3_client", autospec=True)
 @mock.patch("uuid.uuid4")
 @pytest.mark.parametrize(
-    "key,expected_download,expected_path",
+    "key,expected_download,expected_path,prefix_to_strip",
     [
         (
             "diag_t_anl.202301300600.nc4.gz",
             "/tmp/mock-uuid-diag_t_anl.202301300600.nc4.gz",
             "/tmp/mock-uuid-diag_t_anl.202301300600.nc4",
+            None,
         ),
         (
             "ncdiag_conv_t_anl.nc4.2023013006",
             "/tmp/mock-uuid-ncdiag_conv_t_anl.nc4.2023013006",
             "/tmp/mock-uuid-ncdiag_conv_t_anl.nc4.2023013006",
+            None,
+        ),
+        (
+            "RTMA/foo/ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "diag",
+        ),
+        (
+            "diag/RTMA/foo/ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "/tmp/mock-uuid-RTMA_foo_ncdiag_conv_t_anl.nc4.2023013006",
+            "diag",
         ),
     ],
 )
@@ -34,9 +48,13 @@ def test_fetch_record(
     key,
     expected_download,
     expected_path,
+    prefix_to_strip,
+    monkeypatch,
 ):
     bucket = "s3://test-bucket"
     mock_uuid4.return_value = "mock-uuid"
+    if prefix_to_strip:
+        monkeypatch.setenv("UG_DIAG_KEY_PREFIX", prefix_to_strip)
 
     result = aws.fetch_record(bucket, key)
 
