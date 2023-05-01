@@ -9,7 +9,7 @@ authors = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-Flask = "^2.1.2"
+Flask = "^2.3.2"
 netCDF4 = "^1.6.3"
 xarray = "^2023.3.0"
 fsspec = "^2022.10.0"
