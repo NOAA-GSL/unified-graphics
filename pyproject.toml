@@ -21,6 +21,7 @@ s3fs = "*"
 zarr = "^2.14.1"
 flask-sqlalchemy = "^3.0.3"
 flask-alembic = "^2.0.1"
+psycopg = "^3.1.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.3"
