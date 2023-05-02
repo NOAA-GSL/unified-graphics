@@ -1,8 +1,12 @@
 from logging.config import dictConfig
 
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
 __version__ = "0.1.0"
+
+
+db = SQLAlchemy()
 
 
 def create_app(config=None):
@@ -30,6 +34,8 @@ def create_app(config=None):
 
     app = Flask(__name__)
     app.config.from_prefixed_env()
+
+    db.init_app(app)
 
     from . import routes
 
