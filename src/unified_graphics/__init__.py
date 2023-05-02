@@ -1,12 +1,14 @@
 from logging.config import dictConfig
 
 from flask import Flask
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 __version__ = "0.1.0"
 
 
 db = SQLAlchemy()
+migrate = Migrate()
 
 
 def create_app(config=None):
@@ -36,6 +38,7 @@ def create_app(config=None):
     app.config.from_prefixed_env()
 
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from . import routes
 
