@@ -6,12 +6,16 @@ from typing import Generator, List, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
+import sqlalchemy as sa
 import xarray as xr
 import zarr  # type: ignore
 from flask import current_app
 from s3fs import S3FileSystem, S3Map  # type: ignore
 from werkzeug.datastructures import MultiDict
 from xarray.core.dataset import Dataset
+
+from . import db
+from .models import Analysis, WeatherModel
 
 
 class MinimLoop(Enum):
@@ -121,26 +125,13 @@ ModelMetadata = namedtuple(
 
 
 def get_model_metadata() -> ModelMetadata:
-    store = get_store(current_app.config["DIAG_ZARR"])
-    z = zarr.convenience.open_consolidated(store)
-
-    model_list = set()
-    system_list = set()
-    domain_list = set()
-    frequency_list = set()
-    background_list = set()
-    init_time_list = set()
-    variable_list = set()
-
-    for _, arr in z.arrays(True):
-        model, system, domain, bg, freq, variable, init_time = arr.path.split("/")[:-2]
-        model_list.add(model)
-        system_list.add(system)
-        domain_list.add(domain)
-        frequency_list.add(freq)
-        background_list.add(bg)
-        variable_list.add(variable)
-        init_time_list.add(init_time)
+    model_list = db.session.scalars(sa.select(WeatherModel.name).distinct()).all()
+    system_list = db.session.scalars(sa.select(Analysis.system).distinct()).all()
+    domain_list = db.session.scalars(sa.select(Analysis.domain).distinct()).all()
+    frequency_list = db.session.scalars(sa.select(Analysis.frequency).distinct()).all()
+    background_list = db.session.scalars(sa.select(WeatherModel.name).distinct()).all()
+    init_time_list = db.session.scalars(sa.select(Analysis.time).distinct()).all()
+    variable_list = ["uv", "ps", "q", "t"]
 
     return ModelMetadata(
         model_list,

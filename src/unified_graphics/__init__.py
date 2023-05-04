@@ -1,7 +1,7 @@
 from logging.config import dictConfig
 
 from flask import Flask
-from flask_migrate import Migrate
+from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy
 
 __version__ = "0.1.0"
