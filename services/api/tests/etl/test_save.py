@@ -1,7 +1,10 @@
 """Test saving xarray Datasets to Zarr"""
 
+from pathlib import Path
+
 import xarray as xr
-from ugdata import diag
+
+from unified_graphics.etl import diag
 
 
 def test_save_new(tmp_path, diag_dataset):
@@ -75,7 +78,10 @@ def test_add_loop(diag_zarr, diag_dataset):
     diag.save(zarr_file, ps)
 
     assert (
-        zarr_file / "Unknown/Unknown/Unknown/Unknown/Unknown/ps" / init_time / loop
+        Path(zarr_file)
+        / "Unknown/Unknown/Unknown/Unknown/Unknown/ps"
+        / init_time
+        / loop
     ).exists(), "Loop group is missing"
 
     xr.testing.assert_equal(

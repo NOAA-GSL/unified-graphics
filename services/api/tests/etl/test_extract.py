@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 import xarray as xr
-from ugdata import diag
+
+from unified_graphics.etl import diag
 
 
 @pytest.mark.parametrize(
@@ -185,7 +186,6 @@ def test_load(
     coords,
     diag_file,
     diag_dataset,
-    tmp_path,
 ):
     """diag.load should return datasets for observations, forecasts, and results"""
 
@@ -231,12 +231,12 @@ def test_no_forecast_scalar(diag_dataset, tmp_path):
     )
     ds = xr.Dataset(
         {
-            "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
-            "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
-            "Observation": (["nobs"], np.zeros((2,))),
-            "Analysis_Use_Flag": (["nobs"], np.array([1, -1], dtype=np.int8)),
-            "Latitude": (["nobs"], np.array([22, 25], dtype=np.float64)),
-            "Longitude": (["nobs"], np.array([90, 200], dtype=np.float64)),
+            "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
+            "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
+            "Observation": (["nobs"], np.zeros((3,))),
+            "Analysis_Use_Flag": (["nobs"], np.array([1, -1, 1], dtype=np.int8)),
+            "Latitude": (["nobs"], np.array([22, 23, 25], dtype=np.float64)),
+            "Longitude": (["nobs"], np.array([90, 91, 200], dtype=np.float64)),
         }
     )
     ds.to_netcdf(tmp_path / filename)
@@ -276,15 +276,15 @@ def test_no_forecast_vector(diag_dataset, tmp_path):
     )
     ds = xr.Dataset(
         {
-            "u_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
-            "v_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((2,))),
-            "u_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
-            "v_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((2,))),
-            "u_Observation": (["nobs"], np.zeros((2,))),
-            "v_Observation": (["nobs"], np.zeros((2,))),
-            "Analysis_Use_Flag": (["nobs"], np.array([1, -1], dtype=np.int8)),
-            "Latitude": (["nobs"], np.array([22, 25], dtype=np.float64)),
-            "Longitude": (["nobs"], np.array([90, 200], dtype=np.float64)),
+            "u_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
+            "v_Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
+            "u_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
+            "v_Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
+            "u_Observation": (["nobs"], np.zeros((3,))),
+            "v_Observation": (["nobs"], np.zeros((3,))),
+            "Analysis_Use_Flag": (["nobs"], np.array([1, -1, 1], dtype=np.int8)),
+            "Latitude": (["nobs"], np.array([22, 23, 25], dtype=np.float64)),
+            "Longitude": (["nobs"], np.array([90, 91, 200], dtype=np.float64)),
         }
     )
     ds.to_netcdf(tmp_path / filename)
