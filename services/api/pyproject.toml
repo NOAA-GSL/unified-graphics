@@ -8,13 +8,17 @@ authors = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.9"
 Flask = "^2.3.2"
 netCDF4 = "^1.6.3"
 xarray = "^2023.3.0"
-fsspec = "^2022.10.0"
-s3fs = "^2022.10.0"
-zarr = "^2.13.6"
+h5netcdf = "^1.1.0"
+scipy = "^1.10.0"
+# Use permissive versions to resolve dependency hell with boto3 & aiobotocore
+aiobotocore = {version = "*", extras = ["boto3"]}
+fsspec = "*"
+s3fs = "*"
+zarr = "^2.14.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.3"
