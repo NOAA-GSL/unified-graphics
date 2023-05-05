@@ -3,6 +3,9 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
+# Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
+# https://github.com/pydata/xarray/issues/7259
+import netCDF4  # type: ignore # noqa: F401 # This needs to be imported before numpy
 import numpy as np
 import pytest
 import xarray as xr
@@ -57,16 +60,50 @@ def client(app):
 
 
 @pytest.fixture
-def diag_file(app):
-    def factory(name: str, data: xr.Dataset):
-        test_file = working_dir / name
-        data.to_netcdf(test_file)
-        files_created.append(test_file)
+def diag_file(app, tmp_path):
+    def factory(
+        variable: str,
+        loop: str,
+        init_time: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
+    ) -> Path:
+        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
+        if background:
+            filename += f".{background}"
+        filename += ".nc4"
 
-    working_dir = Path(app.config["DIAG_DIR"].removeprefix("file://"))
-    files_created = []
+        if frequency:
+            filename = f"{frequency}_{filename}"
+        if domain:
+            filename = f"{domain}_{filename}"
+        if system:
+            filename = f"{system}_{filename}"
+        if model:
+            filename = f"{model}_{filename}"
 
-    yield factory
+        ds = xr.Dataset(
+            {
+                "Forecast_adjusted": (["nobs"], np.zeros((3,))),
+                "Forecast_unadjusted": (["nobs"], np.zeros((3,))),
+                "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
+                "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
+                "Observation": (["nobs"], np.zeros((3,))),
+                "Analysis_Use_Flag": (["nobs"], np.array([1, -1, 1], dtype=np.int8)),
+                "Latitude": (["nobs"], np.array([22, 23, 25], dtype=np.float64)),
+                "Longitude": (["nobs"], np.array([90, 91, 200], dtype=np.float64)),
+            }
+        )
+
+        diag_file = tmp_path / filename
+        ds.to_netcdf(diag_file)
+
+        return diag_file
+
+    return factory
 
 
 # FIXME: Replace diag_dataset with this fixture
