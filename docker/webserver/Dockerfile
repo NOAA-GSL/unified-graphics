@@ -10,7 +10,7 @@ RUN npm run vendor && npm run build
 FROM nginxinc/nginx-unprivileged:1.24
 
 COPY --from=build /home/node/app/build /usr/share/nginx/html/static
-COPY default.conf.template /etc/nginx/templates/
+COPY docker/webserver/default.conf.template /etc/nginx/templates/
 
 # The default port exposed by the unprivileged image is 8080
 EXPOSE 80
