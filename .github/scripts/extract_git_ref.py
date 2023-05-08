@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from typing import Optional
 import os
 import re
+from typing import Optional
 
 
 def get_branch(gh_event: str, gh_ref: str, gh_head_ref: Optional[str]) -> str:
