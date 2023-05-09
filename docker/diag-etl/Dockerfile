@@ -11,6 +11,6 @@ COPY poetry.lock .
 RUN poetry export --format requirements.txt --without dev --without-hashes --output requirements.txt \
     && pip install --target "${LAMBDA_TASK_ROOT}" --requirement requirements.txt
 
-COPY src/ugdata/ "${LAMBDA_TASK_ROOT}/ugdata"
+COPY src/unified_graphics/ "${LAMBDA_TASK_ROOT}/unified_graphics"
 
-CMD ["ugdata.aws.lambda_handler"]
+CMD ["unified_graphics.etl.aws.lambda_handler"]

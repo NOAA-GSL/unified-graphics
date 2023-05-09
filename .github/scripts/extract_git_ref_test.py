@@ -1,5 +1,4 @@
 import pytest
-
 from extract_git_ref import get_branch
 
 

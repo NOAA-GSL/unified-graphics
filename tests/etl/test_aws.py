@@ -2,13 +2,14 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-from ugdata import aws
+
+from unified_graphics.etl import aws
 
 
-@mock.patch("ugdata.aws.open")
+@mock.patch("unified_graphics.etl.aws.open")
 @mock.patch("gzip.open")
 @mock.patch("shutil.copyfileobj")
-@mock.patch("ugdata.aws.s3_client", autospec=True)
+@mock.patch("unified_graphics.etl.aws.s3_client", autospec=True)
 @mock.patch("uuid.uuid4")
 @pytest.mark.parametrize(
     "key,expected_download,expected_path,prefix_to_strip",
@@ -77,9 +78,9 @@ def test_handler_test_event():
     assert result == "Test event received"
 
 
-@mock.patch("ugdata.diag.save")
-@mock.patch("ugdata.diag.load")
-@mock.patch("ugdata.aws.fetch_record")
+@mock.patch("unified_graphics.etl.diag.save")
+@mock.patch("unified_graphics.etl.diag.load")
+@mock.patch("unified_graphics.etl.aws.fetch_record")
 def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
     ug_bucket = "s3://test-bucket/test.zarr"
     dl_bucket = "s3://test-diag-bucket"
@@ -113,9 +114,9 @@ def test_handler_no_records(monkeypatch):
     assert result == ""
 
 
-@mock.patch("ugdata.diag.save")
-@mock.patch("ugdata.diag.load")
-@mock.patch("ugdata.aws.fetch_record")
+@mock.patch("unified_graphics.etl.diag.save")
+@mock.patch("unified_graphics.etl.diag.load")
+@mock.patch("unified_graphics.etl.aws.fetch_record")
 def test_handler_skip_second_loop(mock_fetch_record, mock_load, mock_save, monkeypatch):
     ug_bucket = "s3://test-bucket/test.zarr"
     dl_bucket = "s3://test-diag-bucket"

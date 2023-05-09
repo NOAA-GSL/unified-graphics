@@ -1,12 +1,13 @@
-name: Cleanup API PR images
+name: Cleanup Application PR images
 
 on:
   pull_request:
     types: [closed]
     paths:
-      - 'services/api/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
+      - "src/**/*.py"
+      - "src/**/*.html"
+      - ".github/workflows/**"
+      - ".github/scripts/**"
 jobs:
   purge-ghcr-images:
     name: Cleanup PR images from ghcr.io
@@ -17,6 +18,13 @@ jobs:
         with:
           owner: noaa-gsl
           name: unified-graphics/api
+          token: ${{ secrets.GHCR_CLEANUP_PAT }}
+          tag: ${{ github.head_ref }}
+      - name: Cleanup images
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
+        with:
+          owner: noaa-gsl
+          name: unified-graphics/data
           token: ${{ secrets.GHCR_CLEANUP_PAT }}
           tag: ${{ github.head_ref }}
   purge-ecr-images:
@@ -36,4 +44,9 @@ jobs:
         run: |
           aws ecr batch-delete-image \
             --repository-name rtma-vis/api \
+            --image-ids imageTag=${{ github.head_ref }}
+      - name: Cleanup image
+        run: |
+          aws ecr batch-delete-image \
+            --repository-name rtma-vis/data \
             --image-ids imageTag=${{ github.head_ref }}
