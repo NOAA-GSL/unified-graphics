@@ -1,4 +1,5 @@
 from logging.config import dictConfig
+from typing import Any, Mapping, Optional
 
 from flask import Flask
 from flask_migrate import Migrate  # type: ignore
@@ -11,7 +12,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config=None):
+def create_app(config: Optional[Mapping[str, Any]] = None):
     dictConfig(
         {
             "version": 1,
@@ -35,6 +36,7 @@ def create_app(config=None):
     )
 
     app = Flask(__name__)
+    app.config.from_mapping(config)
     app.config.from_prefixed_env()
 
     db.init_app(app)
