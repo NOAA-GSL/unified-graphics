@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import datetime
 from unittest import mock
 
 import numpy as np
@@ -7,7 +8,8 @@ import pytest
 import xarray as xr
 from werkzeug.datastructures import MultiDict
 
-from unified_graphics import diag
+from unified_graphics import db, diag
+from unified_graphics.models import Analysis, WeatherModel
 
 # Global resources for s3
 test_bucket_name = "osti-modeling-dev-rtma-vis"
@@ -18,37 +20,35 @@ def test_key_prefix():
     return f"/test/{uuid.uuid4()}/"
 
 
-def test_get_model_metadata(app, diag_zarr):
+@pytest.mark.usefixtures("app_ctx")
+def test_get_model_metadata():
     model_run_list = [
-        ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00", "anl"),
-        ("3DRTMA", "JET", "CONUS", "RETRO", "RRFS", "2023-03-17T15:00", "ges"),
+        ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00"),
+        ("3DRTMA", "JET", "CONUS", "RETRO", "RRFS", "2023-03-17T15:00"),
     ]
 
     variable_list = ["ps", "q", "t", "uv"]
 
-    for model, system, domain, freq, bg, init_time, loop in model_run_list:
-        diag_zarr(
-            variable_list,
-            init_time,
-            loop,
-            model=model,
-            system=system,
-            domain=domain,
-            background=bg,
-            frequency=freq,
+    for model, system, domain, freq, bg, init_time in model_run_list:
+        wx_model = WeatherModel(name=model, background=WeatherModel(name=bg))
+        analysis = Analysis(
+            time=init_time, domain=domain, frequency=freq, system=system, model=wx_model
         )
+        db.session.add(analysis)
 
-    with app.app_context():
-        result = diag.get_model_metadata()
+    result = diag.get_model_metadata()
 
     assert result
-    assert result.model_list == set(["3DRTMA", "RTMA"])
-    assert result.system_list == set(["JET", "WCOSS"])
-    assert result.domain_list == set(["CONUS"])
-    assert result.frequency_list == set(["REALTIME", "RETRO"])
-    assert result.background_list == set(["HRRR", "RRFS"])
-    assert result.init_time_list == set(["2023-03-17T14:00", "2023-03-17T15:00"])
-    assert result.variable_list == set(variable_list)
+    assert result.model_list == ["3DRTMA", "RTMA"]
+    assert result.system_list == ["JET", "WCOSS"]
+    assert result.domain_list == ["CONUS"]
+    assert result.frequency_list == ["REALTIME", "RETRO"]
+    assert result.background_list == ["HRRR", "RRFS"]
+    assert result.init_time_list == [
+        datetime(2023, 3, 17, 14),
+        datetime(2023, 3, 17, 15),
+    ]
+    assert result.variable_list == variable_list
 
 
 @pytest.mark.parametrize(
