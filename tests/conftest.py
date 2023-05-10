@@ -3,11 +3,14 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
+import flask_migrate
+
 # Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
 # https://github.com/pydata/xarray/issues/7259
 import netCDF4  # type: ignore # noqa: F401 # This needs to be imported before numpy
 import numpy as np
 import pytest
+import sqlalchemy
 import xarray as xr
 from s3fs import S3FileSystem, S3Map  # type: ignore
 
@@ -42,16 +45,52 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_aws)
 
 
+@pytest.fixture(scope="session")
+def test_db():
+    engine = sqlalchemy.create_engine(
+        "postgresql+psycopg://postgres:oranges@localhost:5432/postgres",
+        isolation_level="AUTOCOMMIT",
+    )
+    with engine.connect() as conn:
+        conn.execute(sqlalchemy.text("DROP DATABASE IF EXISTS test_unified_graphics"))
+        conn.execute(sqlalchemy.text("CREATE DATABASE test_unified_graphics"))
+
+    yield
+
+    with engine.connect() as conn:
+        conn.execute(sqlalchemy.text("DROP DATABASE test_unified_graphics"))
+
+    engine.dispose()
+
+
+@pytest.mark.usefixtures("test_db")
 @pytest.fixture
 def app(tmp_path):
     diag_dir = tmp_path / "data"
     diag_dir.mkdir()
 
-    app = create_app()
+    app = create_app(
+        {
+            "SQLALCHEMY_DATABASE_URI": (
+                "postgresql+psycopg://postgres:oranges@localhost:5432/"
+                "test_unified_graphics"
+            )
+        }
+    )
+
     app.config["DIAG_DIR"] = str(diag_dir.as_uri())
     app.config["DIAG_ZARR"] = str(tmp_path / "test_diag.zarr")
 
+    with app.app_context():
+        flask_migrate.upgrade()
+
     yield app
+
+
+@pytest.fixture
+def app_ctx(app):
+    with app.app_context():
+        yield
 
 
 @pytest.fixture
