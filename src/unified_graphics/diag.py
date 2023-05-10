@@ -125,13 +125,40 @@ ModelMetadata = namedtuple(
 
 
 def get_model_metadata() -> ModelMetadata:
-    model_list = db.session.scalars(sa.select(WeatherModel.name).distinct()).all()
-    system_list = db.session.scalars(sa.select(Analysis.system).distinct()).all()
-    domain_list = db.session.scalars(sa.select(Analysis.domain).distinct()).all()
-    frequency_list = db.session.scalars(sa.select(Analysis.frequency).distinct()).all()
-    background_list = db.session.scalars(sa.select(WeatherModel.name).distinct()).all()
-    init_time_list = db.session.scalars(sa.select(Analysis.time).distinct()).all()
-    variable_list = ["uv", "ps", "q", "t"]
+    model_list = db.session.scalars(
+        sa.select(WeatherModel.name)
+        .where(WeatherModel.analysis_list.any())
+        .distinct()
+        .order_by(WeatherModel.name)
+    ).all()
+    system_list = db.session.scalars(
+        sa.select(Analysis.system).distinct().order_by(Analysis.system)
+    ).all()
+    domain_list = db.session.scalars(
+        sa.select(Analysis.domain).distinct().order_by(Analysis.domain)
+    ).all()
+    frequency_list = db.session.scalars(
+        sa.select(Analysis.frequency).distinct().order_by(Analysis.frequency)
+    ).all()
+
+    bg_subq = (
+        sa.select(WeatherModel.background_id)
+        .where(WeatherModel.background_id.isnot(None))
+        .distinct()
+        .subquery("bg_model")
+    )
+    background_list = db.session.scalars(
+        sa.select(WeatherModel.name)
+        .join(bg_subq, bg_subq.c.background_id == WeatherModel.id)
+        .distinct()
+        .order_by(WeatherModel.name)
+    ).all()
+
+    init_time_list = db.session.scalars(
+        sa.select(Analysis.time).distinct().order_by(Analysis.time)
+    ).all()
+
+    variable_list = ["ps", "q", "t", "uv"]
 
     return ModelMetadata(
         model_list,
