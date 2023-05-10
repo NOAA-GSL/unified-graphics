@@ -1,6 +1,5 @@
 import os
 import uuid
-from datetime import datetime
 from unittest import mock
 
 import numpy as np
@@ -44,10 +43,7 @@ def test_get_model_metadata():
     assert result.domain_list == ["CONUS"]
     assert result.frequency_list == ["REALTIME", "RETRO"]
     assert result.background_list == ["HRRR", "RRFS"]
-    assert result.init_time_list == [
-        datetime(2023, 3, 17, 14),
-        datetime(2023, 3, 17, 15),
-    ]
+    assert result.init_time_list == ["2023-03-17T14:00", "2023-03-17T15:00"]
     assert result.variable_list == variable_list
 
 

@@ -154,9 +154,12 @@ def get_model_metadata() -> ModelMetadata:
         .order_by(WeatherModel.name)
     ).all()
 
-    init_time_list = db.session.scalars(
-        sa.select(Analysis.time).distinct().order_by(Analysis.time)
-    ).all()
+    init_time_list = [
+        t.isoformat(timespec="minutes")
+        for t in db.session.scalars(
+            sa.select(Analysis.time).distinct().order_by(Analysis.time)
+        ).all()
+    ]
 
     variable_list = ["ps", "q", "t", "uv"]
 
