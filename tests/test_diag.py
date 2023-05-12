@@ -7,8 +7,8 @@ import pytest
 import xarray as xr
 from werkzeug.datastructures import MultiDict
 
-from unified_graphics import db, diag
-from unified_graphics.models import Analysis, WeatherModel
+from unified_graphics import diag
+from unified_graphics.models import Analysis, WeatherModel, db
 
 # Global resources for s3
 test_bucket_name = "osti-modeling-dev-rtma-vis"

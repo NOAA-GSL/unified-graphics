@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
-import flask_migrate
+import alembic.command
+import alembic.config
 
 # Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
 # https://github.com/pydata/xarray/issues/7259
@@ -55,6 +56,9 @@ def test_db():
         conn.execute(sqlalchemy.text("DROP DATABASE IF EXISTS test_unified_graphics"))
         conn.execute(sqlalchemy.text("CREATE DATABASE test_unified_graphics"))
 
+    config = alembic.config.Config("alembic.ini")
+    alembic.command.upgrade(config, revision="head")
+
     yield
 
     with engine.connect() as conn:
@@ -63,9 +67,8 @@ def test_db():
     engine.dispose()
 
 
-@pytest.mark.usefixtures("test_db")
 @pytest.fixture
-def app(tmp_path):
+def app(tmp_path, test_db):
     diag_dir = tmp_path / "data"
     diag_dir.mkdir()
 
@@ -80,9 +83,6 @@ def app(tmp_path):
 
     app.config["DIAG_DIR"] = str(diag_dir.as_uri())
     app.config["DIAG_ZARR"] = str(tmp_path / "test_diag.zarr")
-
-    with app.app_context():
-        flask_migrate.upgrade()
 
     yield app
 
