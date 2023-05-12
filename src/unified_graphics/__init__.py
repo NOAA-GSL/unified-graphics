@@ -2,14 +2,10 @@ from logging.config import dictConfig
 from typing import Any, Mapping, Optional
 
 from flask import Flask
-from flask_migrate import Migrate  # type: ignore
-from flask_sqlalchemy import SQLAlchemy
+
+from . import models, routes
 
 __version__ = "0.1.0"
-
-
-db = SQLAlchemy()
-migrate = Migrate()
 
 
 def create_app(config: Optional[Mapping[str, Any]] = None):
@@ -39,10 +35,7 @@ def create_app(config: Optional[Mapping[str, Any]] = None):
     app.config.from_mapping(config)
     app.config.from_prefixed_env()
 
-    db.init_app(app)
-    migrate.init_app(app, db)
-
-    from . import routes
+    models.db.init_app(app)
 
     app.register_blueprint(routes.bp)
 

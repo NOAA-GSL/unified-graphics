@@ -1,9 +1,20 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, UniqueConstraint
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ForeignKey, MetaData, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from unified_graphics import db
+# Naming conventions for constrant names. Defining these conventions makes the database
+# more portable. See: https://alembic.sqlalchemy.org/en/latest/naming.html
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+db = SQLAlchemy(metadata=MetaData(naming_convention=convention))
+
 
 # FIXME: Disable typechecking on the model class inheritance until stubs are created for
 # Flask-SqlAlchemy

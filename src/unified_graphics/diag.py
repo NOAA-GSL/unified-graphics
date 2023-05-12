@@ -14,8 +14,7 @@ from s3fs import S3FileSystem, S3Map  # type: ignore
 from werkzeug.datastructures import MultiDict
 from xarray.core.dataset import Dataset
 
-from . import db
-from .models import Analysis, WeatherModel
+from .models import Analysis, WeatherModel, db
 
 
 class MinimLoop(Enum):
