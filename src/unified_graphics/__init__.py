@@ -32,8 +32,8 @@ def create_app(config: Optional[Mapping[str, Any]] = None):
     )
 
     app = Flask(__name__)
-    app.config.from_mapping(config)
     app.config.from_prefixed_env()
+    app.config.from_mapping(config)
 
     models.db.init_app(app)
 
