@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -14,6 +15,7 @@ import pytest
 import sqlalchemy
 import xarray as xr
 from s3fs import S3FileSystem, S3Map  # type: ignore
+from sqlalchemy.orm import Session
 
 from unified_graphics import create_app
 
@@ -47,55 +49,68 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
-def test_db():
-    engine = sqlalchemy.create_engine(
+def db_name():
+    now = datetime.now()
+
+    return f"test_unified_graphics_{now.strftime('%Y%m%d%H%M%S')}"
+
+
+@pytest.fixture(scope="session")
+def engine(db_name):
+    autocommit_engine = sqlalchemy.create_engine(
         "postgresql+psycopg://postgres:oranges@localhost:5432/postgres",
         isolation_level="AUTOCOMMIT",
     )
-    with engine.connect() as conn:
-        conn.execute(sqlalchemy.text("DROP DATABASE IF EXISTS test_unified_graphics"))
-        conn.execute(sqlalchemy.text("CREATE DATABASE test_unified_graphics"))
+    with autocommit_engine.connect() as conn:
+        conn.execute(sqlalchemy.text(f"DROP DATABASE IF EXISTS {db_name}"))
+        conn.execute(sqlalchemy.text(f"CREATE DATABASE {db_name}"))
+
+    url = f"postgresql+psycopg://postgres:oranges@localhost:5432/{db_name}"
 
     config = alembic.config.Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", url)
     alembic.command.upgrade(config, revision="head")
 
-    yield
+    _engine = sqlalchemy.create_engine(url)
+    yield _engine
+    _engine.dispose()
 
-    with engine.connect() as conn:
-        conn.execute(sqlalchemy.text("DROP DATABASE test_unified_graphics"))
+    with autocommit_engine.connect() as conn:
+        conn.execute(sqlalchemy.text(f"DROP DATABASE {db_name}"))
 
-    engine.dispose()
+    autocommit_engine.dispose()
 
 
 @pytest.fixture
-def app(tmp_path, test_db):
-    diag_dir = tmp_path / "data"
-    diag_dir.mkdir()
+def session(engine):
+    session = Session(engine)
+    yield session
+    session.close()
 
-    app = create_app(
+
+@pytest.fixture
+def diag_zarr_file(tmp_path):
+    return str(tmp_path / "test_diag.zarr")
+
+
+@pytest.fixture
+def app(diag_zarr_file, engine):
+    _app = create_app(
         {
-            "SQLALCHEMY_DATABASE_URI": (
-                "postgresql+psycopg://postgres:oranges@localhost:5432/"
-                "test_unified_graphics"
-            )
+            "SQLALCHEMY_DATABASE_URI": engine.url,
+            "DIAG_ZARR": diag_zarr_file,
         }
     )
 
-    app.config["DIAG_DIR"] = str(diag_dir.as_uri())
-    app.config["DIAG_ZARR"] = str(tmp_path / "test_diag.zarr")
+    _app.testing = True
 
-    yield app
-
-
-@pytest.fixture
-def app_ctx(app):
-    with app.app_context():
-        yield
+    yield _app
 
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    with app.test_client() as c:
+        yield c
 
 
 @pytest.fixture
@@ -261,7 +276,7 @@ def diag_dataset():
 
 
 @pytest.fixture
-def diag_zarr(app, diag_dataset):
+def diag_zarr(diag_zarr_file, diag_dataset):
     def factory(
         variables: list[str],
         initialization_time: str,
@@ -275,8 +290,7 @@ def diag_zarr(app, diag_dataset):
         data: Optional[xr.Dataset] = None,
     ):
         if not zarr_file:
-            with app.app_context():
-                zarr_file = app.config["DIAG_ZARR"]
+            zarr_file = diag_zarr_file
 
         result = urlparse(zarr_file)
 
