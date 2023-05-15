@@ -22,7 +22,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", os.environ["FLASK_SQLALCHEMY_DATABASE_URI"])
+# Set the URL for the connection from the environment variable if it's not already set.
+# We set this manually when running tests to specify our test database.
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option(
+        "sqlalchemy.url", os.environ["FLASK_SQLALCHEMY_DATABASE_URI"]
+    )
 
 # add your model's MetaData object here
 # for 'autogenerate' support
