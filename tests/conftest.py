@@ -18,6 +18,17 @@ from sqlalchemy.orm import Session
 
 from unified_graphics import create_app
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+test_db_user = os.environ.get("TEST_DB_USER", "postgres")
+test_db_pass = os.environ.get("TEST_DB_PASS", "postgres")
+test_db_host = os.environ.get("TEST_DB_HOST", "localhost:5432")
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -55,14 +66,14 @@ def db_name():
 @pytest.fixture(scope="session")
 def test_db(db_name):
     autocommit_engine = sqlalchemy.create_engine(
-        "postgresql+psycopg://postgres:oranges@localhost:5432/postgres",
+        f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/postgres",
         isolation_level="AUTOCOMMIT",
     )
     with autocommit_engine.connect() as conn:
         conn.execute(sqlalchemy.text(f"DROP DATABASE IF EXISTS {db_name}"))
         conn.execute(sqlalchemy.text(f"CREATE DATABASE {db_name}"))
 
-    url = f"postgresql+psycopg://postgres:oranges@localhost:5432/{db_name}"
+    url = f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/{db_name}"
 
     config = alembic.config.Config("alembic.ini")
     config.set_main_option("sqlalchemy.url", url)
