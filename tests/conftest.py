@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
@@ -50,9 +49,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def db_name():
-    now = datetime.now()
-
-    return f"test_unified_graphics_{now.strftime('%Y%m%d%H%M%S')}"
+    return "test_unified_graphics"
 
 
 @pytest.fixture(scope="session")
