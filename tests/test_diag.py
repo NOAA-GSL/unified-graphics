@@ -19,7 +19,6 @@ def test_key_prefix():
     return f"/test/{uuid.uuid4()}/"
 
 
-@pytest.mark.skip
 def test_get_model_metadata(session):
     model_run_list = [
         ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00"),
