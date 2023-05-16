@@ -53,7 +53,7 @@ def db_name():
 
 
 @pytest.fixture(scope="session")
-def engine(db_name):
+def test_db(db_name):
     autocommit_engine = sqlalchemy.create_engine(
         "postgresql+psycopg://postgres:oranges@localhost:5432/postgres",
         isolation_level="AUTOCOMMIT",
@@ -68,9 +68,7 @@ def engine(db_name):
     config.set_main_option("sqlalchemy.url", url)
     alembic.command.upgrade(config, revision="head")
 
-    _engine = sqlalchemy.create_engine(url)
-    yield _engine
-    _engine.dispose()
+    yield url
 
     with autocommit_engine.connect() as conn:
         conn.execute(sqlalchemy.text(f"DROP DATABASE {db_name}"))
@@ -78,7 +76,11 @@ def engine(db_name):
     autocommit_engine.dispose()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def engine(test_db):
+    _engine = sqlalchemy.create_engine(test_db)
+    yield _engine
+    _engine.dispose()
 def session(engine):
     session = Session(engine)
     yield session
@@ -91,10 +93,10 @@ def diag_zarr_file(tmp_path):
 
 
 @pytest.fixture
-def app(diag_zarr_file, engine):
+def app(diag_zarr_file, test_db):
     _app = create_app(
         {
-            "SQLALCHEMY_DATABASE_URI": engine.url,
+            "SQLALCHEMY_DATABASE_URI": test_db,
             "DIAG_ZARR": diag_zarr_file,
         }
     )
