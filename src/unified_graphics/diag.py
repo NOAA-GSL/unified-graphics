@@ -9,12 +9,11 @@ import numpy as np
 import sqlalchemy as sa
 import xarray as xr
 import zarr  # type: ignore
-from flask import current_app
 from s3fs import S3FileSystem, S3Map  # type: ignore
 from werkzeug.datastructures import MultiDict
 from xarray.core.dataset import Dataset
 
-from .models import Analysis, WeatherModel, db
+from .models import Analysis, WeatherModel
 
 
 class MinimLoop(Enum):
@@ -123,20 +122,20 @@ ModelMetadata = namedtuple(
 )
 
 
-def get_model_metadata() -> ModelMetadata:
-    model_list = db.session.scalars(
+def get_model_metadata(session) -> ModelMetadata:
+    model_list = session.scalars(
         sa.select(WeatherModel.name)
         .where(WeatherModel.analysis_list.any())
         .distinct()
         .order_by(WeatherModel.name)
     ).all()
-    system_list = db.session.scalars(
+    system_list = session.scalars(
         sa.select(Analysis.system).distinct().order_by(Analysis.system)
     ).all()
-    domain_list = db.session.scalars(
+    domain_list = session.scalars(
         sa.select(Analysis.domain).distinct().order_by(Analysis.domain)
     ).all()
-    frequency_list = db.session.scalars(
+    frequency_list = session.scalars(
         sa.select(Analysis.frequency).distinct().order_by(Analysis.frequency)
     ).all()
 
@@ -146,7 +145,7 @@ def get_model_metadata() -> ModelMetadata:
         .distinct()
         .subquery("bg_model")
     )
-    background_list = db.session.scalars(
+    background_list = session.scalars(
         sa.select(WeatherModel.name)
         .join(bg_subq, bg_subq.c.background_id == WeatherModel.id)
         .distinct()
@@ -155,7 +154,7 @@ def get_model_metadata() -> ModelMetadata:
 
     init_time_list = [
         t.isoformat(timespec="minutes")
-        for t in db.session.scalars(
+        for t in session.scalars(
             sa.select(Analysis.time).distinct().order_by(Analysis.time)
         ).all()
     ]
@@ -193,6 +192,7 @@ def get_store(url: str) -> Union[str, S3Map]:
 
 
 def open_diagnostic(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -202,7 +202,7 @@ def open_diagnostic(
     initialization_time: str,
     loop: MinimLoop,
 ) -> xr.Dataset:
-    store = get_store(current_app.config["DIAG_ZARR"])
+    store = get_store(diag_zarr)
     group = (
         f"/{model}/{system}/{domain}/{background}/{frequency}"
         f"/{variable.value}/{initialization_time}/{loop.value}"
@@ -253,6 +253,7 @@ def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
 
 
 def scalar(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -264,6 +265,7 @@ def scalar(
     filters: MultiDict,
 ) -> List[Observation]:
     data = open_diagnostic(
+        diag_zarr,
         model,
         system,
         domain,
@@ -293,6 +295,7 @@ def scalar(
 
 
 def temperature(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -303,6 +306,7 @@ def temperature(
     filters: MultiDict,
 ) -> List[Observation]:
     return scalar(
+        diag_zarr,
         model,
         system,
         domain,
@@ -316,6 +320,7 @@ def temperature(
 
 
 def moisture(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -326,6 +331,7 @@ def moisture(
     filters: MultiDict,
 ) -> List[Observation]:
     return scalar(
+        diag_zarr,
         model,
         system,
         domain,
@@ -339,6 +345,7 @@ def moisture(
 
 
 def pressure(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -349,6 +356,7 @@ def pressure(
     filters: MultiDict,
 ) -> List[Observation]:
     return scalar(
+        diag_zarr,
         model,
         system,
         domain,
@@ -384,6 +392,7 @@ def vector_magnitude(u, v):
 
 
 def wind(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -394,6 +403,7 @@ def wind(
     filters: MultiDict,
 ) -> List[Observation]:
     data = open_diagnostic(
+        diag_zarr,
         model,
         system,
         domain,
@@ -462,6 +472,7 @@ def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
 
 
 def get_model_run_list(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -469,13 +480,14 @@ def get_model_run_list(
     frequency: str,
     variable: Variable,
 ):
-    store = get_store(current_app.config["DIAG_ZARR"])
+    store = get_store(diag_zarr)
     path = "/".join([model, system, domain, background, frequency, variable.value])
     with zarr.open_group(store, mode="r", path=path) as group:
         return group.group_keys()
 
 
 def summary(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -486,7 +498,7 @@ def summary(
     loop: MinimLoop,
     filters: MultiDict,
 ) -> Optional[DiagSummary]:
-    store = get_store(current_app.config["DIAG_ZARR"])
+    store = get_store(diag_zarr)
     path = "/".join(
         [
             model,
@@ -506,6 +518,7 @@ def summary(
 
 
 def history(
+    diag_zarr: str,
     model: str,
     system: str,
     domain: str,
@@ -516,9 +529,10 @@ def history(
     filters: MultiDict,
 ):
     for init_time in get_model_run_list(
-        model, system, domain, background, frequency, variable
+        diag_zarr, model, system, domain, background, frequency, variable
     ):
         result = summary(
+            diag_zarr,
             model,
             system,
             domain,
