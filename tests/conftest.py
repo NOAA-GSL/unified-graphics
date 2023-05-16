@@ -71,6 +71,23 @@ def test_db(db_name):
     yield url
 
     with autocommit_engine.connect() as conn:
+        # Disconnect all users from the database we are dropping. I'm unsure why this is
+        # necessary, as I think all fo the connections created for our tests should be
+        # cleaned up by now.
+        #
+        # Copied from:
+        # https://sqlalchemy-utils.readthedocs.io/en/latest/_modules/sqlalchemy_utils/functions/database.html#drop_database
+        version = conn.dialect.server_version_info
+        pid_column = "pid" if (version >= (9, 2)) else "procpid"
+        conn.execute(
+            sqlalchemy.text(
+                f"""SELECT pg_terminate_backend(pg_stat_activity.{pid_column})
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.datname = '{db_name}'
+        AND {pid_column} <> pg_backend_pid();
+        """
+            )
+        )
         conn.execute(sqlalchemy.text(f"DROP DATABASE {db_name}"))
 
     autocommit_engine.dispose()
@@ -81,6 +98,8 @@ def engine(test_db):
     _engine = sqlalchemy.create_engine(test_db)
     yield _engine
     _engine.dispose()
+
+
 @pytest.fixture(scope="session")
 def session(engine):
     with Session(engine) as s:
