@@ -82,9 +82,9 @@ def engine(test_db):
     yield _engine
     _engine.dispose()
 def session(engine):
-    session = Session(engine)
-    yield session
-    session.close()
+    with Session(engine) as s:
+        yield s
+        s.rollback()
 
 
 @pytest.fixture
