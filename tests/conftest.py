@@ -100,7 +100,7 @@ def engine(test_db):
     _engine.dispose()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def session(engine):
     with Session(engine) as s:
         yield s
