@@ -26,7 +26,7 @@ def test_save_new(tmp_path, diag_dataset, session):
     )
 
     zarr_file = tmp_path / "unified_graphics.zarr"
-    diag.save(zarr_file, ps)
+    diag.save(session, zarr_file, ps)
 
     assert zarr_file.exists(), "Zarr file not created"
     assert (zarr_file / model).exists(), "model group is missing"
@@ -93,7 +93,7 @@ def test_save_new(tmp_path, diag_dataset, session):
     assert analysis_count == 1, "Analysis row not created in database"
 
 
-def test_add_loop(diag_zarr, diag_dataset):
+def test_add_loop(session, diag_zarr, diag_dataset):
     """diag.save should add a new group for each loop"""
 
     variables = ["ps"]
@@ -103,7 +103,7 @@ def test_add_loop(diag_zarr, diag_dataset):
     loop = "ges"
     ps = diag_dataset(variables[0], init_time, loop)
 
-    diag.save(zarr_file, ps)
+    diag.save(session, zarr_file, ps)
 
     assert (
         Path(zarr_file)
@@ -124,7 +124,7 @@ def test_add_loop(diag_zarr, diag_dataset):
     )
 
 
-def test_add_variable(diag_zarr, diag_dataset):
+def test_add_variable(session, diag_zarr, diag_dataset):
     """diag.save should insert new variables into existing groups"""
 
     init_time = "2022-05-05T14"
@@ -133,7 +133,7 @@ def test_add_variable(diag_zarr, diag_dataset):
 
     t = diag_dataset("t", init_time, loop)
 
-    diag.save(zarr_file, t)
+    diag.save(session, zarr_file, t)
 
     xr.testing.assert_equal(
         xr.open_zarr(
