@@ -81,6 +81,7 @@ def engine(test_db):
     _engine = sqlalchemy.create_engine(test_db)
     yield _engine
     _engine.dispose()
+@pytest.fixture(scope="session")
 def session(engine):
     with Session(engine) as s:
         yield s
