@@ -84,12 +84,8 @@ jobs:
           poetry env use 3.9
           poetry install
       - name: Test
-        env:
-          TEST_DB_USER: "postgres"
-          TEST_DB_PASS: "postgres"
-          TEST_DB_HOST: "postgres:5432"
         run: |
-          poetry run coverage run -m pytest -xs --tb=no
+          poetry run coverage run -m pytest --tb=no
           poetry run coverage report
           poetry run coverage xml
       - name: Code Coverage Report
