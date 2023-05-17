@@ -1,8 +1,8 @@
 """Test saving xarray Datasets to Zarr"""
 
 from datetime import datetime
-from pathlib import Path
 
+import pytest
 import xarray as xr
 from sqlalchemy import func, select
 
@@ -10,61 +10,72 @@ from unified_graphics.etl import diag
 from unified_graphics.models import Analysis, WeatherModel
 
 
-def test_save_new(tmp_path, diag_dataset, session):
-    """diag.save should create a new Zarr on first write"""
+@pytest.fixture
+def zarr_file(tmp_path):
+    return tmp_path / "unified_graphics.zarr"
 
+
+@pytest.fixture(scope="module")
+def analysis():
     init_time = "2022-05-05T14"
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"
     frequency = "REALTIME"
     background = "HRRR"
-    loop = "anl"
 
+    return (init_time, model, system, domain, frequency, background)
+
+
+@pytest.fixture
+def ps_anl(analysis, diag_dataset, session, zarr_file):
+    (init_time, model, system, domain, frequency, background) = analysis
     ps = diag_dataset(
-        "ps", init_time, loop, model, system, domain, frequency, background
+        "ps", init_time, "anl", model, system, domain, frequency, background
     )
 
-    zarr_file = tmp_path / "unified_graphics.zarr"
     diag.save(session, zarr_file, ps)
 
-    assert zarr_file.exists(), "Zarr file not created"
-    assert (zarr_file / model).exists(), "model group is missing"
-    assert (zarr_file / model / system).exists(), "system group is missing"
-    assert (zarr_file / model / system / domain).exists(), "domain group is missing"
-    assert (
-        zarr_file / model / system / domain / background
-    ).exists(), "background group is missing"
-    assert (
-        zarr_file / model / system / domain / background / frequency
-    ).exists(), "frequency group is missing"
-    assert (
-        zarr_file / model / system / domain / background / frequency / "ps"
-    ).exists(), "variable group is missing"
-    assert (
-        zarr_file / model / system / domain / background / frequency / "ps" / init_time
-    ).exists(), "initialization time group is missing"
-    assert (
-        zarr_file
-        / model
-        / system
-        / domain
-        / background
-        / frequency
-        / "ps"
-        / init_time
-        / loop
-    ).exists(), "loop group is missing"
+    return ps
+
+
+@pytest.fixture
+def ps_ges(analysis, diag_dataset, session, zarr_file):
+    (init_time, model, system, domain, frequency, background) = analysis
+    ps = diag_dataset(
+        "ps", init_time, "ges", model, system, domain, frequency, background
+    )
+
+    diag.save(session, zarr_file, ps)
+
+    return ps
+
+
+@pytest.fixture
+def t_anl(analysis, diag_dataset, session, zarr_file):
+    (init_time, model, system, domain, frequency, background) = analysis
+    t = diag_dataset(
+        "t", init_time, "anl", model, system, domain, frequency, background
+    )
+
+    diag.save(session, zarr_file, t)
+
+    return t
+
+
+def test_save_new(ps_anl, analysis, zarr_file, session):
+    """diag.save should create a new Zarr on first write"""
+    (init_time, model, system, domain, frequency, background) = analysis
 
     xr.testing.assert_equal(
         xr.open_zarr(
             zarr_file,
             group=(
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
-                f"ps/{init_time}/{loop}"
+                f"ps/{init_time}/anl"
             ),
         ),
-        ps,
+        ps_anl,
     )
 
     bg_model = session.scalar(
@@ -93,52 +104,63 @@ def test_save_new(tmp_path, diag_dataset, session):
     assert analysis_count == 1, "Analysis row not created in database"
 
 
-def test_add_loop(session, diag_zarr, diag_dataset):
+def test_add_loop(ps_anl, ps_ges, analysis, zarr_file, session):
     """diag.save should add a new group for each loop"""
 
-    variables = ["ps"]
-    init_time = "2022-05-05T14"
-    zarr_file = diag_zarr(variables, "anl", init_time)
-
-    loop = "ges"
-    ps = diag_dataset(variables[0], init_time, loop)
-
-    diag.save(session, zarr_file, ps)
-
-    assert (
-        Path(zarr_file)
-        / "Unknown/Unknown/Unknown/Unknown/Unknown/ps"
-        / init_time
-        / loop
-    ).exists(), "Loop group is missing"
+    (init_time, model, system, domain, frequency, background) = analysis
 
     xr.testing.assert_equal(
         xr.open_zarr(
             zarr_file,
             group=(
-                f"/Unknown/Unknown/Unknown/Unknown/Unknown/"
-                f"{variables[0]}/{init_time}/{loop}"
+                f"{model}/{system}/{domain}/{background}/{frequency}/"
+                f"ps/{init_time}/anl"
             ),
         ),
-        ps,
+        ps_anl,
     )
-
-
-def test_add_variable(session, diag_zarr, diag_dataset):
-    """diag.save should insert new variables into existing groups"""
-
-    init_time = "2022-05-05T14"
-    loop = "anl"
-    zarr_file = diag_zarr(["ps"], init_time, loop)
-
-    t = diag_dataset("t", init_time, loop)
-
-    diag.save(session, zarr_file, t)
 
     xr.testing.assert_equal(
         xr.open_zarr(
             zarr_file,
-            group=f"/Unknown/Unknown/Unknown/Unknown/Unknown/t/{init_time}/{loop}",
+            group=(
+                f"{model}/{system}/{domain}/{background}/{frequency}/"
+                f"ps/{init_time}/ges"
+            ),
         ),
-        diag_dataset("t", init_time, loop),
+        ps_ges,
     )
+
+    analysis_count = session.scalar(select(func.count()).select_from(Analysis))
+    assert analysis_count == 1
+
+
+def test_add_variable(ps_anl, t_anl, analysis, zarr_file, session):
+    """diag.save should insert new variables into existing groups"""
+
+    (init_time, model, system, domain, frequency, background) = analysis
+
+    xr.testing.assert_equal(
+        xr.open_zarr(
+            zarr_file,
+            group=(
+                f"{model}/{system}/{domain}/{background}/{frequency}/"
+                f"ps/{init_time}/anl"
+            ),
+        ),
+        ps_anl,
+    )
+
+    xr.testing.assert_equal(
+        xr.open_zarr(
+            zarr_file,
+            group=(
+                f"{model}/{system}/{domain}/{background}/{frequency}/"
+                f"t/{init_time}/anl"
+            ),
+        ),
+        t_anl,
+    )
+
+    analysis_count = session.scalar(select(func.count()).select_from(Analysis))
+    assert analysis_count == 1
