@@ -65,6 +65,9 @@ def db_name():
 
 @pytest.fixture(scope="session")
 def test_db(db_name):
+    print(
+        f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/postgres",
+    )
     autocommit_engine = sqlalchemy.create_engine(
         f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/postgres",
         isolation_level="AUTOCOMMIT",
