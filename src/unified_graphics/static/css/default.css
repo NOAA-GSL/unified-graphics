@@ -260,3 +260,9 @@
     outline-color: transparent;
   }
 }
+
+small.caps {
+  font-size: inherit;
+  font-variant: all-small-caps;
+  letter-spacing: 0.03em;
+}
