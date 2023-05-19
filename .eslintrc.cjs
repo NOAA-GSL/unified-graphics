@@ -10,4 +10,12 @@ module.exports = {
     es2017: true,
     node: true,
   },
+  overrides: [
+    {
+      files: ["tests/js/**/*.test.js"],
+      env: {
+        mocha: true,
+      },
+    },
+  ],
 };
