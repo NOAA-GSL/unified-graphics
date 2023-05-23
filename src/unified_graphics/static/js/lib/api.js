@@ -2,8 +2,11 @@
  * Fetch JSON data from a URL
  *
  * @param {string} url - The URL from which data is fetched
+ * @returns {object} - The parsed JSON data
  */
-function getJson(url) { }
+async function getJson(url) {
+  return fetch(url).then((response) => response.json());
+}
 
 // We’re exporting a default object instead of exporting individual functions so that we
 // can stub these functions in our tests. Sinon can’t stub individual function exported

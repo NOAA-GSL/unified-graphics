@@ -27,4 +27,15 @@ export default /** @type {import("@web/test-runner").TestRunnerConfig} */ ({
 
   /** Browsers to run tests on */
   browsers: [playwrightLauncher({ product: "chromium" })],
+
+  /** Mocks for network tests */
+  plugins: [
+    {
+      name: "mock-api",
+      serve(context) {
+        if (context.path !== "/api/data/") return;
+        return JSON.stringify([1, 2, 3]);
+      },
+    },
+  ],
 });
