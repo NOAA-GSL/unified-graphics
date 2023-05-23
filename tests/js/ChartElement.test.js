@@ -1,5 +1,6 @@
 import { expect, defineCE, fixture } from "@open-wc/testing";
 import { spy } from "sinon";
+import Series from "../../src/unified_graphics/static/js/lib/Series.js";
 import ChartElement from "../../src/unified_graphics/static/js/component/ChartElement";
 
 const subject = defineCE(ChartElement);
@@ -11,7 +12,7 @@ customElements.define(
   "chart-source",
   class extends HTMLElement {
     get data() {
-      return [1, 2, 3];
+      return new Series(this.getAttribute("name"), [1, 2, 3]);
     }
   }
 );
@@ -160,14 +161,26 @@ describe("ChartElement", () => {
   });
 
   describe("data property", () => {
-    it("is an empty array with no data", async () => {
+    it("is an empty array when there is no data", async () => {
       let el = await fixture(`<${subject}></${subject}>`);
       expect(el.data).to.be.deep.equal([]);
     });
 
     it("is a two-dimensional array", async () => {
       let el = await fixture(`<${subject}><chart-source></chart-source></${subject}>`);
-      expect(el.data).to.be.deep.equal([[1, 2, 3]]);
+      expect(el.data).to.be.deep.equal([{ data: [1, 2, 3] }]);
+    });
+
+    it("includes series names when available", async () => {
+      let el = await fixture(`<${subject}>
+          <chart-source name="first"></chart-source>
+          <chart-source name="second"></chart-source>
+        </${subject}>`);
+
+      expect(el.data).to.be.deep.equal([
+        { name: "first", data: [1, 2, 3] },
+        { name: "second", data: [1, 2, 3] },
+      ]);
     });
   });
 });
