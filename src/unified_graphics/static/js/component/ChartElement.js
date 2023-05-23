@@ -10,6 +10,7 @@
  *
  * @property {number} height The height of the element
  * @property {number} width The width of the element
+ * @property {object[]} data - An array of data series
  */
 class ChartElement extends HTMLElement {
   /**
@@ -31,6 +32,17 @@ class ChartElement extends HTMLElement {
       default:
         break;
     }
+  }
+
+  get data() {
+    let series = [];
+
+    for (let src of this.querySelectorAll("chart-source")) {
+      if (!src.data) continue;
+      series.push(src.data);
+    }
+
+    return series;
   }
 
   get height() {

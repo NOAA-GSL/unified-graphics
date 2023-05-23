@@ -4,6 +4,18 @@ import ChartElement from "../../src/unified_graphics/static/js/component/ChartEl
 
 const subject = defineCE(ChartElement);
 
+/**
+ * Mock ChartSource element for testing
+ */
+customElements.define(
+  "chart-source",
+  class extends HTMLElement {
+    get data() {
+      return [1, 2, 3];
+    }
+  }
+);
+
 describe("ChartElement", () => {
   describe("width property", () => {
     let el;
@@ -144,6 +156,18 @@ describe("ChartElement", () => {
     it("calls render when width and height are set", async () => {
       await fixture(`<${subject} width="100" height="100"></${subject}>`);
       expect(renderSpy.calledOnce).to.be.true;
+    });
+  });
+
+  describe("data property", () => {
+    it("is an empty array with no data", async () => {
+      let el = await fixture(`<${subject}></${subject}>`);
+      expect(el.data).to.be.deep.equal([]);
+    });
+
+    it("is a two-dimensional array", async () => {
+      let el = await fixture(`<${subject}><chart-source></chart-source></${subject}>`);
+      expect(el.data).to.be.deep.equal([[1, 2, 3]]);
     });
   });
 });
