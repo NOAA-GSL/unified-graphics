@@ -89,4 +89,8 @@ describe("ChartSource", () => {
       expect(setData).to.throw(TypeError, /^Cannot set property data/);
     });
   });
+
+  describe("errors", () => {
+    it("dispatches chart-source-error on HTTP errors");
+  });
 });

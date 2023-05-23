@@ -8,5 +8,7 @@ describe("api helpers", () => {
       const result = await api.getJson("/api/data/");
       expect(result).to.deep.equal([1, 2, 3]);
     });
+
+    it("throws on HTTP errors");
   });
 });
