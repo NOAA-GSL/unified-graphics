@@ -1,4 +1,5 @@
 import api from "../lib/api.js";
+import Series from "../lib/Series.js";
 
 /**
  * Data has been successfully loaded.
@@ -18,15 +19,15 @@ const CHART_SOURCE_LOAD = "chart-source-load";
  *   <chart-source src="/api/data/"></chart-source>
  * </chart-histogram>
  *
- * @property src {string} - The URL from which data is fetched, also available as an
+ * @property {string} src - The URL from which data is fetched, also available as an
  *  attribute on the HTML element
  * @readonly
- * @property data {object} - A copy of the data loaded from the URL
+ * @property {Series} data - A copy of the data loaded from the URL
  *
  * @fires chart-source-load
  */
 export default class ChartSource extends HTMLElement {
-  #data;
+  #data = Object.freeze([]);
 
   static get observedAttributes() {
     return ["src"];
@@ -51,7 +52,19 @@ export default class ChartSource extends HTMLElement {
   }
 
   get data() {
-    return this.#data;
+    return new Series(this.name, this.#data);
+  }
+
+  get name() {
+    return this.getAttribute("name");
+  }
+
+  set name(value) {
+    if (!value) {
+      this.removeAttribute("name");
+    } else {
+      this.setAttribute("name", value);
+    }
   }
 
   get src() {
