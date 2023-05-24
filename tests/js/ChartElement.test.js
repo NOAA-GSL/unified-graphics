@@ -156,6 +156,37 @@ describe("ChartElement", () => {
       renderSpy.restore();
     });
 
+    it("creates an open shadow root", async () => {
+      const el = await fixture(`<${subject}></${subject}>`);
+      expect(el.shadowRoot).to.be.an.instanceof(ShadowRoot);
+    });
+
+    it("inserts a template into the shadow root", async () => {
+      const comp = defineCE(
+        class extends ChartElement {
+          get template() {
+            return "<span>Template</span>";
+          }
+        }
+      );
+
+      const el = await fixture(`<${comp}></${comp}>`);
+      expect(el).shadowDom.to.equal("<span>Template</span>");
+    });
+
+    it("inserts styles into the shadow root", async () => {
+      const comp = defineCE(
+        class extends ChartElement {
+          get style() {
+            return ":host { color: tomato }";
+          }
+        }
+      );
+
+      const el = await fixture(`<${comp}></${comp}>`);
+      expect(el.shadowRoot.styleSheets.length).to.equal(1);
+    });
+
     it("calls render when width and height are set", async () => {
       await fixture(`<${subject} width="100" height="100"></${subject}>`);
       expect(renderSpy.calledOnce).to.be.true;

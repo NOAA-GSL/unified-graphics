@@ -23,6 +23,25 @@ class ChartElement extends HTMLElement {
     return ["width", "height"];
   }
 
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: "open" });
+
+    let html = "";
+
+    if (this.style) {
+      html += `<style>${this.style}</style>`;
+    }
+
+    if (this.template) {
+      html += this.template;
+    }
+
+    if (html) {
+      root.innerHTML = html;
+    }
+  }
+
   connectedCallback() {
     this.addEventListener("chart-source-load", this.update.bind(this));
   }
