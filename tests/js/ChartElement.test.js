@@ -161,6 +161,11 @@ describe("ChartElement", () => {
       expect(el.shadowRoot).to.be.an.instanceof(ShadowRoot);
     });
 
+    it("has an empty shadow root by default", async () => {
+      const el = await fixture(`<${subject}></${subject}>`);
+      expect(el.shadowRoot.children.length).to.equal(0);
+    });
+
     it("inserts a template into the shadow root", async () => {
       const comp = defineCE(
         class extends ChartElement {
@@ -177,7 +182,7 @@ describe("ChartElement", () => {
     it("inserts styles into the shadow root", async () => {
       const comp = defineCE(
         class extends ChartElement {
-          get style() {
+          get css() {
             return ":host { color: tomato }";
           }
         }

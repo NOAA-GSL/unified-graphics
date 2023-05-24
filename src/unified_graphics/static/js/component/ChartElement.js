@@ -29,7 +29,7 @@ class ChartElement extends HTMLElement {
 
     let html = "";
 
-    if (this.style) {
+    if (this.css) {
       html += `<style>${this.style}</style>`;
     }
 
