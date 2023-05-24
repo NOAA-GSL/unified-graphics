@@ -23,6 +23,10 @@ class ChartElement extends HTMLElement {
     return ["width", "height"];
   }
 
+  connectedCallback() {
+    this.addEventListener("chart-source-load", this.update.bind(this));
+  }
+
   attributeChangedCallback(name) {
     switch (name) {
       case "height":

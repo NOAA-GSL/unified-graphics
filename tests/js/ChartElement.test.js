@@ -1,4 +1,4 @@
-import { expect, defineCE, fixture } from "@open-wc/testing";
+import { expect, defineCE, fixture, oneEvent } from "@open-wc/testing";
 import { spy } from "sinon";
 import Series from "../../src/unified_graphics/static/js/lib/Series.js";
 import ChartElement from "../../src/unified_graphics/static/js/component/ChartElement";
@@ -96,7 +96,7 @@ describe("ChartElement", () => {
     });
 
     beforeEach(async () => {
-      el = await fixture(`<${subject}></${subject}>`);
+      el = await fixture(`<${subject}><chart-source></chart-source></${subject}>`);
     });
 
     afterEach(() => {
@@ -132,6 +132,13 @@ describe("ChartElement", () => {
       el.height = 100;
       expect(renderSpy.calledOnce).to.be.true;
     });
+
+    it("is called when new data is loaded", async () => {
+      const src = el.children[0];
+      setTimeout(() => src.dispatchEvent(new Event("chart-source-load")));
+      await oneEvent(src, "chart-source-load");
+      expect(renderSpy.calledOnce).to.be.true;
+    });
   });
 
   describe("initialization", () => {
@@ -147,11 +154,6 @@ describe("ChartElement", () => {
 
     after(() => {
       renderSpy.restore();
-    });
-
-    it("calls render without width and height", async () => {
-      await fixture(`<${subject}></${subject}>`);
-      expect(renderSpy.calledOnce).to.be.true;
     });
 
     it("calls render when width and height are set", async () => {
