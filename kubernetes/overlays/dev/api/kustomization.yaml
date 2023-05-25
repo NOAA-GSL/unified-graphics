@@ -1,5 +1,9 @@
 bases:
   - ../../../base/api
+
+resources:
+  - "rbac.yaml"
+
 images:
   - name: unified-graphics/api
     newName: ghcr.io/noaa-gsl/unified-graphics/api
