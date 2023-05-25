@@ -1,6 +1,7 @@
 resources:
   - api
   - ui
+  - db
   - ingress.yaml
 commonLabels:
   environment: dev
