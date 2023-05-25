@@ -7,6 +7,7 @@ images:
 
 patchesStrategicMerge:
   - "deployment.yaml"
+  - "job.yaml"
 
 configMapGenerator:
   - name: unified-graphics-api-config
@@ -16,4 +17,7 @@ configMapGenerator:
 secretGenerator:
   - name: unified-graphics-api-secret
     envs:
-    - .env # Should contain AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_SECRET_TOKEN
+    - .env # Should contain AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_SECRET_TOKEN, FLASK_SQLALCHEMY_DATABASE_URI
+  - name: unified-graphics-migrations-secret
+    envs:
+    - .env.migrations # Should contain FLASK_SQLALCHEMY_DATABASE_URI

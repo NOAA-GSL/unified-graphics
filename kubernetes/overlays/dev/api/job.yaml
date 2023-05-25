@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrations
+          envFrom:
+            - secretRef:
+                name: unified-graphics-migrations-secret
+          securityContext:
+            allowPrivilegeEscalation: true # Default behavior
+            runAsNonRoot: false # Default behavior. VLab uses "true" in their environments
