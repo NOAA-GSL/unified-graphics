@@ -6,6 +6,8 @@ from pathlib import Path
 from urllib.parse import unquote_plus
 
 import boto3  # type: ignore
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from . import diag
 
@@ -78,4 +80,8 @@ def lambda_handler(event, context):
     tmp_file = fetch_record(bucket, key)
 
     data = diag.load(tmp_file)
-    diag.save(upload_bucket, data)
+
+    engine = create_engine(os.environ["FLASK_SQLALCHEMY_DATABASE_URI"])
+    with Session(engine) as session:
+        diag.save(session, upload_bucket, data)
+    engine.dispose()
