@@ -81,12 +81,23 @@ def test_handler_test_event():
 @mock.patch("unified_graphics.etl.diag.save")
 @mock.patch("unified_graphics.etl.diag.load")
 @mock.patch("unified_graphics.etl.aws.fetch_record")
-def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
+@mock.patch("unified_graphics.etl.aws.Session")
+@mock.patch("unified_graphics.etl.aws.create_engine")
+def test_handler(
+    mock_create_engine,
+    mock_session,
+    mock_fetch_record,
+    mock_load,
+    mock_save,
+    monkeypatch,
+):
     ug_bucket = "s3://test-bucket/test.zarr"
     dl_bucket = "s3://test-diag-bucket"
     key = "diag_t_anl.202301300600.nc4.gz"
+    db_uri = "postgresql+psycopg://postgres:oranges@localhost:5432/test_uri"
 
     monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+    monkeypatch.setenv("FLASK_SQLALCHEMY_DATABASE_URI", db_uri)
 
     context = {}
     event = {
@@ -100,7 +111,10 @@ def test_handler(mock_fetch_record, mock_load, mock_save, monkeypatch):
 
     mock_fetch_record.assert_called_once_with(dl_bucket, key)
     mock_load.assert_called_once_with(mock_fetch_record.return_value)
-    mock_save.assert_called_once_with(ug_bucket, mock_load.return_value)
+    mock_create_engine.assert_called_once_with(db_uri)
+    mock_save.assert_called_once_with(
+        mock_session().__enter__(), ug_bucket, mock_load.return_value
+    )
 
 
 def test_handler_no_records(monkeypatch):
