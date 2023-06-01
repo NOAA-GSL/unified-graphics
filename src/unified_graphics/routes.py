@@ -1,5 +1,6 @@
 from flask import (
     Blueprint,
+    current_app,
     jsonify,
     make_response,
     request,
@@ -9,6 +10,7 @@ from flask import (
 )
 
 from unified_graphics import diag
+from unified_graphics.models import db
 
 bp = Blueprint("api", __name__)
 
@@ -34,7 +36,7 @@ def handle_diag_file_read_error(e):
 def index():
     show_dialog = False
     context = {
-        "model_metadata": diag.get_model_metadata(),
+        "model_metadata": diag.get_model_metadata(db.session),
         "dist_url": {
             "anl": "",
             "ges": "",
@@ -125,6 +127,7 @@ def serviceworker():
 @bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
 def history(model, system, domain, background, frequency, variable, loop):
     data = diag.history(
+        current_app.config["DIAG_ZARR"],
         model,
         system,
         domain,
@@ -152,6 +155,7 @@ def diagnostics(
 
     variable_diagnostics = getattr(diag, v.name.lower())
     data = variable_diagnostics(
+        current_app.config["DIAG_ZARR"],
         model,
         system,
         domain,
@@ -183,6 +187,7 @@ def magnitude(
 
     variable_diagnostics = getattr(diag, v.name.lower())
     data = variable_diagnostics(
+        current_app.config["DIAG_ZARR"],
         model,
         system,
         domain,

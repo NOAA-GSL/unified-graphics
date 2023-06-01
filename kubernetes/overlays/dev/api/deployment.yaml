@@ -16,3 +16,11 @@ spec:
           securityContext:
             allowPrivilegeEscalation: true # Default behavior
             runAsNonRoot: false # Default behavior. VLab uses "true" in their environments
+      # Init containers to wait for our migrations
+      initContainers:
+      - name: wait-for-migration-job
+        image: ghcr.io/groundnuty/k8s-wait-for:v1.7 # Use v2 for k8s >= v1.23
+        imagePullPolicy: Always
+        args:
+        - "job"
+        - "migrations"

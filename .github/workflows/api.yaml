@@ -60,6 +60,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+    services:
+      postgres:
+        image: "postgres:15.2"
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - "5432:5432"
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -73,7 +85,7 @@ jobs:
           poetry install
       - name: Test
         run: |
-          poetry run coverage run -m pytest
+          poetry run coverage run -m pytest --tb=no
           poetry run coverage report
           poetry run coverage xml
       - name: Code Coverage Report

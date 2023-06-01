@@ -1,9 +1,14 @@
 import re
 from collections import namedtuple
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 
 import xarray as xr
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from unified_graphics.models import Analysis, WeatherModel
 
 DiagMeta = namedtuple(
     "DiagMeta",
@@ -215,7 +220,7 @@ def load(path: Path) -> xr.Dataset:
     return transformed
 
 
-def save(path: Union[Path, str], *args: xr.Dataset):
+def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
     """Write one or more xarray Datasets to a Zarr at `path`
 
     The `name` and `loop` variables are used along with the
@@ -237,4 +242,50 @@ def save(path: Union[Path, str], *args: xr.Dataset):
             f"{model}/{system}/{domain}/{background}/{frequency}/"
             f"{ds.name}/{ds.initialization_time}/{ds.loop}"
         )
+
+        analysis = None
+        wx_model = None
+        bg = session.scalar(
+            select(WeatherModel).where(
+                WeatherModel.name == background,
+                WeatherModel.background_id.is_(None),
+            )
+        )
+
+        if bg:
+            wx_model = session.scalar(
+                select(WeatherModel).where(
+                    WeatherModel.name == model, WeatherModel.background_id == bg.id
+                )
+            )
+        else:
+            bg = WeatherModel(name=background)
+
+        if not wx_model:
+            wx_model = WeatherModel(name=model)
+            wx_model.background = bg
+            session.add(wx_model)
+
+        if wx_model.id:
+            analysis = session.scalar(
+                select(Analysis).where(
+                    Analysis.time == datetime.fromisoformat(ds.initialization_time),
+                    Analysis.system == system,
+                    Analysis.frequency == frequency,
+                    Analysis.domain == domain,
+                    Analysis.model_id == wx_model.id,
+                )
+            )
+
+        if not analysis:
+            analysis = Analysis(
+                time=datetime.fromisoformat(ds.initialization_time),
+                system=system,
+                frequency=frequency,
+                domain=domain,
+            )
+            analysis.model = wx_model
+            session.add(analysis)
+
         ds.to_zarr(path, group=group, mode="a")
+        session.commit()

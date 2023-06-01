@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+  labels:
+    app: migrations
+spec:
+  template:
+    metadata:
+      labels:
+        app: migrations
+    spec:
+      containers:
+        - image: unified-graphics/api
+          name: migrations
+          imagePullPolicy: Always
+          command: ["alembic", "upgrade", "head"]
+      restartPolicy: Never
+  backoffLimit: 1

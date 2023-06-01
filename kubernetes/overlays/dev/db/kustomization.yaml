@@ -1,0 +1,9 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+  - pvc.yaml
+
+secretGenerator:
+  - name: postgres-secret
+    envs:
+    - .env # Should contain POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD

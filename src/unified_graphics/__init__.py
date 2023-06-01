@@ -1,11 +1,14 @@
 from logging.config import dictConfig
+from typing import Any, Mapping, Optional
 
 from flask import Flask
+
+from . import models, routes
 
 __version__ = "0.1.0"
 
 
-def create_app(config=None):
+def create_app(config: Optional[Mapping[str, Any]] = None):
     dictConfig(
         {
             "version": 1,
@@ -30,8 +33,9 @@ def create_app(config=None):
 
     app = Flask(__name__)
     app.config.from_prefixed_env()
+    app.config.from_mapping(config)
 
-    from . import routes
+    models.db.init_app(app)
 
     app.register_blueprint(routes.bp)
 

@@ -3,15 +3,31 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
+import alembic.command
+import alembic.config
+
 # Unused netcdf4 import to suppress a warning from numpy/xarray/netcdf4
 # https://github.com/pydata/xarray/issues/7259
 import netCDF4  # type: ignore # noqa: F401 # This needs to be imported before numpy
 import numpy as np
 import pytest
+import sqlalchemy
 import xarray as xr
 from s3fs import S3FileSystem, S3Map  # type: ignore
+from sqlalchemy.orm import Session
 
 from unified_graphics import create_app
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+test_db_user = os.environ.get("TEST_DB_USER", "postgres")
+test_db_pass = os.environ.get("TEST_DB_PASS", "postgres")
+test_db_host = os.environ.get("TEST_DB_HOST", "localhost:5432")
 
 
 def pytest_addoption(parser):
@@ -42,21 +58,89 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_aws)
 
 
+@pytest.fixture(scope="session")
+def db_name():
+    return "test_unified_graphics"
+
+
+@pytest.fixture(scope="session")
+def test_db(db_name):
+    autocommit_engine = sqlalchemy.create_engine(
+        f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/postgres",
+        isolation_level="AUTOCOMMIT",
+    )
+    with autocommit_engine.connect() as conn:
+        conn.execute(sqlalchemy.text(f"DROP DATABASE IF EXISTS {db_name}"))
+        conn.execute(sqlalchemy.text(f"CREATE DATABASE {db_name}"))
+
+    url = f"postgresql+psycopg://{test_db_user}:{test_db_pass}@{test_db_host}/{db_name}"
+
+    config = alembic.config.Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", url)
+    alembic.command.upgrade(config, revision="head")
+
+    yield url
+
+    with autocommit_engine.connect() as conn:
+        # Disconnect all users from the database we are dropping. I'm unsure why this is
+        # necessary, as I think all fo the connections created for our tests should be
+        # cleaned up by now.
+        #
+        # Copied from:
+        # https://sqlalchemy-utils.readthedocs.io/en/latest/_modules/sqlalchemy_utils/functions/database.html#drop_database
+        version = conn.dialect.server_version_info
+        pid_column = "pid" if (version >= (9, 2)) else "procpid"
+        conn.execute(
+            sqlalchemy.text(
+                f"""SELECT pg_terminate_backend(pg_stat_activity.{pid_column})
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.datname = '{db_name}'
+        AND {pid_column} <> pg_backend_pid();
+        """
+            )
+        )
+        conn.execute(sqlalchemy.text(f"DROP DATABASE {db_name}"))
+
+    autocommit_engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def engine(test_db):
+    _engine = sqlalchemy.create_engine(test_db)
+    yield _engine
+    _engine.dispose()
+
+
 @pytest.fixture
-def app(tmp_path):
-    diag_dir = tmp_path / "data"
-    diag_dir.mkdir()
+def session(engine):
+    with Session(engine) as s:
+        yield s
+        s.rollback()
 
-    app = create_app()
-    app.config["DIAG_DIR"] = str(diag_dir.as_uri())
-    app.config["DIAG_ZARR"] = str(tmp_path / "test_diag.zarr")
 
-    yield app
+@pytest.fixture
+def diag_zarr_file(tmp_path):
+    return str(tmp_path / "test_diag.zarr")
+
+
+@pytest.fixture
+def app(diag_zarr_file, test_db):
+    _app = create_app(
+        {
+            "SQLALCHEMY_DATABASE_URI": test_db,
+            "DIAG_ZARR": diag_zarr_file,
+        }
+    )
+
+    _app.testing = True
+
+    yield _app
 
 
 @pytest.fixture
 def client(app):
-    return app.test_client()
+    with app.test_client() as c:
+        yield c
 
 
 @pytest.fixture
@@ -222,7 +306,7 @@ def diag_dataset():
 
 
 @pytest.fixture
-def diag_zarr(app, diag_dataset):
+def diag_zarr(diag_zarr_file, diag_dataset):
     def factory(
         variables: list[str],
         initialization_time: str,
@@ -236,8 +320,7 @@ def diag_zarr(app, diag_dataset):
         data: Optional[xr.Dataset] = None,
     ):
         if not zarr_file:
-            with app.app_context():
-                zarr_file = app.config["DIAG_ZARR"]
+            zarr_file = diag_zarr_file
 
         result = urlparse(zarr_file)
 
