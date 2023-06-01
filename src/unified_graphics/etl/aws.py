@@ -1,4 +1,5 @@
 import gzip
+import logging
 import os
 import shutil
 import uuid
@@ -12,6 +13,17 @@ from sqlalchemy.orm import Session
 from . import diag
 
 s3_client = boto3.client("s3")
+
+# Logger setup
+# Lambda has a default logger configured that we want to override so we can
+# configure our own
+logging.basicConfig(
+    level=logging.DEBUG if os.environ.get("DEBUG", False) else logging.INFO,
+    format="%(asctime)s [%(levelname)s] (%(name)s) %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S%z",  # ISO 8601
+    force=True,  # Override AWS's default logger
+)
+logger = logging.getLogger(__name__)
 
 
 def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
@@ -53,6 +65,8 @@ def fetch_record(bucket: str, key: str, download_path: str = "/tmp") -> Path:
 def lambda_handler(event, context):
     """Handler for Lambda events."""
 
+    logger.info(f"Processing event: {event}")
+
     if "Event" in event and event["Event"] == "s3:TestEvent":
         return "Test event received"
 
@@ -61,9 +75,7 @@ def lambda_handler(event, context):
         or "bucket" not in event["detail"]
         or "object" not in event["detail"]
     ):
-        # FIXME: This should use a real logger
-        print("Object details missing from event")
-        print(event)
+        logger.warning("Object details missing from event {event}")
         return ""
 
     upload_bucket = os.environ["UG_DIAG_ZARR"]
@@ -71,17 +83,27 @@ def lambda_handler(event, context):
     bucket = event["detail"]["bucket"]["name"]
     key = unquote_plus(event["detail"]["object"]["key"])
 
+    logger.info(f"Started processing {bucket}:{key}")
+
     # Only fetch the first (ges) and last (anl) minimization loops, ignore
     # all intermediate loops.
     if diag.parse_diag_filename(key.replace("/", "_")).loop not in ["anl", "ges"]:
-        print(f"Skipping loop: {key}")
+        logger.info(f"Skipping loop: {key}")
         return ""
 
+    logger.info(f"Fetching record {bucket}:{key} to disk")
     tmp_file = fetch_record(bucket, key)
 
+    logging.info(f"Loading {bucket}:{key} from disk into memory")
     data = diag.load(tmp_file)
 
+    logging.info(
+        f"Saving {bucket}:{key} to the database and to the Zarr "
+        f"store at: {upload_bucket}"
+    )
     engine = create_engine(os.environ["FLASK_SQLALCHEMY_DATABASE_URI"])
     with Session(engine) as session:
         diag.save(session, upload_bucket, data)
     engine.dispose()
+
+    logger.info(f"Done processing {bucket}:{key}")

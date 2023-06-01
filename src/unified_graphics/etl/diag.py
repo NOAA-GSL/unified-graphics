@@ -1,3 +1,4 @@
+import logging
 import re
 from collections import namedtuple
 from datetime import datetime
@@ -9,6 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from unified_graphics.models import Analysis, WeatherModel
+
+logger = logging.getLogger(__name__)
 
 DiagMeta = namedtuple(
     "DiagMeta",
@@ -232,6 +235,7 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
     path : Path
         The path to the location of the Zarr
     """
+    logger.info("Started saving dataset to Zarr and the DB")
     for ds in args:
         model = ds.model or "Unknown"
         system = ds.system or "Unknown"
@@ -287,5 +291,8 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
             analysis.model = wx_model
             session.add(analysis)
 
+        logger.info(f"Saving dataset to Zarr at: {path}")
         ds.to_zarr(path, group=group, mode="a")
+        logger.info("Saving dataset to Database")
         session.commit()
+        logger.info("Done saving dataset")
