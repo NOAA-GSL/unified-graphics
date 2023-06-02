@@ -292,7 +292,7 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
             session.add(analysis)
 
         logger.info(f"Saving dataset to Zarr at: {path}")
-        ds.to_zarr(path, group=group, mode="a")
+        ds.to_zarr(path, group=group, mode="a", consolidated=False)
         logger.info("Saving dataset to Database")
         session.commit()
         logger.info("Done saving dataset")

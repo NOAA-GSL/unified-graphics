@@ -94,10 +94,10 @@ def lambda_handler(event, context):
     logger.info(f"Fetching record {bucket}:{key} to disk")
     tmp_file = fetch_record(bucket, key)
 
-    logging.info(f"Loading {bucket}:{key} from disk into memory")
+    logger.info(f"Loading {bucket}:{key} from disk into memory")
     data = diag.load(tmp_file)
 
-    logging.info(
+    logger.info(
         f"Saving {bucket}:{key} to the database and to the Zarr "
         f"store at: {upload_bucket}"
     )
