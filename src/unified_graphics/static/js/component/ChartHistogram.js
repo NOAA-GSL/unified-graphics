@@ -12,7 +12,8 @@ import {
   select,
 } from "../vendor/d3.js";
 
-import ChartElement from "./ChartElement.js";
+import Margin from "../lib/Margin.js";
+import ChartCartesian from "./ChartCartesian.js";
 
 /**
  * @typedef {Array.<number>} D3Bin
@@ -33,14 +34,6 @@ import ChartElement from "./ChartElement.js";
  * @property {D3BinArray} bins Binned `data` for the histogram.
  * @readonly
  * @property {number} deviation The standard deviation for `data`
- * @property {string} formatX
- *   A d3 format string used to format values along the x-axis. This property
- *   is reflected in an HTML attribute on the custom element called
- *   `format-x`.
- * @property {string} formatY
- *   A d3 format string used to format values along the y-axis. This property
- *   is reflected in an HTML attribute on the custom element called
- *   `format-y`.
  * @readonly
  * @property {number} mean The mean for `data`
  * @property thresholds {(number[]|function)}
@@ -48,17 +41,14 @@ import ChartElement from "./ChartElement.js";
  *   generates those boundaries from `data`. There will be `thresholds.length`
  *   + 1 bins in the histogram.
  *   @see {@link https://github.com/d3/d3-array/blob/v3.2.0/README.md#bin_thresholds}
+ * @property {string} variable - A JavaScript path for looking up the variable
+ *   displayed as the distribution from the loaded data. Reflected as an attribute on
+ *   the HTML element.
+ *   @see {@link https://lodash.com/docs/4.17.15#get}
  */
-export default class ChartHistogram extends ChartElement {
-  static #TEMPLATE = `<svg>
-    <g class="x-axis"></g>
-    <g class="y-axis"></g>
-    <g class="data"></g>
-    <g class="annotation"></g>
-    <rect id="selection"></rect>
-  </svg>`;
-
-  static #STYLE = `:host {
+export default class ChartHistogram extends ChartCartesian {
+  get css() {
+    return `:host {
     display: block;
     user-select: none;
   }
@@ -77,12 +67,10 @@ export default class ChartHistogram extends ChartElement {
     font-weight: bold;
     text-shadow: 1px 1px 1px white;
   }`;
+  }
 
   /** @type {?number[]} **/
   #thresholds = null;
-
-  /** @type {number[]} **/
-  #data = [];
 
   /** @type {number | undefined} */
   #mean = 0;
@@ -90,134 +78,18 @@ export default class ChartHistogram extends ChartElement {
   /** @type {number | undefined} */
   #deviation = 0;
 
-  #selection = null;
-
-  #xScale = scaleLinear();
-  #yScale = scaleLinear();
-
-  static get observedAttributes() {
-    return ["format-x", "format-y", "src"].concat(ChartElement.observedAttributes);
-  }
-
-  constructor() {
-    super();
-
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot.innerHTML = `<style>${ChartHistogram.#STYLE}</style>
-      ${ChartHistogram.#TEMPLATE}`;
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    switch (name) {
-      case "format-x":
-      case "format-y":
-        this.update();
-        break;
-      case "src":
-        fetch(newValue)
-          .then((response) => response.json())
-          .then((data) => data.features.map((d) => d.properties.adjusted))
-          .then((data) => (this.data = data));
-        break;
-      default:
-        super.attributeChangedCallback(name, oldValue, newValue);
-        break;
-    }
-  }
-
-  connectedCallback() {
-    const svg = this.shadowRoot.querySelector("svg");
-
-    if (!svg) return;
-
-    this.#selection = select(svg).select("#selection").datum([0, 0]);
-    svg.addEventListener("mousedown", this.onMouseDown);
-  }
-
   get bins() {
     const binner = bin();
+    const data = this.data.length > 0 ? this.data[0].data : [];
 
     if (this.thresholds) {
       binner.thresholds(this.thresholds);
     } else {
-      const scale = scaleLinear().domain(extent(this.data)).nice(160);
+      const scale = scaleLinear().domain(extent(data)).nice(160);
       binner.thresholds(scale.ticks(160));
     }
 
-    return binner(this.data);
-  }
-
-  get data() {
-    return structuredClone(this.#data);
-  }
-
-  set data(value) {
-    this.#mean = mean(value);
-    this.#deviation = deviation(value);
-
-    this.#data = value;
-
-    // FIXME: This is duplicated across all charts to ensure that they fire
-    // this event. This event is used by the ColorRamp component so that it
-    // knows when to update itself and could be useful for other chart
-    // interactions.
-    const event = new CustomEvent("chart-datachanged", { bubbles: true });
-    this.dispatchEvent(event);
-
-    this.update();
-  }
-
-  get deviation() {
-    return this.#deviation;
-  }
-
-  get formatX() {
-    return this.getAttribute("format-x") ?? ",";
-  }
-
-  set formatX(formatStr) {
-    if (!formatStr) {
-      this.removeAttribute("format-x");
-    } else {
-      this.setAttribute("format-x", formatStr);
-    }
-  }
-
-  get formatY() {
-    return this.getAttribute("format-y") ?? ",";
-  }
-
-  set formatY(formatStr) {
-    if (!formatStr) {
-      this.removeAttribute("format-y");
-    } else {
-      this.setAttribute("format-y", formatStr);
-    }
-  }
-
-  get mean() {
-    return this.#mean;
-  }
-
-  get selection() {
-    return structuredClone(this.#selection.datum());
-  }
-
-  set selection(value) {
-    this.#selection.datum(value).call(this.#brush);
-  }
-
-  get src() {
-    return this.getAttribute("src");
-  }
-
-  set src(value) {
-    if (!value) {
-      this.removeAttribute("src");
-      return;
-    }
-
-    this.setAttribute("src", value);
+    return binner(data);
   }
 
   get thresholds() {
@@ -226,83 +98,20 @@ export default class ChartHistogram extends ChartElement {
 
   set thresholds(value) {
     this.#thresholds = value;
-    this.render();
+    this.update();
   }
 
-  /**
-   * Handle mouse down events on the SVG.
-   *
-   * The mousedown event starts brushing on the histogram.
-   *
-   * **Note**: This has to be an arrow function assigned to a property so that
-   * `this` refers to the ChartHistogram object. If it's defined as a regular
-   * function, `this` will refer to the `<svg>` element that was clicked.
-   *
-   * @param {MouseEvent} event
-   */
-  onMouseDown = (event) => {
-    const svg = event.currentTarget;
-    // FIXME: Not sure I think persisting the selection in the DOM is wise
-    // Pretty sure we stopped doing this for other charts.
-    this.#selection.datum(
-      [event.offsetX, event.offsetX].map((d) => this.#xScale.invert(d))
-    );
+  get variable() {
+    return this.getAttribute("variable");
+  }
 
-    window.addEventListener("mouseup", this.onMouseUp, { once: true });
-    svg.addEventListener("mousemove", this.onMouseMove);
-  };
-
-  /**
-   * Update selection during mouse drags.
-   *
-   * **Note**: This has to be an arrow function assigned to a property so that
-   * `this` refers to the ChartHistogram object. If it's defined as a regular
-   * function, `this` will refer to the `<svg>` element that was clicked.
-   *
-   * @param {MouseEvent} event
-   */
-  onMouseMove = (event) => {
-    this.#selection.datum()[1] = this.#xScale.invert(event.offsetX);
-    this.#selection.call(this.#brush);
-  };
-
-  /**
-   * Handle mouseup events on the SVG.
-   *
-   * This handler is connected by `onMouseDown` to register the end of the
-   * brushing action.
-   *
-   * **Note**: This has to be an arrow function assigned to a property so that
-   * `this` refers to the ChartHistogram object. If it's defined as a regular
-   * function, `this` will refer to the `<svg>` element that was clicked.
-   *
-   * @param {MouseEvent} event
-   */
-  onMouseUp = () => {
-    this.shadowRoot
-      .querySelector("svg")
-      .removeEventListener("mousemove", this.onMouseMove);
-
-    // Set the selection to null if this.#selection.datum()the range is 0.
-    // FIXME: We should not hardcode obs_minus_forecast_adjusted
-    let detail = structuredClone(this.#selection.datum());
-    if (detail && detail[0] === detail[1]) {
-      detail = { obs_minus_forecast_adjusted: null };
+  set variable(value) {
+    if (!value) {
+      this.removeAttribute("variable");
     } else {
-      detail = { obs_minus_forecast_adjusted: detail };
+      this.setAttribute("variable", value);
     }
-
-    // Update the brush one last time because, in the event of a click with no
-    // mousemove, this will never be called, leaving the old selection still
-    // visible despite having updated the actual range.
-    this.#selection.call(this.#brush);
-
-    const brush = new CustomEvent("chart-brush", {
-      bubbles: true,
-      detail: detail,
-    });
-    this.dispatchEvent(brush);
-  };
+  }
 
   render() {
     const svg = select(this.shadowRoot).select("svg");
@@ -312,26 +121,28 @@ export default class ChartHistogram extends ChartElement {
     if (!(width && height)) return;
 
     const fontSize = parseInt(getComputedStyle(svg.node()).fontSize);
-    const margin = { top: fontSize, right: 0, bottom: fontSize, left: 0 };
+    const margin = new Margin(fontSize, 0, fontSize, 0);
 
-    svg.attr("viewBox", `0 0 ${width} ${height}`);
+    svg.attr("viewBox", `0 0 ${width} {height}`);
 
-    if (!this.data?.length) return;
+    const hasData = this.data.length > 0 && this.data[0].data.length > 0;
+    if (!hasData) return;
 
     const data = this.bins;
 
     // Store the x scale so we can invert values from mouse events.
-    const xScale = (this.#xScale = scaleLinear()
+    const xScale = scaleLinear()
       .domain(
         this.thresholds
           ? extent(this.thresholds)
           : [min(data, (d) => d.x0), max(data, (d) => d.x1)]
       )
-      .range([0, width - margin.left - margin.right]));
+      .range([margin.left, width - margin.horizontal]);
 
-    const yScale = (this.#yScale = scaleLinear()
-      .domain(this.range ?? [0, max(data, (d) => d.length)])
-      .range([height - margin.top - margin.bottom, 0]));
+    const maxCount = max(data, (series) => max(series.data, (bin) => bin.length));
+    const yScale = scaleLinear()
+      .domain([0, maxCount])
+      .range([height - margin.vertical, margin.top]);
 
     const xAxis = axisBottom(xScale).tickFormat(format(this.formatX));
     const yAxis = axisRight(yScale)
@@ -341,7 +152,7 @@ export default class ChartHistogram extends ChartElement {
 
     svg
       .select(".data")
-      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .attr("transform", `translate({margin.left}, ${margin.top})`)
       .selectAll("rect")
       .data(data)
       .join("rect")
@@ -457,26 +268,7 @@ export default class ChartHistogram extends ChartElement {
         g.select(".domain").remove();
         g.selectAll(".tick text").attr("x", 4).attr("dy", -4);
       });
-
-    this.#selection
-      .attr("transform", `translate(${margin.left}, ${margin.top})`)
-      .call(this.#brush);
   }
-
-  /**
-   * Update the brush selection
-   *
-   * @param {object} g - The D3 selection of the brush <rect>
-   */
-  #brush = (g) => {
-    const y = Math.min(...this.#yScale.range());
-    const height = Math.max(...this.#yScale.range()) - y;
-
-    g.attr("x", (d) => this.#xScale(Math.min(...d)))
-      .attr("y", y)
-      .attr("width", (d) => Math.abs(this.#xScale(d[1]) - this.#xScale(d[0])))
-      .attr("height", height);
-  };
 }
 
 customElements.define("chart-histogram", ChartHistogram);
