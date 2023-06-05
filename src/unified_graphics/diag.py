@@ -207,7 +207,7 @@ def open_diagnostic(
         f"/{model}/{system}/{domain}/{background}/{frequency}"
         f"/{variable.value}/{initialization_time}/{loop.value}"
     )
-    return xr.open_zarr(store, group=group)
+    return xr.open_zarr(store, group=group, consolidated=False)
 
 
 def parse_filter_value(value):
@@ -512,7 +512,7 @@ def summary(
         ]
     )
 
-    ds = xr.open_zarr(store, group=path)
+    ds = xr.open_zarr(store, group=path, consolidated=False)
     ds = apply_filters(ds, filters)
     return DiagSummary.from_dataset(ds) if len(ds["nobs"]) > 0 else None
 
