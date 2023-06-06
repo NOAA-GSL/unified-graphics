@@ -17,7 +17,7 @@ def zarr_file(tmp_path):
 
 @pytest.fixture(scope="module")
 def analysis():
-    init_time = "2022-05-05T14"
+    init_time = "2022-05-05T14:00"
     model = "RTMA"
     system = "WCOSS"
     domain = "CONUS"

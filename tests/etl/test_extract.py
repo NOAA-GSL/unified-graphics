@@ -65,7 +65,7 @@ from unified_graphics.etl import diag
             "ncdiag_conv_ps_anl.2022050514.nc4",
             ["ps"],
             "anl",
-            "2022-05-05T14",
+            "2022-05-05T14:00",
             None,
             None,
             None,
@@ -76,7 +76,7 @@ from unified_graphics.etl import diag
             "ncdiag_conv_uv_ges.2023010204.nc4",
             ["u", "v"],
             "ges",
-            "2023-01-02T04",
+            "2023-01-02T04:00",
             None,
             None,
             None,
@@ -193,7 +193,7 @@ def test_load(
         variable, loop, init_time, model, system, domain, frequency, background
     )
     expected_init_time = (
-        f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}"
+        f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}:00"
     )
     expected = diag_dataset(
         variable,
