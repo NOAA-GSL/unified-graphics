@@ -39,6 +39,21 @@ poetry run mypy src/
 poetry run pytest
 ```
 
+**Note**: You will need a postgres database and a `.env` file with the required
+testing env variables set. You can do so with the following:
+
+```
+# Run a postgres container in the background ("-d")
+$ docker run --name postgres15 -d -p 5432:5432 -e POSTGRES_PASSWORD=<password> -e POSTGRES_USER=postgres postgres:15
+
+# Add the required variables to a .env file for testing
+$ cat << EOF >> .env
+TEST_DB_USER=postgres
+TEST_DB_PASS=<password>
+TEST_DB_HOST=localhost:5432
+EOF
+```
+
 **Note**: There aren’t any type definitions for `pytest`, so running `mypy` on
 the `tests/` directory results in errors. As such, it’s best to run `mypy` just
 for our `src/` directory.

@@ -8,11 +8,20 @@ from flask import (
     stream_template,
     url_for,
 )
+from zarr.errors import FSPathExistNotDir, GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import db
 
 bp = Blueprint("api", __name__)
+
+
+@bp.errorhandler(GroupNotFoundError)
+def handle_diag_group_not_found(e):
+    if isinstance(e, FSPathExistNotDir):
+        return jsonify(msg="Unable to read diagnostic file group"), 500
+
+    return jsonify(msg="Diagnostic file group not found"), 404
 
 
 # TODO: Don't hardcode the error message

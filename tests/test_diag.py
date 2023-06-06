@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from werkzeug.datastructures import MultiDict
+from zarr.errors import GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import Analysis, WeatherModel
@@ -138,9 +139,9 @@ def test_open_diagnostic_local_does_not_exist(diag_zarr_file):
     background = "HRRR"
     frequency = "REALTIME"
     init_time = "2022-05-16T04:00"
-    expected = r"No such file or directory: '.*test_diag.zarr'$"
+    expected = r"group not found at path .*$"
 
-    with pytest.raises(FileNotFoundError, match=expected):
+    with pytest.raises(GroupNotFoundError, match=expected):
         diag.open_diagnostic(
             diag_zarr_file,
             model,

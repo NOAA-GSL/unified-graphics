@@ -74,6 +74,7 @@ def test_save_new(ps_anl, analysis, zarr_file, session):
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
                 f"ps/{init_time}/anl"
             ),
+            consolidated=False,
         ),
         ps_anl,
     )
@@ -116,6 +117,7 @@ def test_add_loop(ps_anl, ps_ges, analysis, zarr_file, session):
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
                 f"ps/{init_time}/anl"
             ),
+            consolidated=False,
         ),
         ps_anl,
     )
@@ -127,6 +129,7 @@ def test_add_loop(ps_anl, ps_ges, analysis, zarr_file, session):
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
                 f"ps/{init_time}/ges"
             ),
+            consolidated=False,
         ),
         ps_ges,
     )
@@ -147,6 +150,7 @@ def test_add_variable(ps_anl, t_anl, analysis, zarr_file, session):
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
                 f"ps/{init_time}/anl"
             ),
+            consolidated=False,
         ),
         ps_anl,
     )
@@ -158,6 +162,7 @@ def test_add_variable(ps_anl, t_anl, analysis, zarr_file, session):
                 f"{model}/{system}/{domain}/{background}/{frequency}/"
                 f"t/{init_time}/anl"
             ),
+            consolidated=False,
         ),
         t_anl,
     )
