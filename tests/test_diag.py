@@ -5,8 +5,8 @@ from unittest import mock
 import numpy as np
 import pytest
 import xarray as xr
-from zarr.errors import GroupNotFoundError
 from werkzeug.datastructures import MultiDict
+from zarr.errors import GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import Analysis, WeatherModel

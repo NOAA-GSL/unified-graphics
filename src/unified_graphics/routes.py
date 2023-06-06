@@ -8,8 +8,8 @@ from flask import (
     stream_template,
     url_for,
 )
+from zarr.errors import FSPathExistNotDir, GroupNotFoundError  # type: ignore
 
-from zarr.errors import GroupNotFoundError, FSPathExistNotDir
 from unified_graphics import diag
 from unified_graphics.models import db
 
