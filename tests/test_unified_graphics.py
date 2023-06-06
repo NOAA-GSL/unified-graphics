@@ -648,7 +648,7 @@ def test_diag_not_found(variable, client):
     )
 
     assert response.status_code == 404
-    assert response.json == {"msg": "Diagnostic file not found"}
+    assert response.json == {"msg": "Diagnostic file group not found"}
 
 
 @pytest.mark.parametrize(
@@ -663,7 +663,7 @@ def test_diag_read_error(variable, app, client):
     )
 
     assert response.status_code == 500
-    assert response.json == {"msg": "Unable to read diagnostic file"}
+    assert response.json == {"msg": "Unable to read diagnostic file group"}
 
 
 @pytest.mark.parametrize(
