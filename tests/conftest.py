@@ -342,7 +342,7 @@ def diag_zarr(diag_zarr_file, diag_dataset):
                 f"/{data.model}/{data.system}/{data.domain}/{data.background}"
                 f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
             )
-            data.to_zarr(store, group=group)
+            data.to_zarr(store, group=group, consolidated=False)
             return zarr_file
 
         for variable in variables:
@@ -364,7 +364,7 @@ def diag_zarr(diag_zarr_file, diag_dataset):
                     f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
                     f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
                 )
-                ds.to_zarr(store, group=group)
+                ds.to_zarr(store, group=group, consolidated=False)
             except Exception as e:
                 raise e
 
