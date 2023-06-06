@@ -79,6 +79,8 @@ def parse_diag_filename(filename: str) -> DiagMeta:
     init_time = f"{year}-{month}-{day}T{hour}"
     if minute:
         init_time += ":" + minute
+    else:
+        init_time += ":00"
 
     return DiagMeta(
         variables, loop, init_time, model, system, domain, frequency, background
