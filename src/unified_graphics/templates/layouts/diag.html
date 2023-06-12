@@ -22,20 +22,11 @@
           >Observation &minus; Forecast</color-ramp>
       </chart-container>
     {%- else -%}
-      <div class="grid">
-        <chart-container class="padding-2 radius-md bg-white shadow-1">
-          <span class="axis-y title" slot="title-y">Observation Count</span>
-          <chart-histogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-histogram>
-          <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
-        </chart-container>
-
-        <chart-container class="padding-2 radius-md bg-white shadow-1">
-          <span class="axis-y title" slot="title-y">Observation &minus; Forecast</span>
-          <chart-timeseries id="history-{{ minim_loop }}" src="{{ history_url[minim_loop] }}"
-            current="{{ form.get("initialization_time") }}"></chart-timeseries>
-          <span class="axis-x title" slot="title-x">Initialization Time</span>
-        </chart-container>
-      </div>
+      <chart-container class="padding-2 radius-md bg-white shadow-1">
+        <span class="axis-y title" slot="title-y">Observation Count</span>
+        <chart-histogram id="distribution-{{ minim_loop }}" src="{{ dist_url[minim_loop] }}"></chart-histogram>
+        <span class="axis-x title" slot="title-x">Observation &minus; Forecast</span>
+      </chart-container>
     {%- endif %}
 
     <chart-container class="padding-2 radius-md bg-white shadow-1">
