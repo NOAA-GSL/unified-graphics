@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Union
 
+import pandas as pd
 import xarray as xr
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -225,6 +226,29 @@ def load(path: Path) -> xr.Dataset:
     return transformed
 
 
+def prep_dataframe(ds: xr.Dataset) -> pd.DataFrame:
+    """Prepare a diagnostic dataset for storing in a Parquet file
+
+    Creates a pandas DataFrame from `ds` and cleans the string columns.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The Dataset to convert to a DataFrame
+    """
+    df = ds.to_dataframe()
+
+    df["loop"] = ds.loop
+
+    # FIXME: We drop the `Observation_Class` column from the data when we load the data
+    # because we weren't using it for anything, but since it contains the name of the
+    # variable, if we end up switching to Parquet for all of our data needs, we'll
+    # probably want to retain it. Meanwhile we add it back in here so that if we do make
+    # that switch, downstream parquet code doesn't have to change.
+    df["observation_class"] = ds.name
+    return df
+
+
 def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
     """Write one or more xarray Datasets to a Zarr at `path`
 
@@ -295,6 +319,19 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
 
         logger.info(f"Saving dataset to Zarr at: {path}")
         ds.to_zarr(path, group=group, mode="a", consolidated=False)
+
+        parquet_path = (
+            Path(path) / ".." / "_".join((model, background, system, domain, frequency))
+        )
+        logger.info(f"Saving dataframe to Parquet at: {parquet_path}")
+        prep_dataframe(ds).to_parquet(
+            parquet_path,
+            engine="pyarrow",
+            index=True,
+            partition_cols=("observation_class", "loop"),
+        )
+
         logger.info("Saving dataset to Database")
         session.commit()
+
         logger.info("Done saving dataset")
