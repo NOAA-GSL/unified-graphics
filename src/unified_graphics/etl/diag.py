@@ -327,7 +327,7 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
             parquet_path,
             engine="pyarrow",
             index=True,
-            partition_cols=("loop",),
+            partition_cols=["loop"],
         )
 
         logger.info("Saving dataset to Database")
