@@ -42,6 +42,12 @@ def dataset_to_table(dataset: xr.Dataset) -> pd.DataFrame:
     df = dataset.to_dataframe()
     df["observation_class"] = dataset.name
     df["loop"] = dataset.loop
+
+    # Insert a component dimension to the index for scalar variables
+    if "component" not in df.index.names:
+        df["component"] = ""
+        df = df.set_index("component", append=True)
+
     df = df.astype({"observation_class": "category", "loop": "category"})
 
     return df

@@ -240,12 +240,21 @@ def prep_dataframe(ds: xr.Dataset) -> pd.DataFrame:
 
     df["loop"] = ds.loop
 
+    # FIXME: Clean the string columns Observation_Class, Station_ID, Provider_Name,
+    # Subprovider_Name
+
     # FIXME: We drop the `Observation_Class` column from the data when we load the data
     # because we weren't using it for anything, but since it contains the name of the
     # variable, if we end up switching to Parquet for all of our data needs, we'll
     # probably want to retain it. Meanwhile we add it back in here so that if we do make
     # that switch, downstream parquet code doesn't have to change.
     df["observation_class"] = ds.name
+
+    # Add a blank component dimension to scalar variables so they align with vectors
+    if "component" not in df.index.names:
+        df["component"] = ""
+        df = df.set_index("component", append=True)
+
     return df
 
 
