@@ -40,17 +40,9 @@ def parquet_file(model, data_path):
 
 def dataset_to_table(dataset: xr.Dataset) -> pd.DataFrame:
     df = dataset.to_dataframe()
-    df["observation_class"] = dataset.name
     df["loop"] = dataset.loop
 
-    # Insert a component dimension to the index for scalar variables
-    if "component" not in df.index.names:
-        df["component"] = ""
-        df = df.set_index("component", append=True)
-
-    df = df.astype({"observation_class": "category", "loop": "category"})
-
-    return df
+    return df.astype({"loop": "category"})
 
 
 class TestSaveNew:
@@ -84,8 +76,8 @@ class TestSaveNew:
 
     def test_parquet_created(self, dataframe, parquet_file):
         result = pd.read_parquet(
-            parquet_file,
-            filters=(("observation_class", "=", "ps"), ("loop", "=", "anl")),
+            parquet_file / "ps",
+            filters=(("loop", "=", "anl"),),
         )
 
         pd.testing.assert_frame_equal(result, dataframe)
@@ -149,16 +141,7 @@ class TestAddVariable:
 
     @pytest.fixture(scope="class")
     def dataframe(self, dataset):
-        return tuple(
-            df.astype(
-                {
-                    "observation_class": pd.CategoricalDtype(
-                        categories=["ps", "t"], ordered=False
-                    )
-                }
-            )
-            for df in map(dataset_to_table, dataset)
-        )
+        return tuple(map(dataset_to_table, dataset))
 
     @pytest.mark.parametrize("variable,expected", (("ps", 0), ("t", 1)))
     def test_zarr(self, dataset, model, zarr_file, variable, expected):
@@ -169,8 +152,8 @@ class TestAddVariable:
     @pytest.mark.parametrize("variable,expected", (("ps", 0), ("t", 1)))
     def test_parquet(self, dataframe, parquet_file, variable, expected):
         result = pd.read_parquet(
-            parquet_file,
-            filters=(("observation_class", "=", variable), ("loop", "=", "anl")),
+            parquet_file / variable,
+            filters=(("loop", "=", "anl"),),
         )
 
         pd.testing.assert_frame_equal(result, dataframe[expected])
@@ -230,8 +213,8 @@ class TestAddLoop:
     @pytest.mark.parametrize("loop,expected", (("ges", 0), ("anl", 1)))
     def test_parquet(self, dataframe, parquet_file, loop, expected):
         result = pd.read_parquet(
-            parquet_file,
-            filters=(("observation_class", "=", "ps"), ("loop", "=", loop)),
+            parquet_file / "ps",
+            filters=(("loop", "=", loop),),
         )
 
         pd.testing.assert_frame_equal(result, dataframe[expected])
@@ -287,8 +270,8 @@ class TestAddAnalysis:
 
     def test_parquet(self, dataframe, parquet_file):
         result = pd.read_parquet(
-            parquet_file,
-            filters=(("observation_class", "=", "ps"), ("loop", "=", "ges")),
+            parquet_file / "ps",
+            filters=(("loop", "=", "ges"),),
         )
 
         pd.testing.assert_frame_equal(result, dataframe)

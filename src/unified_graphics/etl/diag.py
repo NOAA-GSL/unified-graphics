@@ -240,20 +240,7 @@ def prep_dataframe(ds: xr.Dataset) -> pd.DataFrame:
 
     df["loop"] = ds.loop
 
-    # FIXME: Clean the string columns Observation_Class, Station_ID, Provider_Name,
-    # Subprovider_Name
-
-    # FIXME: We drop the `Observation_Class` column from the data when we load the data
-    # because we weren't using it for anything, but since it contains the name of the
-    # variable, if we end up switching to Parquet for all of our data needs, we'll
-    # probably want to retain it. Meanwhile we add it back in here so that if we do make
-    # that switch, downstream parquet code doesn't have to change.
-    df["observation_class"] = ds.name
-
-    # Add a blank component dimension to scalar variables so they align with vectors
-    if "component" not in df.index.names:
-        df["component"] = ""
-        df = df.set_index("component", append=True)
+    # FIXME: Clean the string columns Station_ID, Provider_Name, Subprovider_Name
 
     return df
 
@@ -330,14 +317,17 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
         ds.to_zarr(path, group=group, mode="a", consolidated=False)
 
         parquet_path = (
-            Path(path) / ".." / "_".join((model, background, system, domain, frequency))
+            Path(path)
+            / ".."
+            / "_".join((model, background, system, domain, frequency))
+            / ds.name
         )
         logger.info(f"Saving dataframe to Parquet at: {parquet_path}")
         prep_dataframe(ds).to_parquet(
             parquet_path,
             engine="pyarrow",
             index=True,
-            partition_cols=("observation_class", "loop"),
+            partition_cols=("loop",),
         )
 
         logger.info("Saving dataset to Database")
