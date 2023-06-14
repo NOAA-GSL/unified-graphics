@@ -111,7 +111,7 @@ def engine(test_db):
     _engine.dispose()
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def session(engine):
     with Session(engine) as s:
         yield s
@@ -250,7 +250,7 @@ def test_dataset():
     return factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def diag_dataset():
     def factory(
         variable: str,
