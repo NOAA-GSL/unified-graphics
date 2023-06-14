@@ -236,4 +236,57 @@ class TestAddLoop:
 
 
 class TestAddAnalysis:
-    ...
+    @pytest.fixture(scope="class", autouse=True)
+    def dataset(self, model, diag_dataset, session, zarr_file):
+        (mdl, system, domain, background, frequency) = model
+        first = diag_dataset(
+            "ps",
+            "2022-05-05T14:00",
+            "ges",
+            mdl,
+            system,
+            domain,
+            frequency,
+            background,
+        )
+
+        diag.save(session, zarr_file, first)
+
+        second = diag_dataset(
+            "ps",
+            "2022-05-05T15:00",
+            "ges",
+            mdl,
+            system,
+            domain,
+            frequency,
+            background,
+        )
+
+        diag.save(session, zarr_file, second)
+
+        return (first, second)
+
+    @pytest.fixture(scope="class")
+    def dataframe(self, dataset):
+        return pd.concat(map(dataset_to_table, dataset))
+
+    @pytest.mark.parametrize(
+        "init_time,expected", (("2022-05-05T14:00", 0), ("2022-05-05T15:00", 1))
+    )
+    def test_zarr(self, dataset, model, zarr_file, init_time, expected):
+        group = "/".join((*model, "ps", init_time, "ges"))
+        result = xr.open_zarr(zarr_file, group=group, consolidated=False)
+        xr.testing.assert_equal(result, dataset[expected])
+
+    def test_parquet(self, dataframe, parquet_file):
+        result = pd.read_parquet(
+            parquet_file,
+            filters=(("observation_class", "=", "ps"), ("loop", "=", "ges")),
+        )
+
+        pd.testing.assert_frame_equal(result, dataframe)
+
+    def test_analysis_metadata(self, session):
+        analysis_count = session.scalar(select(func.count()).select_from(Analysis))
+        assert analysis_count == 2
