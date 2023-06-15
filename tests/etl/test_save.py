@@ -40,6 +40,7 @@ def parquet_file(model, data_path):
 
 def dataset_to_table(dataset: xr.Dataset) -> pd.DataFrame:
     df = dataset.to_dataframe()
+    df["initialization_time"] = datetime.fromisoformat(dataset.initialization_time)
     df["loop"] = dataset.loop
 
     return df.astype({"loop": "category"})
@@ -258,7 +259,9 @@ class TestAddAnalysis:
 
     @pytest.fixture(scope="class")
     def dataframe(self, dataset):
-        return pd.concat(map(dataset_to_table, dataset))
+        return pd.concat(map(dataset_to_table, dataset)).sort_values(
+            "initialization_time"
+        )
 
     @pytest.mark.parametrize(
         "init_time,expected", (("2022-05-05T14:00", 0), ("2022-05-05T15:00", 1))
