@@ -239,6 +239,7 @@ def prep_dataframe(ds: xr.Dataset) -> pd.DataFrame:
     df = ds.to_dataframe()
 
     df["loop"] = ds.loop
+    df["initialization_time"] = datetime.fromisoformat(ds.initialization_time)
 
     # FIXME: Clean the string columns Station_ID, Provider_Name, Subprovider_Name
 
