@@ -275,7 +275,7 @@ class TestAddAnalysis:
         result = pd.read_parquet(
             parquet_file / "ps",
             filters=(("loop", "=", "ges"),),
-        )
+        ).sort_values("initialization_time")
 
         pd.testing.assert_frame_equal(result, dataframe)
 
