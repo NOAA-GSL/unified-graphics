@@ -3,7 +3,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Generator, List, Optional, Union
+from typing import Generator, List, Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -75,44 +75,6 @@ class Observation:
             "properties": properties,
             "geometry": {"type": "Point", "coordinates": list(self.position)},
         }
-
-
-@dataclass
-class SummaryStatistics:
-    min: float
-    max: float
-    mean: float
-
-    @classmethod
-    def from_data_array(cls, array: xr.DataArray) -> "SummaryStatistics":
-        return cls(
-            min=float(array.min()),
-            max=float(array.max()),
-            mean=float(array.mean()),
-        )
-
-
-@dataclass
-class DiagSummary:
-    initialization_time: str
-    obs_minus_forecast_adjusted: SummaryStatistics
-    obs_minus_forecast_unadjusted: SummaryStatistics
-    observation: SummaryStatistics
-    obs_count: int
-
-    @classmethod
-    def from_dataset(cls, dataset: xr.Dataset) -> "DiagSummary":
-        return cls(
-            initialization_time=dataset.attrs["initialization_time"],
-            obs_minus_forecast_adjusted=SummaryStatistics.from_data_array(
-                dataset["obs_minus_forecast_adjusted"]
-            ),
-            obs_minus_forecast_unadjusted=SummaryStatistics.from_data_array(
-                dataset["obs_minus_forecast_unadjusted"]
-            ),
-            observation=SummaryStatistics.from_data_array(dataset["observation"]),
-            obs_count=len(dataset["nobs"]),
-        )
 
 
 ModelMetadata = namedtuple(
@@ -486,37 +448,6 @@ def get_model_run_list(
     path = "/".join([model, system, domain, background, frequency, variable.value])
     with zarr.open_group(store, mode="r", path=path) as group:
         return group.group_keys()
-
-
-def summary(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    initialization_time: str,
-    variable: Variable,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> Optional[DiagSummary]:
-    store = get_store(diag_zarr)
-    path = "/".join(
-        [
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            variable.value,
-            initialization_time,
-            loop.value,
-        ]
-    )
-
-    ds = xr.open_zarr(store, group=path, consolidated=False)
-    ds = apply_filters(ds, filters)
-    return DiagSummary.from_dataset(ds) if len(ds["nobs"]) > 0 else None
 
 
 def history(
