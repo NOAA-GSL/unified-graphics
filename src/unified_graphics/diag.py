@@ -2,10 +2,12 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Generator, List, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
+import pandas as pd
 import sqlalchemy as sa
 import xarray as xr
 import zarr  # type: ignore
@@ -527,24 +529,29 @@ def history(
     variable: Variable,
     loop: MinimLoop,
     filters: MultiDict,
-):
-    for init_time in get_model_run_list(
-        diag_zarr, model, system, domain, background, frequency, variable
-    ):
-        result = summary(
-            diag_zarr,
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            init_time,
-            variable,
-            loop,
-            filters,
-        )
+) -> pd.DataFrame:
+    parquet_file = (
+        Path(diag_zarr)
+        / ".."
+        / "_".join((model, background, system, domain, frequency))
+        / variable.value
+    )
 
-        if not result:
-            continue
+    df = pd.read_parquet(
+        parquet_file,
+        columns=["initialization_time", "obs_minus_forecast_unadjusted"],
+        filters=(("loop", "=", loop.value), ("is_used", "=", 1)),
+    )
 
-        yield result
+    if df.empty:
+        return df
+
+    df = (
+        df.sort_values("initialization_time")
+        .groupby("initialization_time")
+        .describe()
+        .droplevel(0, axis=1)  # Drop a level from the columns created by the groupby
+        .reset_index()
+    )
+
+    return df[["initialization_time", "min", "max", "mean", "count"]]

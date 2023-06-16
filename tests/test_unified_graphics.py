@@ -61,7 +61,7 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
     }
 
 
-def test_scalar_history(diag_zarr, test_dataset, client):
+def test_scalar_history(diag_parquet, test_dataset, client):
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -83,7 +83,7 @@ def test_scalar_history(diag_zarr, test_dataset, client):
 
     for run in run_list:
         data = test_dataset(**run)
-        diag_zarr([data.name], data.initialization_time, data.loop, data=data)
+        diag_parquet(data)
 
     response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
@@ -91,46 +91,22 @@ def test_scalar_history(diag_zarr, test_dataset, client):
     assert response.json == [
         {
             "initialization_time": "2022-05-16T04:00",
-            "obs_minus_forecast_adjusted": {
-                "min": 5.0,
-                "max": 10.0,
-                "mean": 7.5,
-            },
-            "observation": {
-                "min": 10.0,
-                "max": 20.0,
-                "mean": 15.0,
-            },
-            "obs_minus_forecast_unadjusted": {
-                "min": 5.0,
-                "max": 10.0,
-                "mean": 7.5,
-            },
-            "obs_count": 2,
+            "min": 5.0,
+            "max": 10.0,
+            "mean": 7.5,
+            "count": 2,
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "obs_minus_forecast_adjusted": {
-                "min": -8.0,
-                "max": 0.0,
-                "mean": -4.0,
-            },
-            "observation": {
-                "min": 1.0,
-                "max": 3.0,
-                "mean": 2.0,
-            },
-            "obs_minus_forecast_unadjusted": {
-                "min": -8.0,
-                "max": 0.0,
-                "mean": -4.0,
-            },
-            "obs_count": 3,
+            "min": -8.0,
+            "max": 0.0,
+            "mean": -4.0,
+            "count": 3,
         },
     ]
 
 
-def test_scalar_history_unused(diag_zarr, test_dataset, client):
+def test_scalar_history_unused(diag_parquet, test_dataset, client):
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -150,7 +126,7 @@ def test_scalar_history_unused(diag_zarr, test_dataset, client):
 
     for run in run_list:
         data = test_dataset(**run)
-        diag_zarr([data.name], data.initialization_time, data.loop, data=data)
+        diag_parquet(data)
 
     response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
@@ -158,46 +134,22 @@ def test_scalar_history_unused(diag_zarr, test_dataset, client):
     assert response.json == [
         {
             "initialization_time": "2022-05-16T04:00",
-            "obs_minus_forecast_adjusted": {
-                "min": 5.0,
-                "max": 5.0,
-                "mean": 5.0,
-            },
-            "observation": {
-                "min": 10.0,
-                "max": 10.0,
-                "mean": 10.0,
-            },
-            "obs_minus_forecast_unadjusted": {
-                "min": 5.0,
-                "max": 5.0,
-                "mean": 5.0,
-            },
-            "obs_count": 1,
+            "min": 5.0,
+            "max": 5.0,
+            "mean": 5.0,
+            "count": 1,
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "obs_minus_forecast_adjusted": {
-                "min": -8.0,
-                "max": -8.0,
-                "mean": -8.0,
-            },
-            "observation": {
-                "min": 2.0,
-                "max": 2.0,
-                "mean": 2.0,
-            },
-            "obs_minus_forecast_unadjusted": {
-                "min": -8.0,
-                "max": -8.0,
-                "mean": -8.0,
-            },
-            "obs_count": 1,
+            "min": -8.0,
+            "max": -8.0,
+            "mean": -8.0,
+            "count": 1,
         },
     ]
 
 
-def test_scalar_history_empty(diag_zarr, test_dataset, client):
+def test_scalar_history_empty(diag_parquet, test_dataset, client):
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -211,7 +163,7 @@ def test_scalar_history_empty(diag_zarr, test_dataset, client):
 
     for run in run_list:
         data = test_dataset(**run)
-        diag_zarr([data.name], data.initialization_time, data.loop, data=data)
+        diag_parquet(data)
 
     response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
@@ -220,7 +172,7 @@ def test_scalar_history_empty(diag_zarr, test_dataset, client):
 
 
 @pytest.mark.xfail
-def test_vectory_history():
+def test_vector_history():
     assert 0, "Not implemented"
 
 

@@ -191,7 +191,7 @@ def diag_file(app, tmp_path):
 
 
 # FIXME: Replace diag_dataset with this fixture
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_dataset():
     def factory(
         *,
@@ -301,6 +301,30 @@ def diag_dataset():
             )
 
         return ds
+
+    return factory
+
+
+@pytest.fixture
+def diag_parquet(diag_zarr_file):
+    def factory(
+        ds: xr.Dataset,
+    ) -> Path:
+        parquet_file = (
+            Path(diag_zarr_file)
+            / ".."
+            / "_".join((ds.model, ds.background, ds.system, ds.domain, ds.frequency))
+            / ds.name
+        )
+        df = ds.to_dataframe()
+        df["loop"] = ds.loop
+        df["initialization_time"] = ds.initialization_time
+
+        df.to_parquet(
+            parquet_file, partition_cols=["loop"], index=True, engine="pyarrow"
+        )
+
+        return parquet_file
 
     return factory
 

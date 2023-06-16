@@ -147,7 +147,9 @@ def history(model, system, domain, background, frequency, variable, loop):
         request.args,
     )
 
-    return jsonify([d for d in data])
+    return data.to_json(orient="records", date_format="iso"), {
+        "Content-Type": "application/json"
+    }
 
 
 @bp.route(
