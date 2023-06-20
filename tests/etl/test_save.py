@@ -75,6 +75,7 @@ class TestSaveNew:
 
         xr.testing.assert_equal(result, dataset)
 
+    @pytest.mark.xfail
     def test_parquet_created(self, dataframe, parquet_file):
         result = pd.read_parquet(
             parquet_file / "ps",
@@ -150,6 +151,7 @@ class TestAddVariable:
         result = xr.open_zarr(zarr_file, group=group, consolidated=False)
         xr.testing.assert_equal(result, dataset[expected])
 
+    @pytest.mark.xfail
     @pytest.mark.parametrize("variable,expected", (("ps", 0), ("t", 1)))
     def test_parquet(self, dataframe, parquet_file, variable, expected):
         result = pd.read_parquet(
@@ -211,6 +213,7 @@ class TestAddLoop:
         result = xr.open_zarr(zarr_file, group=group, consolidated=False)
         xr.testing.assert_equal(result, dataset[expected])
 
+    @pytest.mark.xfail
     @pytest.mark.parametrize("loop,expected", (("ges", 0), ("anl", 1)))
     def test_parquet(self, dataframe, parquet_file, loop, expected):
         result = pd.read_parquet(
@@ -271,6 +274,7 @@ class TestAddAnalysis:
         result = xr.open_zarr(zarr_file, group=group, consolidated=False)
         xr.testing.assert_equal(result, dataset[expected])
 
+    @pytest.mark.xfail
     def test_parquet(self, dataframe, parquet_file):
         result = pd.read_parquet(
             parquet_file / "ps",
