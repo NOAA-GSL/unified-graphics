@@ -120,7 +120,7 @@ def session(engine):
 
 @pytest.fixture
 def diag_zarr_file(tmp_path):
-    return str(tmp_path / "test_diag.zarr")
+    return f"file://{tmp_path / 'test_diag.zarr'}"
 
 
 @pytest.fixture

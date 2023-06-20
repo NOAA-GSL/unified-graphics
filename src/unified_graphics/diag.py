@@ -461,6 +461,8 @@ def history(
     loop: MinimLoop,
     filters: MultiDict,
 ) -> pd.DataFrame:
+    # FIXME: This fails when diag_zarr is a file:// URL. Pandas ends up trying to use
+    # urlopen to read the file, but it's a directory
     parquet_file = (
         Path(diag_zarr)
         / ".."
