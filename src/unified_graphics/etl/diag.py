@@ -317,6 +317,20 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
         logger.info(f"Saving dataset to Zarr at: {path}")
         ds.to_zarr(path, group=group, mode="a", consolidated=False)
 
+        parquet_path = (
+            Path(path)
+            / ".."
+            / "_".join((model, background, system, domain, frequency))
+            / ds.name
+        )
+        logger.info(f"Saving dataframe to Parquet at: {parquet_path}")
+        prep_dataframe(ds).to_parquet(
+            parquet_path,
+            engine="pyarrow",
+            index=True,
+            partition_cols=["loop"],
+        )
+
         logger.info("Saving dataset to Database")
         session.commit()
 
