@@ -294,15 +294,19 @@ def test_vector_magnitude():
         ([("a", "1::2")], [("a", np.array([1.0]), np.array([2.0]))]),
         ([("a", "2,4::3,1")], [("a", np.array([2.0, 1.0]), np.array([3.0, 4.0]))]),
     ],
+    scope="class",
 )
-def test_get_bounds(mapping, expected):
-    filters = MultiDict(mapping)
+class TestGetBounds:
+    @pytest.fixture(scope="class")
+    def result(self, mapping):
+        filters = MultiDict(mapping)
+        return list(diag.get_bounds(filters))
 
-    result = list(diag.get_bounds(filters))
+    def test_coord(self, result, expected):
+        assert result[0][0] == expected[0][0]
 
-    for (coord, lower, upper), (expected_coord, expected_lower, expected_upper) in zip(
-        result, expected
-    ):
-        assert coord == expected_coord
-        assert (lower == expected_lower).all()
-        assert (upper == expected_upper).all()
+    def test_lower_bounds(self, result, expected):
+        assert (result[0][1] == expected[0][1]).all()
+
+    def test_upper_bounds(self, result, expected):
+        assert (result[0][2] == expected[0][2]).all()
