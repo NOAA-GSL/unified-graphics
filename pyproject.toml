@@ -42,3 +42,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
+
+[tool.poetry.scripts]
+s3_bulk_rename = "utils.s3.s3_bulk_renaming:main"
