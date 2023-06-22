@@ -41,14 +41,15 @@ def test_get_model_metadata(session):
 
     result = diag.get_model_metadata(session)
 
-    assert result
-    assert result.model_list == ["3DRTMA", "RTMA"]
-    assert result.system_list == ["JET", "WCOSS"]
-    assert result.domain_list == ["CONUS"]
-    assert result.frequency_list == ["REALTIME", "RETRO"]
-    assert result.background_list == ["HRRR", "RRFS"]
-    assert result.init_time_list == ["2023-03-17T14:00", "2023-03-17T15:00"]
-    assert result.variable_list == variable_list
+    assert result == diag.ModelMetadata(
+        model_list=["3DRTMA", "RTMA"],
+        system_list=["JET", "WCOSS"],
+        domain_list=["CONUS"],
+        frequency_list=["REALTIME", "RETRO"],
+        background_list=["HRRR", "RRFS"],
+        init_time_list=["2023-03-17T14:00", "2023-03-17T15:00"],
+        variable_list=variable_list,
+    )
 
 
 @pytest.mark.parametrize(
