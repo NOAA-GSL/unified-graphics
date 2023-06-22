@@ -85,7 +85,7 @@ jobs:
           poetry install
       - name: Test
         run: |
-          poetry run coverage run -m pytest --tb=no
+          poetry run coverage run -m pytest --tb=no tests/
           poetry run coverage report
           poetry run coverage xml
       - name: Code Coverage Report
