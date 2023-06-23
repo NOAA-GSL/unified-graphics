@@ -92,45 +92,36 @@ def test_get_store_s3(mock_s3filesystem, mock_s3map):
     os.environ = prev_env
 
 
-def test_open_diagnostic(diag_zarr_file, diag_dataset, diag_zarr):
-    variable = diag.Variable.PRESSURE
-    init_time = "2022-05-13T06:00"
-    loop = diag.MinimLoop.ANALYSIS
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-
-    diag_zarr(
-        [variable.value],
-        init_time,
-        loop.value,
-        model,
-        system,
-        domain,
-        frequency,
-        background,
+def test_open_diagnostic(diag_zarr_file, test_dataset):
+    expected = test_dataset()
+    group = "/".join(
+        (
+            expected.model,
+            expected.system,
+            expected.domain,
+            expected.background,
+            expected.frequency,
+            expected.name,
+            expected.initialization_time,
+            expected.loop,
+        )
     )
+
+    expected.to_zarr(diag_zarr_file, group=group, consolidated=False)
 
     result = diag.open_diagnostic(
         diag_zarr_file,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        variable,
-        init_time,
-        loop,
+        expected.model,
+        expected.system,
+        expected.domain,
+        expected.background,
+        expected.frequency,
+        diag.Variable(expected.name),
+        expected.initialization_time,
+        diag.MinimLoop(expected.loop),
     )
 
-    xr.testing.assert_equal(
-        result,
-        diag_dataset(
-            str(variable), init_time, str(loop), model, system, frequency, background
-        ),
-    )
+    xr.testing.assert_equal(result, expected)
 
 
 def test_open_diagnostic_local_does_not_exist(diag_zarr_file):
