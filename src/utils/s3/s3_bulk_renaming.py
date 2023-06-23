@@ -1,8 +1,10 @@
 import argparse
 import re
+import sys
 from typing import Optional
 
 import boto3  # type: ignore
+from botocore.exceptions import NoCredentialsError  # type: ignore
 
 
 def list_objects(bucket_name: str, prefix: Optional[str] = None) -> list[str]:
@@ -16,9 +18,12 @@ def list_objects(bucket_name: str, prefix: Optional[str] = None) -> list[str]:
     paginator = s3.get_paginator("list_objects_v2")
     page_iterator = paginator.paginate(Bucket=bucket_name, Prefix=prefix)
 
-    for page in page_iterator:
-        if "Contents" in page:
-            keys.extend(obj["Key"] for obj in page["Contents"])
+    try:
+        for page in page_iterator:
+            if "Contents" in page:
+                keys.extend(obj["Key"] for obj in page["Contents"])
+    except NoCredentialsError:
+        sys.exit("Error: Unable to locate credentials")
     return keys
 
 
