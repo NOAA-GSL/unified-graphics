@@ -1,3 +1,4 @@
+import argparse
 import re
 from typing import Optional
 
@@ -73,7 +74,7 @@ def rename_objects(bucket_name: str, object_keys: list[str]) -> None:
         print(f"Renamed object: {key} to {new_key}")
 
 
-def process_objects(bucket_name: str, prefix: str) -> None:
+def process_objects(bucket_name: str, prefix: str, dry_run: bool) -> None:
     """
     Process objects in the specified S3 bucket by listing, filtering, and renaming them.
     """
@@ -88,13 +89,37 @@ def process_objects(bucket_name: str, prefix: str) -> None:
     print(f"Number of keys without minutes: {len(filtered_keys)}")
 
     # Rename the filtered objects
-    rename_objects(bucket_name, filtered_keys)
+    if not dry_run:
+        rename_objects(bucket_name, filtered_keys)
 
 
 def main():
-    # FIXME: Ideally the bucket and prefix would be CLI arguments
-    bucket_name = "osti-modeling-dev-rtma-vis-prod"
-    prefix = "diagnostics.zarr"
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--bucket",
+        type=str,
+        required=True,
+        help="The S3 bucket name like: my-s3-bucket",
+    )
+    parser.add_argument(
+        "--prefix",
+        type=str,
+        required=False,
+        help="The S3 bucket prefix to rename like: diagnostics.zarr",
+    )
+    parser.add_argument(
+        "--dry-run",
+        default=True,
+        required=False,
+        help="Do a dry run - everything up to renaming objects in the S3 bucket",
+        action=argparse.BooleanOptionalAction,
+    )
+    args = parser.parse_args()
 
-    # FIXME: A "dry-run" option would be nice
-    process_objects(bucket_name, prefix)
+    if args.dry_run:
+        print(
+            "Dry run - Objects won't be renamed in S3. \n\n"
+            "Use --no-dry-run once you've confirmed the results are as desired.\n"
+        )
+
+    process_objects(args.bucket, args.prefix, args.dry_run)
