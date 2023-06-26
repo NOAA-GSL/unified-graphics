@@ -1,10 +1,13 @@
 import os
 import uuid
-from unittest import mock
+from functools import partial
 
 import numpy as np
 import pytest
 import xarray as xr
+from botocore.session import Session
+from moto.server import ThreadedMotoServer
+from s3fs import S3FileSystem, S3Map
 from werkzeug.datastructures import MultiDict
 from zarr.errors import GroupNotFoundError  # type: ignore
 
@@ -13,6 +16,20 @@ from unified_graphics.models import Analysis, WeatherModel
 
 # Global resources for s3
 test_bucket_name = "osti-modeling-dev-rtma-vis"
+
+
+@pytest.fixture(scope="module")
+def s3():
+    server = ThreadedMotoServer(port=9000)
+    server.start()
+    yield
+    server.stop()
+
+
+@pytest.fixture
+def s3_client(s3):
+    session = Session()
+    return session.create_client("s3", endpoint_url="http://localhost:9000")
 
 
 @pytest.fixture
@@ -65,31 +82,37 @@ def test_get_store_file(uri, expected):
     assert result == expected
 
 
-@mock.patch("unified_graphics.diag.S3Map", autospec=True)
-@mock.patch("unified_graphics.diag.S3FileSystem", autospec=True)
-def test_get_store_s3(mock_s3filesystem, mock_s3map):
-    prev_env = dict(**os.environ)
+def test_get_store_s3(s3_client, monkeypatch):
     key = "test-key"
     token = "test-token"
     secret = "test-secret"
     client = {"region_name": "us-east-1"}
     uri = "s3://bucket/prefix/diag.zarr"
+    s3_client.create_bucket(Bucket="bucket")
+    s3_client.put_object(Bucket="bucket", Body=b"Test object", Key="prefix/diag.zarr")
 
-    os.environ["AWS_ACCESS_KEY_ID"] = key
-    os.environ["AWS_SECRET_ACCESS_KEY"] = secret
-    os.environ["AWS_SESSION_TOKEN"] = token
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", key)
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", secret)
+    monkeypatch.setenv("AWS_SESSION_TOKEN", token)
+    monkeypatch.setattr(
+        diag,
+        "S3FileSystem",
+        partial(diag.S3FileSystem, endpoint_url="http://127.0.0.1:9000"),
+    )
 
     result = diag.get_store(uri)
 
-    assert result == mock_s3map.return_value
-    mock_s3filesystem.assert_called_once_with(
-        key=key, secret=secret, token=token, client_kwargs=client
+    assert result == S3Map(
+        root=uri,
+        s3=S3FileSystem(
+            key=key,
+            secret=secret,
+            token=token,
+            client_kwargs=client,
+            endpoint_url="http://127.0.0.1:9000",
+        ),
+        check=False,
     )
-    mock_s3map.assert_called_once_with(
-        root="bucket/prefix/diag.zarr", s3=mock_s3filesystem.return_value, check=False
-    )
-
-    os.environ = prev_env
 
 
 def test_open_diagnostic(diag_zarr_file, test_dataset):
