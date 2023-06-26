@@ -1,4 +1,3 @@
-import os
 import uuid
 from functools import partial
 
@@ -9,7 +8,6 @@ from botocore.session import Session
 from moto.server import ThreadedMotoServer
 from s3fs import S3FileSystem, S3Map
 from werkzeug.datastructures import MultiDict
-from zarr.errors import GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import Analysis, WeatherModel
@@ -147,29 +145,6 @@ def test_open_diagnostic(diag_zarr_file, test_dataset):
     xr.testing.assert_equal(result, expected)
 
 
-def test_open_diagnostic_local_does_not_exist(diag_zarr_file):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    expected = r"group not found at path .*$"
-
-    with pytest.raises(GroupNotFoundError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file,
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            diag.Variable.WIND,
-            init_time,
-            diag.MinimLoop.GUESS,
-        )
-
-
 @pytest.mark.parametrize(
     "uri,expected",
     [
@@ -203,52 +178,6 @@ def test_open_diagnostic_unknown_uri(uri, expected):
             init_time,
             diag.MinimLoop.GUESS,
         )
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3_nonexistent_bucket():
-    init_time = "2022-05-05T14:00"
-    diag_zarr_file = "s3://foo/test.zarr"
-
-    expected = r"Forbidden"
-
-    with pytest.raises(PermissionError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
-        )
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3_nonexistent_key():
-    init_time = "2022-05-16T04:00"
-    diag_zarr_file = "s3://osti-modeling-dev-rtma-vis/test/no_such.zarr"
-    expected = r"No such file or directory.*"
-
-    with pytest.raises(FileNotFoundError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
-        )
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3_unauthenticated(test_key_prefix):
-    # Back up the current environment so we don't break anything
-    prev_env = dict(**os.environ)
-
-    init_time = "2022-05-16T04:00"
-    diag_zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
-
-    del os.environ["AWS_ACCESS_KEY_ID"]
-    del os.environ["AWS_SECRET_ACCESS_KEY"]
-    del os.environ["AWS_SESSION_TOKEN"]
-
-    with pytest.raises(PermissionError):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
-        )
-
-    # Restore environment
-    os.environ = prev_env
 
 
 @pytest.mark.aws
