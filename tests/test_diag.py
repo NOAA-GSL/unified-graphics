@@ -180,20 +180,48 @@ def test_open_diagnostic_unknown_uri(uri, expected):
         )
 
 
-@pytest.mark.aws
-def test_open_diagnostic_s3(test_key_prefix, diag_zarr, diag_dataset):
-    variable = diag.Variable.WIND
-    loop = diag.MinimLoop.ANALYSIS
-    coords = {"component": ["u", "v"]}
-    init_time = "2022-05-05T14:00"
-    zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
-    diag_zarr([variable.value], init_time, loop.value, zarr_file)
-
-    result = diag.open_diagnostic(zarr_file, variable, init_time, loop)
-
-    xr.testing.assert_equal(
-        result, diag_dataset(variable.value, init_time, loop.value, **coords)
+def test_open_diagnostic_s3(s3_client, test_dataset, monkeypatch):
+    store = "s3://test_open_diagnostic_s3/test_diag.zarr"
+    expected = test_dataset()
+    group = "/".join(
+        (
+            expected.model,
+            expected.system,
+            expected.domain,
+            expected.background,
+            expected.frequency,
+            expected.name,
+            expected.initialization_time,
+            expected.loop,
+        )
     )
+
+    monkeypatch.setattr(
+        diag,
+        "S3FileSystem",
+        partial(diag.S3FileSystem, endpoint_url="http://127.0.0.1:9000"),
+    )
+
+    expected.to_zarr(
+        store,
+        group=group,
+        consolidated=False,
+        storage_options={"endpoint_url": "http://127.0.0.1:9000"},
+    )
+
+    result = diag.open_diagnostic(
+        store,
+        expected.model,
+        expected.system,
+        expected.domain,
+        expected.background,
+        expected.frequency,
+        diag.Variable(expected.name),
+        expected.initialization_time,
+        diag.MinimLoop(expected.loop),
+    )
+
+    xr.testing.assert_equal(result, expected)
 
 
 # Test cases taken from the examples at
