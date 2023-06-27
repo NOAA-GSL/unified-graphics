@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
 
 import alembic.command
 import alembic.config
@@ -13,7 +12,6 @@ import numpy as np
 import pytest
 import sqlalchemy
 import xarray as xr
-from s3fs import S3FileSystem, S3Map  # type: ignore
 from sqlalchemy.orm import Session
 
 from unified_graphics import create_app
@@ -294,27 +292,12 @@ def diag_zarr(diag_zarr_file, diag_dataset):
         if not zarr_file:
             zarr_file = diag_zarr_file
 
-        result = urlparse(zarr_file)
-
-        if result.scheme == "s3":
-            region = os.environ.get("AWS_REGION", "us-east-1")
-            s3 = S3FileSystem(
-                key=os.environ["AWS_ACCESS_KEY_ID"],
-                secret=os.environ["AWS_SECRET_ACCESS_KEY"],
-                token=os.environ["AWS_SESSION_TOKEN"],
-                client_kwargs={"region_name": region},
-            )
-
-            store = S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
-        else:
-            store = result.path
-
         if data:
             group = (
                 f"/{data.model}/{data.system}/{data.domain}/{data.background}"
                 f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
             )
-            data.to_zarr(store, group=group, consolidated=False)
+            data.to_zarr(zarr_file, group=group, consolidated=False)
             return zarr_file
 
         for variable in variables:
@@ -336,7 +319,7 @@ def diag_zarr(diag_zarr_file, diag_dataset):
                     f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
                     f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
                 )
-                ds.to_zarr(store, group=group, consolidated=False)
+                ds.to_zarr(zarr_file, group=group, consolidated=False)
             except Exception as e:
                 raise e
 
