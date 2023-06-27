@@ -1,8 +1,69 @@
+from typing import Optional
+
 import numpy as np
 import pytest
 import xarray as xr
 
 from unified_graphics.etl import diag
+
+
+@pytest.fixture(scope="module")
+def input_data():
+    def _input_data(
+        *,
+        Forecast_adjusted,
+        Forecast_unadjusted,
+        Observation,
+        Analysis_Use_Flag,
+        Latitude,
+        Longitude,
+    ):
+        return xr.Dataset(
+            {
+                "Forecast_adjusted": (["nobs"], Forecast_adjusted),
+                "Forecast_unadjusted": (["nobs"], Forecast_unadjusted),
+                "Obs_Minus_Forecast_adjusted": (
+                    ["nobs"],
+                    Observation - Forecast_adjusted,
+                ),
+                "Obs_Minus_Forecast_unadjusted": (
+                    ["nobs"],
+                    Observation - Forecast_unadjusted,
+                ),
+                "Observation": (["nobs"], Observation),
+                "Analysis_Use_Flag": (["nobs"], Analysis_Use_Flag),
+                "Latitude": (["nobs"], Latitude),
+                "Longitude": (["nobs"], Longitude),
+            }
+        )
+
+    return _input_data
+
+
+@pytest.fixture(scope="class")
+def netcdf_path(tmp_path_factory):
+    def _netcdf_path(
+        variable: str,
+        loop: str,
+        init_time: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
+    ):
+        path = tmp_path_factory.mktemp("diag_netcdf")
+
+        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
+        if background:
+            filename += "." + background
+        filename += ".nc4"
+
+        prefix = "_".join(filter(None, (model, system, domain, frequency)))
+
+        return path / "_".join(filter(None, (prefix, filename)))
+
+    return _netcdf_path
 
 
 @pytest.mark.parametrize(
@@ -167,50 +228,83 @@ def test_get_data_array_vector(variable):
 
 
 @pytest.mark.parametrize(
-    "variable,loop,init_time,model,system,domain,frequency,background,coords",
+    "variable,loop,init_time,model,system,domain,frequency,background",
     [
-        ("ps", "anl", "2022050514", None, None, None, None, None, {}),
-        ("q", "anl", "2022050514", "RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", {}),
-        ("t", "anl", "2022050514", "RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", {}),
+        ("q", "anl", "2022050514", None, None, None, None, None),
+        ("q", "anl", "2022050514", "RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR"),
     ],
+    scope="class",
 )
-def test_load(
-    variable,
-    loop,
-    init_time,
-    model,
-    system,
-    domain,
-    frequency,
-    background,
-    coords,
-    diag_file,
-    diag_dataset,
-):
+class TestLoad:
     """diag.load should return datasets for observations, forecasts, and results"""
 
-    test_file = diag_file(
-        variable, loop, init_time, model, system, domain, frequency, background
-    )
-    expected_init_time = (
-        f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}:00"
-    )
-    expected = diag_dataset(
+    @pytest.fixture(scope="class")
+    def test_file(
+        self,
         variable,
-        expected_init_time,
         loop,
+        init_time,
         model,
         system,
         domain,
         frequency,
         background,
-        **coords,
-    )
+        input_data,
+        netcdf_path,
+    ):
+        ds = input_data(
+            Forecast_adjusted=np.array([0, 1]),
+            Forecast_unadjusted=np.array([0, 1]),
+            Observation=np.array([1, 0]),
+            Analysis_Use_Flag=np.array([1, -1]),
+            Latitude=np.array([22, 23]),
+            Longitude=np.array([90, 91]),
+        )
 
-    result = diag.load(test_file)
+        path = netcdf_path(
+            variable, loop, init_time, model, system, domain, frequency, background
+        )
 
-    xr.testing.assert_equal(result, expected)
-    assert result.attrs == expected.attrs
+        ds.to_netcdf(path)
+
+        return path
+
+    @pytest.fixture
+    def expected(
+        self,
+        variable,
+        loop,
+        init_time,
+        model,
+        system,
+        domain,
+        frequency,
+        background,
+        test_dataset,
+    ):
+        expected_init_time = (
+            f"{init_time[:4]}-{init_time[4:6]}-{init_time[6:8]}T{init_time[-2:]}:00"
+        )
+        return test_dataset(
+            model=model or "Unknown",
+            system=system or "Unknown",
+            domain=domain or "Unknown",
+            background=background or "Unknown",
+            frequency=frequency or "Unknown",
+            initialization_time=expected_init_time,
+            variable=variable,
+            loop=loop,
+        )
+
+    @pytest.fixture(scope="class")
+    def result(self, test_file):
+        return diag.load(test_file)
+
+    def test_datasets(self, result, expected):
+        xr.testing.assert_equal(result, expected)
+
+    def test_attributes(self, result, expected):
+        assert result.attrs == expected.attrs
 
 
 def test_no_forecast_scalar(diag_dataset, tmp_path):
