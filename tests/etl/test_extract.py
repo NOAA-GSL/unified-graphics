@@ -307,49 +307,85 @@ class TestLoad:
         assert result.attrs == expected.attrs
 
 
-def test_no_forecast_scalar(diag_dataset, tmp_path):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    frequency = "REALTIME"
-    background = "HRRR"
-    init_time = "202303171400"
-    expected_init_time = "2023-03-17T14:00"
-    variable = "ps"
-    loop = "ges"
+class TestNoForecastScalar:
+    @pytest.fixture(scope="class")
+    def obs(self):
+        return np.array([1.0, 0.0])
 
-    # FIXME: This test data should be created by a fixture
-    filename = (
-        f"{model}_{system}_{domain}_{frequency}_"
-        f"ncdiag_conv_{variable}_{loop}.{init_time}.{background}.nc4"
-    )
-    ds = xr.Dataset(
-        {
-            "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
-            "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
-            "Observation": (["nobs"], np.zeros((3,))),
-            "Analysis_Use_Flag": (["nobs"], np.array([1, -1, 1], dtype=np.int8)),
-            "Latitude": (["nobs"], np.array([22, 23, 25], dtype=np.float64)),
-            "Longitude": (["nobs"], np.array([90, 91, 200], dtype=np.float64)),
-        }
-    )
-    ds.to_netcdf(tmp_path / filename)
+    @pytest.fixture(scope="class")
+    def fcst_adj(self):
+        return np.array([0.1, 1.1])
 
-    expected = diag_dataset(
-        variable,
-        expected_init_time,
-        loop,
-        model,
-        system,
-        domain,
-        frequency,
-        background,
-    )
+    @pytest.fixture(scope="class")
+    def fcst_un(self):
+        return np.array([0.0, 1.0])
 
-    result = diag.load(tmp_path / filename)
+    @pytest.fixture(scope="class")
+    def used(self):
+        return np.array([1.0, -1.0])
 
-    xr.testing.assert_equal(result, expected)
-    assert result.attrs == expected.attrs
+    @pytest.fixture(scope="class")
+    def lng(self):
+        return np.array([90.0, 91.0])
+
+    @pytest.fixture(scope="class")
+    def lat(self):
+        return np.array([22.0, 23.0])
+
+    @pytest.fixture(scope="class")
+    def test_file(self, netcdf_path, obs, fcst_adj, fcst_un, used, lng, lat):
+        path = netcdf_path(
+            variable="ps",
+            loop="ges",
+            init_time="202303171400",
+            model="RTMA",
+            system="WCOSS",
+            domain="CONUS",
+            frequency="REALTIME",
+            background="HRRR",
+        )
+
+        ds = xr.Dataset(
+            {
+                "Obs_Minus_Forecast_adjusted": (["nobs"], obs - fcst_adj),
+                "Obs_Minus_Forecast_unadjusted": (["nobs"], obs - fcst_un),
+                "Observation": (["nobs"], obs),
+                "Analysis_Use_Flag": (["nobs"], used),
+                "Latitude": (["nobs"], lat),
+                "Longitude": (["nobs"], lng),
+            }
+        )
+        ds.to_netcdf(path)
+
+        return path
+
+    @pytest.fixture
+    def result(self, test_file):
+        return diag.load(test_file)
+
+    def test_forecast_adjusted(self, result, fcst_adj, lng, lat, used):
+        expected = xr.DataArray(
+            fcst_adj,
+            coords={
+                "longitude": ("nobs", lng),
+                "latitude": ("nobs", lat),
+                "is_used": ("nobs", used == 1),
+            },
+            dims=["nobs"],
+        )
+        xr.testing.assert_allclose(result["forecast_adjusted"], expected)
+
+    def test_forecast_unadjusted(self, result, fcst_un, lng, lat, used):
+        expected = xr.DataArray(
+            fcst_un,
+            coords={
+                "longitude": ("nobs", lng),
+                "latitude": ("nobs", lat),
+                "is_used": ("nobs", used == 1),
+            },
+            dims=["nobs"],
+        )
+        xr.testing.assert_equal(result["forecast_unadjusted"], expected)
 
 
 def test_no_forecast_vector(diag_dataset, tmp_path):
