@@ -17,17 +17,17 @@ test_bucket_name = "osti-modeling-dev-rtma-vis"
 
 
 @pytest.fixture(scope="module")
-def s3():
+def moto_server():
     server = ThreadedMotoServer(port=9000)
     server.start()
-    yield
+    yield "http://127.0.0.1:9000"
     server.stop()
 
 
 @pytest.fixture
-def s3_client(s3):
+def s3_client(moto_server):
     session = Session()
-    return session.create_client("s3", endpoint_url="http://localhost:9000")
+    return session.create_client("s3", endpoint_url=moto_server)
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ def test_get_store_file(uri, expected):
     assert result == expected
 
 
-def test_get_store_s3(s3_client, monkeypatch):
+def test_get_store_s3(moto_server, s3_client, monkeypatch):
     key = "test-key"
     token = "test-token"
     secret = "test-secret"
@@ -95,7 +95,7 @@ def test_get_store_s3(s3_client, monkeypatch):
     monkeypatch.setattr(
         diag,
         "S3FileSystem",
-        partial(diag.S3FileSystem, endpoint_url="http://127.0.0.1:9000"),
+        partial(diag.S3FileSystem, endpoint_url=moto_server),
     )
 
     result = diag.get_store(uri)
@@ -107,7 +107,7 @@ def test_get_store_s3(s3_client, monkeypatch):
             secret=secret,
             token=token,
             client_kwargs=client,
-            endpoint_url="http://127.0.0.1:9000",
+            endpoint_url=moto_server,
         ),
         check=False,
     )
@@ -180,7 +180,7 @@ def test_open_diagnostic_unknown_uri(uri, expected):
         )
 
 
-def test_open_diagnostic_s3(s3_client, test_dataset, monkeypatch):
+def test_open_diagnostic_s3(moto_server, s3_client, test_dataset, monkeypatch):
     store = "s3://test_open_diagnostic_s3/test_diag.zarr"
     expected = test_dataset()
     group = "/".join(
@@ -199,14 +199,14 @@ def test_open_diagnostic_s3(s3_client, test_dataset, monkeypatch):
     monkeypatch.setattr(
         diag,
         "S3FileSystem",
-        partial(diag.S3FileSystem, endpoint_url="http://127.0.0.1:9000"),
+        partial(diag.S3FileSystem, endpoint_url=moto_server),
     )
 
     expected.to_zarr(
         store,
         group=group,
         consolidated=False,
-        storage_options={"endpoint_url": "http://127.0.0.1:9000"},
+        storage_options={"endpoint_url": moto_server},
     )
 
     result = diag.open_diagnostic(
