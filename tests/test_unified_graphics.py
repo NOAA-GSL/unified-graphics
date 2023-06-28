@@ -1,7 +1,144 @@
 from pathlib import Path
+from typing import Optional
 
+import numpy as np
 import pytest  # noqa: F401
 import xarray as xr
+
+from unified_graphics import create_app
+
+
+@pytest.fixture
+def diag_zarr_file(tmp_path):
+    return str(tmp_path / "test_diag.zarr")
+
+
+@pytest.fixture
+def app(diag_zarr_file, test_db):
+    _app = create_app(
+        {
+            "SQLALCHEMY_DATABASE_URI": test_db,
+            "DIAG_ZARR": diag_zarr_file,
+        }
+    )
+
+    _app.testing = True
+
+    yield _app
+
+
+@pytest.fixture
+def client(app):
+    with app.test_client() as c:
+        yield c
+
+
+@pytest.fixture(scope="session")
+def diag_dataset():
+    def factory(
+        variable: str,
+        initialization_time: str,
+        loop: str,
+        model: Optional[str] = None,
+        system: Optional[str] = None,
+        domain: Optional[str] = None,
+        frequency: Optional[str] = None,
+        background: Optional[str] = None,
+        data: Optional[xr.Dataset] = None,
+        **kwargs,
+    ):
+        dims = ["nobs", *kwargs.keys()]
+        shape = [3, *map(len, kwargs.values())]
+        variables = [
+            "observation",
+            "forecast_adjusted",
+            "obs_minus_forecast_adjusted",
+            "forecast_unadjusted",
+            "obs_minus_forecast_unadjusted",
+        ]
+
+        if data:
+            ds = data
+            ds.attrs.update(
+                name=variable, loop=loop, initialization_time=initialization_time
+            )
+        else:
+            ds = xr.Dataset(
+                {var: (dims, np.zeros(shape)) for var in variables},
+                coords=dict(
+                    longitude=(["nobs"], np.array([90, 91, -160], dtype=np.float64)),
+                    latitude=(["nobs"], np.array([22, 23, 25], dtype=np.float64)),
+                    is_used=(["nobs"], np.array([1, 0, 1], dtype=np.int8)),
+                    **kwargs,
+                ),
+                attrs={
+                    "name": variable,
+                    "loop": loop,
+                    "initialization_time": initialization_time,
+                    "model": model or "Unknown",
+                    "system": system or "Unknown",
+                    "domain": domain or "Unknown",
+                    "frequency": frequency or "Unknown",
+                    "background": background or "Unknown",
+                },
+            )
+
+        return ds
+
+    return factory
+
+
+@pytest.fixture
+def diag_zarr(diag_zarr_file, diag_dataset):
+    def factory(
+        variables: list[str],
+        initialization_time: str,
+        loop: str,
+        model: Optional[str] = "RTMA",
+        system: Optional[str] = "WCOSS",
+        domain: Optional[str] = "CONUS",
+        frequency: Optional[str] = "REALTIME",
+        background: Optional[str] = "HRRR",
+        zarr_file: str = "",
+        data: Optional[xr.Dataset] = None,
+    ):
+        if not zarr_file:
+            zarr_file = diag_zarr_file
+
+        if data:
+            group = (
+                f"/{data.model}/{data.system}/{data.domain}/{data.background}"
+                f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
+            )
+            data.to_zarr(zarr_file, group=group, consolidated=False)
+            return zarr_file
+
+        for variable in variables:
+            coords = {"component": ["u", "v"]} if variable == "uv" else {}
+
+            ds = diag_dataset(
+                variable,
+                initialization_time,
+                loop,
+                model,
+                system,
+                domain,
+                frequency,
+                background,
+                **coords,
+            )
+            try:
+                group = (
+                    f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
+                    f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
+                )
+                ds.to_zarr(zarr_file, group=group, consolidated=False)
+            except Exception as e:
+                raise e
+
+        return zarr_file
+
+    return factory
 
 
 @pytest.mark.xfail(reason="Needs to be updated to expect HTML response")
