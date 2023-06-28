@@ -113,7 +113,7 @@ def client(app):
 
 
 # FIXME: Replace diag_dataset with this fixture
-@pytest.fixture
+@pytest.fixture(scope="class")
 def test_dataset():
     def factory(
         *,
