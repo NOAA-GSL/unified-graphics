@@ -113,7 +113,8 @@ def test_get_store_s3(moto_server, s3_client, monkeypatch):
     )
 
 
-def test_open_diagnostic(diag_zarr_file, test_dataset):
+def test_open_diagnostic(tmp_path, test_dataset):
+    diag_zarr_file = str(tmp_path / "test_diag.zarr")
     expected = test_dataset()
     group = "/".join(
         (
