@@ -48,17 +48,17 @@ def dataset_to_table(dataset: xr.Dataset) -> pd.DataFrame:
 
 class TestSaveNew:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, diag_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, zarr_file):
         (mdl, system, domain, background, frequency) = model
-        ps = diag_dataset(
-            "ps",
-            "2022-05-05T14:00",
-            "anl",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        ps = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T14:00",
+            loop="anl",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, ps)
@@ -111,30 +111,30 @@ class TestSaveNew:
 
 class TestAddVariable:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, diag_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, zarr_file):
         (mdl, system, domain, background, frequency) = model
-        ps = diag_dataset(
-            "ps",
-            "2022-05-05T14:00",
-            "anl",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        ps = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T14:00",
+            loop="anl",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, ps)
 
-        t = diag_dataset(
-            "t",
-            "2022-05-05T14:00",
-            "anl",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        t = test_dataset(
+            variable="t",
+            initialization_time="2022-05-05T14:00",
+            loop="anl",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, t)
@@ -168,30 +168,30 @@ class TestAddVariable:
 
 class TestAddLoop:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, diag_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, zarr_file):
         (mdl, system, domain, background, frequency) = model
-        ges = diag_dataset(
-            "ps",
-            "2022-05-05T14:00",
-            "ges",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        ges = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T14:00",
+            loop="ges",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, ges)
 
-        anl = diag_dataset(
-            "ps",
-            "2022-05-05T14:00",
-            "anl",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        anl = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T14:00",
+            loop="anl",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, anl)
@@ -230,30 +230,30 @@ class TestAddLoop:
 
 class TestAddAnalysis:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, diag_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, zarr_file):
         (mdl, system, domain, background, frequency) = model
-        first = diag_dataset(
-            "ps",
-            "2022-05-05T14:00",
-            "ges",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        first = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T14:00",
+            loop="ges",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, first)
 
-        second = diag_dataset(
-            "ps",
-            "2022-05-05T15:00",
-            "ges",
-            mdl,
-            system,
-            domain,
-            frequency,
-            background,
+        second = test_dataset(
+            variable="ps",
+            initialization_time="2022-05-05T15:00",
+            loop="ges",
+            model=mdl,
+            system=system,
+            domain=domain,
+            frequency=frequency,
+            background=background,
         )
 
         diag.save(session, zarr_file, second)
