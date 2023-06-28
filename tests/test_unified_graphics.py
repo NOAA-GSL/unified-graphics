@@ -141,11 +141,17 @@ def diag_zarr(diag_zarr_file, diag_dataset):
     return factory
 
 
-@pytest.mark.xfail(reason="Needs to be updated to expect HTML response")
-def test_root_endpoint(client):
-    response = client.get("/")
+class TestHomePage:
+    @pytest.fixture
+    def response(self, client):
+        return client.get("/")
 
-    assert response.status_code == 200
+    def test_http_status(self, response):
+        assert response.status_code == 200
+
+    @pytest.mark.xfail(reason="Needs to be updated to expect HTML response")
+    def test_page(self, response):
+        assert 0
 
 
 @pytest.mark.parametrize(
