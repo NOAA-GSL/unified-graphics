@@ -1,7 +1,5 @@
 import os
-from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
 
 import alembic.command
 import alembic.config
@@ -13,10 +11,7 @@ import numpy as np
 import pytest
 import sqlalchemy
 import xarray as xr
-from s3fs import S3FileSystem, S3Map  # type: ignore
 from sqlalchemy.orm import Session
-
-from unified_graphics import create_app
 
 try:
     from dotenv import load_dotenv
@@ -28,34 +23,6 @@ except ImportError:
 test_db_user = os.environ.get("TEST_DB_USER", "postgres")
 test_db_pass = os.environ.get("TEST_DB_PASS", "postgres")
 test_db_host = os.environ.get("TEST_DB_HOST", "localhost:5432")
-
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--runaws",
-        action="store_true",
-        default=False,
-        help="run tests that require authentication to AWS",
-    )
-
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "aws: mark test as requiring an authenticated connection to AWS"
-    )
-
-
-def pytest_collection_modifyitems(config, items):
-    if config.getoption("--runaws"):
-        # If --runaws is set, there's no need to modify any of the tests
-        # to mark them skipped.
-        return
-
-    # Mark any test with the aws mark as skipped because --runaws is off
-    skip_aws = pytest.mark.skip(reason="use --runaws to run")
-    for item in items:
-        if "aws" in item.keywords:
-            item.add_marker(skip_aws)
 
 
 @pytest.fixture(scope="session")
@@ -118,80 +85,7 @@ def session(engine):
         s.rollback()
 
 
-@pytest.fixture
-def diag_zarr_file(tmp_path):
-    return str(tmp_path / "test_diag.zarr")
-
-
-@pytest.fixture
-def app(diag_zarr_file, test_db):
-    _app = create_app(
-        {
-            "SQLALCHEMY_DATABASE_URI": test_db,
-            "DIAG_ZARR": diag_zarr_file,
-        }
-    )
-
-    _app.testing = True
-
-    yield _app
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as c:
-        yield c
-
-
-@pytest.fixture
-def diag_file(app, tmp_path):
-    def factory(
-        variable: str,
-        loop: str,
-        init_time: str,
-        model: Optional[str] = None,
-        system: Optional[str] = None,
-        domain: Optional[str] = None,
-        frequency: Optional[str] = None,
-        background: Optional[str] = None,
-    ) -> Path:
-        filename = f"ncdiag_conv_{variable}_{loop}.{init_time}"
-        if background:
-            filename += f".{background}"
-        filename += ".nc4"
-
-        if frequency:
-            filename = f"{frequency}_{filename}"
-        if domain:
-            filename = f"{domain}_{filename}"
-        if system:
-            filename = f"{system}_{filename}"
-        if model:
-            filename = f"{model}_{filename}"
-
-        ds = xr.Dataset(
-            {
-                "Forecast_adjusted": (["nobs"], np.zeros((3,))),
-                "Forecast_unadjusted": (["nobs"], np.zeros((3,))),
-                "Obs_Minus_Forecast_adjusted": (["nobs"], np.zeros((3,))),
-                "Obs_Minus_Forecast_unadjusted": (["nobs"], np.zeros((3,))),
-                "Observation": (["nobs"], np.zeros((3,))),
-                "Analysis_Use_Flag": (["nobs"], np.array([1, -1, 1], dtype=np.int8)),
-                "Latitude": (["nobs"], np.array([22, 23, 25], dtype=np.float64)),
-                "Longitude": (["nobs"], np.array([90, 91, 200], dtype=np.float64)),
-            }
-        )
-
-        diag_file = tmp_path / filename
-        ds.to_netcdf(diag_file)
-
-        return diag_file
-
-    return factory
-
-
-# FIXME: Replace diag_dataset with this fixture
-@pytest.fixture
+@pytest.fixture(scope="class")
 def test_dataset():
     def factory(
         *,
@@ -246,128 +140,5 @@ def test_dataset():
                 "background": background,
             },
         )
-
-    return factory
-
-
-@pytest.fixture(scope="session")
-def diag_dataset():
-    def factory(
-        variable: str,
-        initialization_time: str,
-        loop: str,
-        model: Optional[str] = None,
-        system: Optional[str] = None,
-        domain: Optional[str] = None,
-        frequency: Optional[str] = None,
-        background: Optional[str] = None,
-        data: Optional[xr.Dataset] = None,
-        **kwargs,
-    ):
-        dims = ["nobs", *kwargs.keys()]
-        shape = [3, *map(len, kwargs.values())]
-        variables = [
-            "observation",
-            "forecast_adjusted",
-            "obs_minus_forecast_adjusted",
-            "forecast_unadjusted",
-            "obs_minus_forecast_unadjusted",
-        ]
-
-        if data:
-            ds = data
-            ds.attrs.update(
-                name=variable, loop=loop, initialization_time=initialization_time
-            )
-        else:
-            ds = xr.Dataset(
-                {var: (dims, np.zeros(shape)) for var in variables},
-                coords=dict(
-                    longitude=(["nobs"], np.array([90, 91, -160], dtype=np.float64)),
-                    latitude=(["nobs"], np.array([22, 23, 25], dtype=np.float64)),
-                    is_used=(["nobs"], np.array([1, 0, 1], dtype=np.int8)),
-                    **kwargs,
-                ),
-                attrs={
-                    "name": variable,
-                    "loop": loop,
-                    "initialization_time": initialization_time,
-                    "model": model or "Unknown",
-                    "system": system or "Unknown",
-                    "domain": domain or "Unknown",
-                    "frequency": frequency or "Unknown",
-                    "background": background or "Unknown",
-                },
-            )
-
-        return ds
-
-    return factory
-
-
-@pytest.fixture
-def diag_zarr(diag_zarr_file, diag_dataset):
-    def factory(
-        variables: list[str],
-        initialization_time: str,
-        loop: str,
-        model: Optional[str] = "RTMA",
-        system: Optional[str] = "WCOSS",
-        domain: Optional[str] = "CONUS",
-        frequency: Optional[str] = "REALTIME",
-        background: Optional[str] = "HRRR",
-        zarr_file: str = "",
-        data: Optional[xr.Dataset] = None,
-    ):
-        if not zarr_file:
-            zarr_file = diag_zarr_file
-
-        result = urlparse(zarr_file)
-
-        if result.scheme == "s3":
-            region = os.environ.get("AWS_REGION", "us-east-1")
-            s3 = S3FileSystem(
-                key=os.environ["AWS_ACCESS_KEY_ID"],
-                secret=os.environ["AWS_SECRET_ACCESS_KEY"],
-                token=os.environ["AWS_SESSION_TOKEN"],
-                client_kwargs={"region_name": region},
-            )
-
-            store = S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
-        else:
-            store = result.path
-
-        if data:
-            group = (
-                f"/{data.model}/{data.system}/{data.domain}/{data.background}"
-                f"/{data.frequency}/{data.attrs['name']}/{initialization_time}/{loop}"
-            )
-            data.to_zarr(store, group=group, consolidated=False)
-            return zarr_file
-
-        for variable in variables:
-            coords = {"component": ["u", "v"]} if variable == "uv" else {}
-
-            ds = diag_dataset(
-                variable,
-                initialization_time,
-                loop,
-                model,
-                system,
-                domain,
-                frequency,
-                background,
-                **coords,
-            )
-            try:
-                group = (
-                    f"/{ds.model}/{ds.system}/{ds.domain}/{ds.background}"
-                    f"/{ds.frequency}/{variable}/{initialization_time}/{loop}"
-                )
-                ds.to_zarr(store, group=group, consolidated=False)
-            except Exception as e:
-                raise e
-
-        return zarr_file
 
     return factory
