@@ -16,6 +16,22 @@ from unified_graphics.models import Analysis, WeatherModel
 test_bucket_name = "osti-modeling-dev-rtma-vis"
 
 
+@pytest.fixture
+def aws_credentials(monkeypatch):
+    credentials = {
+        "AWS_ACCESS_KEY_ID": "test-id",
+        "AWS_SECRET_ACCESS_KEY": "test-key",
+        "AWS_SECURITY_TOKEN": "test-token",
+        "AWS_SESSION_TOKEN": "test-session",
+        "AWS_DEFAULT_REGION": "us-east-1",
+    }
+
+    for k, v in credentials.items():
+        monkeypatch.setenv(k, v)
+
+    return credentials
+
+
 @pytest.fixture(scope="module")
 def moto_server():
     server = ThreadedMotoServer(port=9000)
@@ -25,7 +41,7 @@ def moto_server():
 
 
 @pytest.fixture
-def s3_client(moto_server):
+def s3_client(aws_credentials, moto_server):
     session = Session()
     return session.create_client("s3", endpoint_url=moto_server)
 
@@ -81,17 +97,11 @@ def test_get_store_file(uri, expected):
 
 
 def test_get_store_s3(moto_server, s3_client, monkeypatch):
-    key = "test-key"
-    token = "test-token"
-    secret = "test-secret"
     client = {"region_name": "us-east-1"}
     uri = "s3://bucket/prefix/diag.zarr"
     s3_client.create_bucket(Bucket="bucket")
     s3_client.put_object(Bucket="bucket", Body=b"Test object", Key="prefix/diag.zarr")
 
-    monkeypatch.setenv("AWS_ACCESS_KEY_ID", key)
-    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", secret)
-    monkeypatch.setenv("AWS_SESSION_TOKEN", token)
     monkeypatch.setattr(
         diag,
         "S3FileSystem",
@@ -103,9 +113,6 @@ def test_get_store_s3(moto_server, s3_client, monkeypatch):
     assert result == S3Map(
         root=uri,
         s3=S3FileSystem(
-            key=key,
-            secret=secret,
-            token=token,
             client_kwargs=client,
             endpoint_url=moto_server,
         ),
@@ -175,13 +182,14 @@ def test_open_diagnostic_unknown_uri(uri, expected):
             domain,
             background,
             frequency,
-            diag.Variable.WIND,
             init_time,
+            diag.Variable.WIND,
             diag.MinimLoop.GUESS,
         )
 
 
-def test_open_diagnostic_s3(moto_server, s3_client, test_dataset, monkeypatch):
+@pytest.mark.usefixtures("aws_credentials")
+def test_open_diagnostic_s3(moto_server, test_dataset, monkeypatch):
     store = "s3://test_open_diagnostic_s3/test_diag.zarr"
     expected = test_dataset()
     group = "/".join(
