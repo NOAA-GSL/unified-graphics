@@ -56,42 +56,27 @@ class TestDetectTimestamps:
         assert detect_timestamps_without_minutes(key) is None
 
 
-class TestUpdateTimestamp:
-    def test_update_timestamp(self):
-        key = (
-            "diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/uv/"
-            "2023-06-06T16/ges/observation/1.1"
-        )
-        desired = (
-            "diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/uv/"
-            "2023-06-06T16:00/ges/observation/1.1"
-        )
-
-        assert desired == update_timestamp(key)
-
-    def test_simplified_timestamp(self):
-        key = "foo/2023-06-06T16/bar"
-        desired = "foo/2023-06-06T16:00/bar"
-
-        assert desired == update_timestamp(key)
-
-    def test_bare_timestamp(self):
-        key = "2023-06-06T16"
-        desired = "2023-06-06T16:00"
-
-        assert desired == update_timestamp(key)
-
-    def test_matching_timestamps(self):
-        key = "2023-06-06T16:00"
-        desired = "2023-06-06T16:00"
-
-        assert desired == update_timestamp(key)
-
-    def test_no_timestamp(self):
-        key = "foo/bar"
-        desired = "foo/bar"
-
-        assert desired == update_timestamp(key)
+@pytest.mark.parametrize(
+    "key,expected",
+    (
+        (
+            (
+                "diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/uv/"
+                "2023-06-06T16/ges/observation/1.1"
+            ),
+            (
+                "diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/uv/"
+                "2023-06-06T16:00/ges/observation/1.1"
+            ),
+        ),
+        ("foo/2023-06-06T16/bar", "foo/2023-06-06T16:00/bar"),
+        ("2023-06-06T16", "2023-06-06T16:00"),
+        ("2023-06-06T16:00", "2023-06-06T16:00"),
+        ("foo/bar", "foo/bar"),
+    ),
+)
+def test_update_timestamp(key, expected):
+    assert expected == update_timestamp(key)
 
 
 @mock.patch("utils.s3.s3_bulk_renaming.boto3.client")
