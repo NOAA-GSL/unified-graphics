@@ -6,6 +6,11 @@ from typing import Optional
 import boto3  # type: ignore
 from botocore.exceptions import NoCredentialsError  # type: ignore
 
+pattern_with_minutes = r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})"  # "YYYY-MM-DDTHH:MM"
+pattern_without_minutes = r"(\d{4}-\d{2}-\d{2}T\d{2})"  # "YYYY-MM-DDTHH"
+iso_date_with_minutes = re.compile(pattern_with_minutes)
+iso_date_without_minutes = re.compile(pattern_without_minutes)
+
 
 def list_objects(bucket_name: str, prefix: Optional[str] = None) -> list[str]:
     """
@@ -37,19 +42,15 @@ def detect_timestamps_without_minutes(key: str) -> Optional[str]:
     Returns the string if it contains a YYYY-MM-DDTHH timestamp.
     Otherwise, return None
     """
-    pattern_with_minutes = r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})"  # "YYYY-MM-DDTHH:MM"
-    pattern_without_minutes = r"(\d{4}-\d{2}-\d{2}T\d{2})"  # "YYYY-MM-DDTHH"
-
-    match_with_minutes = re.search(pattern_with_minutes, key)
-    match_without_minutes = re.search(pattern_without_minutes, key)
+    match_with_minutes = iso_date_with_minutes.search(key)
+    match_without_minutes = iso_date_without_minutes.search(key)
 
     return key if match_without_minutes and not match_with_minutes else None
 
 
 def update_timestamp(string) -> str:
     """Updates YYYY-MM-DDTHH timestamps with a :MM field set to the start of the hour"""
-    desired_format = r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})"  # "YYYY-MM-DDTHH:MM"
-    if re.search(desired_format, string):
+    if iso_date_with_minutes.search(string):
         return string
     return re.sub(r"(^.*\d{4}-\d{2}-\d{2}T\d{2})(.*$)", r"\1:00\2", string)
 
