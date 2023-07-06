@@ -106,6 +106,7 @@ def main():
     parser.add_argument(
         "--prefix",
         type=str,
+        default="",
         required=False,
         help="The S3 bucket prefix to rename like: diagnostics.zarr",
     )
