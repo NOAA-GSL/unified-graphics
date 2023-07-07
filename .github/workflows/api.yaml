@@ -12,6 +12,10 @@ on:
       - "tests/**/*"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "docker/app/**"
+      - "docker/diag-etl/**"
   pull_request:
     paths:
       - "src/**/*.py"
@@ -19,6 +23,10 @@ on:
       - "tests/**/*"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "docker/app/**"
+      - "docker/diag-etl/**"
   workflow_dispatch: # Manually
 env:
   REGISTRY: ghcr.io/noaa-gsl/unified-graphics

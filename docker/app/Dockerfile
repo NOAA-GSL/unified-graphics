@@ -11,7 +11,7 @@ RUN apt-get update \
     && apt-get install -y build-essential \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/*
-RUN poetry install --no-interaction --no-ansi --no-dev
+RUN poetry install --no-interaction --no-ansi --without dev
 
 RUN groupadd -g 1000 python && \
     useradd -r -u 1000 -g python python
