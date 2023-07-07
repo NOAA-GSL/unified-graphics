@@ -8,7 +8,7 @@ authors = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.9"
+python = "~3.10"
 Flask = "^2.3.2"
 netCDF4 = "^1.6.3"
 xarray = "^2023.3.0"
