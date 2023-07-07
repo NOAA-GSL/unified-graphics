@@ -13,6 +13,7 @@ on:
       - "src/*/static/**"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "docker/webserver/**"
   pull_request:
     paths:
       - ".nvmrc"
@@ -21,6 +22,7 @@ on:
       - "src/*/static/**"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "docker/webserver/**"
   workflow_dispatch: # Manually
 env:
   REGISTRY: ghcr.io/noaa-gsl/unified-graphics/ui
