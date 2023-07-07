@@ -12,6 +12,8 @@ on:
       - "tests/**/*"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "pyproject.toml"
+      - "poetry.lock"
   pull_request:
     paths:
       - "src/**/*.py"
@@ -19,6 +21,8 @@ on:
       - "tests/**/*"
       - ".github/workflows/**"
       - ".github/scripts/**"
+      - "pyproject.toml"
+      - "poetry.lock"
   workflow_dispatch: # Manually
 env:
   REGISTRY: ghcr.io/noaa-gsl/unified-graphics
