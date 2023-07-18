@@ -32,8 +32,11 @@ updates:
     assignees:
       - "ian-noaa"
     groups:
-      all:
+      pip-dependencies:
         patterns:
+        # Ideally, we could split this into dev and application dependencies.
+        # However, then we'd have to maintain our dependencies list here as
+        # well as in the pyproject.toml file.
         - "*"
 
   - package-ecosystem: "npm"
@@ -45,6 +48,6 @@ updates:
     assignees:
       - "ian-noaa"
     groups:
-      all:
+      npm-dependencies:
         patterns:
         - "*"
