@@ -18,7 +18,7 @@ scipy = "^1.10.0"
 aiobotocore = {version = "*", extras = ["boto3"]}
 fsspec = "*"
 s3fs = "*"
-zarr = "^2.14.1"
+zarr = "^2.16.0"
 flask-sqlalchemy = "^3.0.3"
 psycopg = {version = "^3.1.9", extras = ["binary", "pool"]}
 alembic = "^1.10.4"
