@@ -31,7 +31,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
           node-version-file: ".nvmrc"
@@ -46,7 +46,7 @@ jobs:
   #   permissions:
   #     pull-requests: write
   #   steps:
-  #     - uses: actions/checkout@v3
+  #     - uses: actions/checkout@v4
   #     - uses: actions/setup-node@v3
   #       with:
   #         node-version-file: ".nvmrc"
@@ -86,7 +86,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Extract branch/tag name
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Build & tag image
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Extract branch/tag name
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Scan image with Trivy
@@ -132,7 +132,7 @@ jobs:
     concurrency: vlab
     needs: scan
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Extract branch/tag name
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Login to GHCR
