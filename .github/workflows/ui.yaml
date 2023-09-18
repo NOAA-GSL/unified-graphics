@@ -93,7 +93,7 @@ jobs:
         run: |
           docker build -t ${{ env.REGISTRY }}:${{ env.BRANCH }} -f docker/webserver/Dockerfile .
       - name: Login to GHCR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -136,7 +136,7 @@ jobs:
       - name: Extract branch/tag name
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Login to GHCR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
