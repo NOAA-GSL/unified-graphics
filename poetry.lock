@@ -833,18 +833,18 @@ Flask = ">=0.9"
 
 [[package]]
 name = "flask-sqlalchemy"
-version = "3.0.5"
+version = "3.1.1"
 description = "Add SQLAlchemy support to your Flask application."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "flask_sqlalchemy-3.0.5-py3-none-any.whl", hash = "sha256:cabb6600ddd819a9f859f36515bb1bd8e7dbf30206cc679d2b081dff9e383283"},
-    {file = "flask_sqlalchemy-3.0.5.tar.gz", hash = "sha256:c5765e58ca145401b52106c0f46178569243c5da25556be2c231ecc60867c5b1"},
+    {file = "flask_sqlalchemy-3.1.1-py3-none-any.whl", hash = "sha256:4ba4be7f419dc72f4efd8802d69974803c37259dd42f3913b0dcf75c9447e0a0"},
+    {file = "flask_sqlalchemy-3.1.1.tar.gz", hash = "sha256:e4b68bb881802dda1a7d878b2fc84c06d1ee57fb40b874d3dc97dabfa36b8312"},
 ]
 
 [package.dependencies]
 flask = ">=2.2.5"
-sqlalchemy = ">=1.4.18"
+sqlalchemy = ">=2.0.16"
 
 [[package]]
 name = "frozenlist"
@@ -1448,13 +1448,13 @@ files = [
 
 [[package]]
 name = "moto"
-version = "4.2.2"
+version = "4.2.3"
 description = ""
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "moto-4.2.2-py2.py3-none-any.whl", hash = "sha256:2a9cbcd9da1a66b23f95d62ef91968284445233a606b4de949379395056276fb"},
-    {file = "moto-4.2.2.tar.gz", hash = "sha256:ee34c4c3f53900d953180946920c9dba127a483e2ed40e6dbf93d4ae2e760e7c"},
+    {file = "moto-4.2.3-py2.py3-none-any.whl", hash = "sha256:2e934d834729b274382055e097b166127db829ab4fae00bb08c031c108391a2c"},
+    {file = "moto-4.2.3.tar.gz", hash = "sha256:4caab0145d557d102fe79d0ce3b73d6bf1d916d29ad03c14da15f7da66429cdb"},
 ]
 
 [package.dependencies]
@@ -1471,7 +1471,7 @@ graphql-core = {version = "*", optional = true, markers = "extra == \"server\""}
 Jinja2 = ">=2.10.1"
 jsondiff = {version = ">=1.1.2", optional = true, markers = "extra == \"server\""}
 openapi-spec-validator = {version = ">=0.2.8", optional = true, markers = "extra == \"server\""}
-py-partiql-parser = {version = "0.3.6", optional = true, markers = "extra == \"server\""}
+py-partiql-parser = {version = "0.3.7", optional = true, markers = "extra == \"server\""}
 pyparsing = {version = ">=3.0.7", optional = true, markers = "extra == \"server\""}
 python-dateutil = ">=2.1,<3.0.0"
 python-jose = {version = ">=3.1.0,<4.0.0", extras = ["cryptography"], optional = true, markers = "extra == \"server\""}
@@ -1484,28 +1484,28 @@ werkzeug = ">=0.5,<2.2.0 || >2.2.0,<2.2.1 || >2.2.1"
 xmltodict = "*"
 
 [package.extras]
-all = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.6)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
+all = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.7)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
 apigateway = ["PyYAML (>=5.1)", "ecdsa (!=0.15)", "openapi-spec-validator (>=0.2.8)", "python-jose[cryptography] (>=3.1.0,<4.0.0)"]
 apigatewayv2 = ["PyYAML (>=5.1)"]
 appsync = ["graphql-core"]
 awslambda = ["docker (>=3.0.0)"]
 batch = ["docker (>=3.0.0)"]
-cloudformation = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.6)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
+cloudformation = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.7)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
 cognitoidp = ["ecdsa (!=0.15)", "python-jose[cryptography] (>=3.1.0,<4.0.0)"]
 ds = ["sshpubkeys (>=3.1.0)"]
-dynamodb = ["docker (>=3.0.0)", "py-partiql-parser (==0.3.6)"]
-dynamodbstreams = ["docker (>=3.0.0)", "py-partiql-parser (==0.3.6)"]
+dynamodb = ["docker (>=3.0.0)", "py-partiql-parser (==0.3.7)"]
+dynamodbstreams = ["docker (>=3.0.0)", "py-partiql-parser (==0.3.7)"]
 ebs = ["sshpubkeys (>=3.1.0)"]
 ec2 = ["sshpubkeys (>=3.1.0)"]
 efs = ["sshpubkeys (>=3.1.0)"]
 eks = ["sshpubkeys (>=3.1.0)"]
 glue = ["pyparsing (>=3.0.7)"]
 iotdata = ["jsondiff (>=1.1.2)"]
-resourcegroupstaggingapi = ["PyYAML (>=5.1)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.6)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "sshpubkeys (>=3.1.0)"]
+resourcegroupstaggingapi = ["PyYAML (>=5.1)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.7)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "sshpubkeys (>=3.1.0)"]
 route53resolver = ["sshpubkeys (>=3.1.0)"]
-s3 = ["PyYAML (>=5.1)", "py-partiql-parser (==0.3.6)"]
-s3crc32c = ["PyYAML (>=5.1)", "crc32c", "py-partiql-parser (==0.3.6)"]
-server = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "flask (!=2.2.0,!=2.2.1)", "flask-cors", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.6)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
+s3 = ["PyYAML (>=5.1)", "py-partiql-parser (==0.3.7)"]
+s3crc32c = ["PyYAML (>=5.1)", "crc32c", "py-partiql-parser (==0.3.7)"]
+server = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "flask (!=2.2.0,!=2.2.1)", "flask-cors", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.2.8)", "py-partiql-parser (==0.3.7)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
 ssm = ["PyYAML (>=5.1)"]
 xray = ["aws-xray-sdk (>=0.93,!=0.96)", "setuptools"]
 
@@ -2080,13 +2080,13 @@ typing-extensions = ">=3.10"
 
 [[package]]
 name = "py-partiql-parser"
-version = "0.3.6"
+version = "0.3.7"
 description = "Pure Python PartiQL Parser"
 optional = false
 python-versions = "*"
 files = [
-    {file = "py-partiql-parser-0.3.6.tar.gz", hash = "sha256:c03568d15a5e04e802b43c6066a07a7409825d6b02da6c70f60e520ca32a4995"},
-    {file = "py_partiql_parser-0.3.6-py3-none-any.whl", hash = "sha256:edc61645f99076eee660fe30f0bc67b04ce1e0e750d56af8932b229f012bb40d"},
+    {file = "py-partiql-parser-0.3.7.tar.gz", hash = "sha256:5341f1adc3bdd5dbe7c980fc17b3a4a6353c9052e5b5dd70f6aff9306fb8cbb2"},
+    {file = "py_partiql_parser-0.3.7-py3-none-any.whl", hash = "sha256:e18696b40b9733b1e4b312969f8210fcde24e0766e2a0da799e8f70a5594d6ab"},
 ]
 
 [package.extras]
@@ -3260,4 +3260,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "8ab78eeeb2f4f4c3fe983231ff524312d5975a8db3c9f9d5866a253110090452"
+content-hash = "d6fa0146f5a25e899ec2616ea49c59c58415d2c30f78842f88077e17dd60023b"
