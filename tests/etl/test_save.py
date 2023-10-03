@@ -27,21 +27,9 @@ def data_path(tmp_path_factory):
     return tmp_path_factory.mktemp("test_etl_save")
 
 
-@pytest.fixture(
-    scope="class",
-    params=[
-        "unified_graphics.zarr",
-        pytest.param(
-            "s3://osti-modeling-dev-rtma-vis/unified_graphics.zarr",
-            marks=pytest.mark.aws,
-        ),
-    ],
-)
-def zarr_file(request, data_path):
-    if request.param.startswith("s3://"):
-        return request.param
-
-    return data_path / request.param
+@pytest.fixture(scope="class")
+def zarr_file(data_path):
+    return data_path / "unified_graphics.zarr"
 
 
 @pytest.fixture(scope="class")
