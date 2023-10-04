@@ -48,7 +48,7 @@ def dataset_to_table(dataset: xr.Dataset) -> pd.DataFrame:
 
 class TestSaveNew:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, test_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, data_path, zarr_file):
         (mdl, system, domain, background, frequency) = model
         ps = test_dataset(
             variable="ps",
@@ -61,7 +61,7 @@ class TestSaveNew:
             background=background,
         )
 
-        diag.save(session, zarr_file, ps)
+        diag.save(session, zarr_file, data_path, ps)
 
         return ps
 
@@ -110,7 +110,7 @@ class TestSaveNew:
 
 class TestAddVariable:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, test_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, data_path, zarr_file):
         (mdl, system, domain, background, frequency) = model
         ps = test_dataset(
             variable="ps",
@@ -123,7 +123,7 @@ class TestAddVariable:
             background=background,
         )
 
-        diag.save(session, zarr_file, ps)
+        diag.save(session, zarr_file, data_path, ps)
 
         t = test_dataset(
             variable="t",
@@ -136,7 +136,7 @@ class TestAddVariable:
             background=background,
         )
 
-        diag.save(session, zarr_file, t)
+        diag.save(session, zarr_file, data_path, t)
 
         return (ps, t)
 
@@ -166,7 +166,7 @@ class TestAddVariable:
 
 class TestAddLoop:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, test_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, data_path, zarr_file):
         (mdl, system, domain, background, frequency) = model
         ges = test_dataset(
             variable="ps",
@@ -179,7 +179,7 @@ class TestAddLoop:
             background=background,
         )
 
-        diag.save(session, zarr_file, ges)
+        diag.save(session, zarr_file, data_path, ges)
 
         anl = test_dataset(
             variable="ps",
@@ -192,7 +192,7 @@ class TestAddLoop:
             background=background,
         )
 
-        diag.save(session, zarr_file, anl)
+        diag.save(session, zarr_file, data_path, anl)
 
         return (ges, anl)
 
@@ -227,7 +227,7 @@ class TestAddLoop:
 
 class TestAddAnalysis:
     @pytest.fixture(scope="class", autouse=True)
-    def dataset(self, model, test_dataset, session, zarr_file):
+    def dataset(self, model, test_dataset, session, data_path, zarr_file):
         (mdl, system, domain, background, frequency) = model
         first = test_dataset(
             variable="ps",
@@ -240,7 +240,7 @@ class TestAddAnalysis:
             background=background,
         )
 
-        diag.save(session, zarr_file, first)
+        diag.save(session, zarr_file, data_path, first)
 
         second = test_dataset(
             variable="ps",
@@ -253,7 +253,7 @@ class TestAddAnalysis:
             background=background,
         )
 
-        diag.save(session, zarr_file, second)
+        diag.save(session, zarr_file, data_path, second)
 
         return (first, second)
 
