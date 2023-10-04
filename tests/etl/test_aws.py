@@ -91,12 +91,14 @@ def test_handler(
     mock_save,
     monkeypatch,
 ):
-    ug_bucket = "s3://test-bucket/test.zarr"
+    ug_bucket = "s3://test-bucket/"
+    ug_zarr = f"{ug_bucket}test.zarr"
     dl_bucket = "s3://test-diag-bucket"
     key = "diag_t_anl.202301300600.nc4.gz"
     db_uri = "postgresql+psycopg://postgres:oranges@localhost:5432/test_uri"
 
-    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_zarr)
+    monkeypatch.setenv("UG_DIAG_PARQUET", ug_bucket)
     monkeypatch.setenv("FLASK_SQLALCHEMY_DATABASE_URI", db_uri)
 
     context = {}
@@ -113,15 +115,17 @@ def test_handler(
     mock_load.assert_called_once_with(mock_fetch_record.return_value)
     mock_create_engine.assert_called_once_with(db_uri)
     mock_save.assert_called_once_with(
-        mock_session().__enter__(), ug_bucket, mock_load.return_value
+        mock_session().__enter__(), ug_zarr, ug_bucket, mock_load.return_value
     )
 
 
 def test_handler_no_records(monkeypatch):
     context = {}
     event = {}
-    ug_bucket = "s3://test-bucket/test.zarr"
-    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+    ug_bucket = "s3://test-bucket/"
+    ug_zarr = f"{ug_bucket}test.zarr"
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_zarr)
+    monkeypatch.setenv("UG_DIAG_PARQUET", ug_bucket)
 
     result = aws.lambda_handler(event, context)
 
@@ -132,11 +136,13 @@ def test_handler_no_records(monkeypatch):
 @mock.patch("unified_graphics.etl.diag.load")
 @mock.patch("unified_graphics.etl.aws.fetch_record")
 def test_handler_skip_second_loop(mock_fetch_record, mock_load, mock_save, monkeypatch):
-    ug_bucket = "s3://test-bucket/test.zarr"
+    ug_bucket = "s3://test-bucket/"
+    ug_zarr = f"{ug_bucket}test.zarr"
     dl_bucket = "s3://test-diag-bucket"
     key = "diag_t_02.202301300600.nc4.gz"
 
-    monkeypatch.setenv("UG_DIAG_ZARR", ug_bucket)
+    monkeypatch.setenv("UG_DIAG_ZARR", ug_zarr)
+    monkeypatch.setenv("UG_DIAG_PARQUET", ug_bucket)
 
     context = {}
     event = {
