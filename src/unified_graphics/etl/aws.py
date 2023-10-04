@@ -78,7 +78,8 @@ def lambda_handler(event, context):
         logger.warning("Object details missing from event {event}")
         return ""
 
-    upload_bucket = os.environ["UG_DIAG_ZARR"]
+    zarr_upload = os.environ["UG_DIAG_ZARR"]
+    parquet_upload = os.environ["UG_DIAG_PARQUET"]
 
     bucket = event["detail"]["bucket"]["name"]
     key = unquote_plus(event["detail"]["object"]["key"])
@@ -99,11 +100,11 @@ def lambda_handler(event, context):
 
     logger.info(
         f"Saving {bucket}:{key} to the database and to the Zarr "
-        f"store at: {upload_bucket}"
+        f"store at: {zarr_upload}"
     )
     engine = create_engine(os.environ["FLASK_SQLALCHEMY_DATABASE_URI"])
     with Session(engine) as session:
-        diag.save(session, upload_bucket, data)
+        diag.save(session, zarr_upload, parquet_upload, data)
     engine.dispose()
 
     logger.info(f"Done processing {bucket}:{key}")
