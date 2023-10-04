@@ -177,10 +177,7 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   get yScale() {
-    const domain = [
-      min(this.#data, (d) => d.obs_minus_forecast_adjusted.min),
-      max(this.#data, (d) => d.obs_minus_forecast_adjusted.max),
-    ];
+    const domain = [min(this.#data, (d) => d.min), max(this.#data, (d) => d.max)];
     const { top, bottom } = this.margin;
     const height = this.height - top - bottom;
 
@@ -196,12 +193,12 @@ export default class ChartTimeSeries extends ChartElement {
     const { xScale, yScale } = this;
     const rangeArea = area()
       .x((d) => xScale(d.initialization_time))
-      .y0((d) => yScale(d.obs_minus_forecast_adjusted.min))
-      .y1((d) => yScale(d.obs_minus_forecast_adjusted.max))
+      .y0((d) => yScale(d.min))
+      .y1((d) => yScale(d.max))
       .curve(curveBumpX);
     const meanLine = line()
       .x((d) => xScale(d.initialization_time))
-      .y((d) => yScale(d.obs_minus_forecast_adjusted.mean))
+      .y((d) => yScale(d.mean))
       .curve(curveBumpX);
 
     this.#svg.attr("viewBox", `0 0 ${this.width} ${this.height}`);
