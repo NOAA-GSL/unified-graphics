@@ -451,7 +451,7 @@ def get_model_run_list(
 
 
 def history(
-    diag_zarr: str,
+    parquet_path: str,
     model: str,
     system: str,
     domain: str,
@@ -462,10 +462,10 @@ def history(
     filters: MultiDict,
 ) -> pd.DataFrame:
     # FIXME: This fails when diag_zarr is a file:// URL. Pandas ends up trying to use
-    # urlopen to read the file, but it's a directory
+    # urlopen to read the file, but it's a directory. For now, we strip file://, but
+    # this is a hack.
     parquet_file = (
-        Path(diag_zarr)
-        / ".."
+        Path(parquet_path.replace("file://", ""))
         / "_".join((model, background, system, domain, frequency))
         / variable.value
     )
@@ -473,7 +473,7 @@ def history(
     df = pd.read_parquet(
         parquet_file,
         columns=["initialization_time", "obs_minus_forecast_unadjusted"],
-        filters=(("loop", "=", loop.value), ("is_used", "=", 1)),
+        filters=(("loop", "=", loop.value), ("is_used", "=", True)),
     )
 
     if df.empty:

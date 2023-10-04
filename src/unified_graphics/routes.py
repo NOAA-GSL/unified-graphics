@@ -136,7 +136,7 @@ def serviceworker():
 @bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
 def history(model, system, domain, background, frequency, variable, loop):
     data = diag.history(
-        current_app.config["DIAG_ZARR"],
+        current_app.config["DIAG_PARQUET"],
         model,
         system,
         domain,
