@@ -253,7 +253,7 @@ def save(
     parquet_dir: Union[Path, str],
     *args: xr.Dataset,
 ):
-    """Write one or more xarray Datasets to a Zarr at `zarr_path`
+    """Write one or more xarray Datasets to a Zarr, Parquet, and PostgreSQL
 
     The `name` and `loop` variables are used along with the
     `initialization_time` (non-dimension) coordinates to define the group to
@@ -263,7 +263,7 @@ def save(
     ----------
     session : sqlalchemy.orm.Session
         SQLAlchemy database session
-    zarr_path : Path
+    zarr_path : Union[Path, str]
         The path to the location of the Zarr
     parquet_dir : Union[Path, str]
         The path to the location where Parquet files are stored
