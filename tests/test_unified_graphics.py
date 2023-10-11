@@ -608,7 +608,7 @@ def test_diag_not_found(variable, client):
     ["t", "q", "ps", "uv"],
 )
 def test_diag_read_error(variable, app, client):
-    Path(app.config["DIAG_ZARR"]).touch()
+    Path(app.config["DIAG_ZARR"].replace("file://", "")).touch()
 
     response = client.get(
         f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
