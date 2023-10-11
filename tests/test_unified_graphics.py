@@ -67,7 +67,7 @@ def test_scalar_history(diag_parquet, test_dataset, client):
             "initialization_time": "2022-05-16T04:00",
             "observation": [10, 20],
             "forecast_unadjusted": [5, 10],
-            "is_used": [1, 1],
+            "is_used": [True, True],
             # O - F [5, 10]
         },
         {
@@ -76,7 +76,7 @@ def test_scalar_history(diag_parquet, test_dataset, client):
             "forecast_unadjusted": [5, 10, 3],
             "longitude": [0, 0, 0],
             "latitude": [0, 0, 0],
-            "is_used": [1, 1, 1],
+            "is_used": [True, True, True],
             # O - F [-4, -8, 0]
         },
     ]
@@ -112,14 +112,14 @@ def test_scalar_history_unused(diag_parquet, test_dataset, client):
             "initialization_time": "2022-05-16T04:00",
             "observation": [10, 20],
             "forecast_unadjusted": [5, 10],
-            "is_used": [1, 0],
+            "is_used": [True, False],
             # O - F [5, 10]
         },
         {
             "initialization_time": "2022-05-16T07:00",
             "observation": [1, 2],
             "forecast_unadjusted": [5, 10],
-            "is_used": [0, 1],
+            "is_used": [False, True],
             # O - F [-4, -8]
         },
     ]
@@ -153,11 +153,11 @@ def test_scalar_history_empty(diag_parquet, test_dataset, client):
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
-            "is_used": [0, 0],
+            "is_used": [False, False],
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "is_used": [0, 0],
+            "is_used": [False, False],
         },
     ]
 
@@ -324,7 +324,7 @@ def test_range_filter_scalar(diag_zarr, client):
         coords=dict(
             longitude=(["nobs"], [90, -160]),
             latitude=(["nobs"], [22, 25]),
-            is_used=(["nobs"], [0, 1]),
+            is_used=(["nobs"], [False, True]),
         ),
         attrs={
             "name": variable,
@@ -446,7 +446,7 @@ def test_range_filter_vector(diag_zarr, client):
             component=["u", "v"],
             longitude=(["nobs"], [90, -160]),
             latitude=(["nobs"], [22, 25]),
-            is_used=(["nobs"], [1, 0]),
+            is_used=(["nobs"], [True, False]),
         ),
         attrs={
             "name": variable,
