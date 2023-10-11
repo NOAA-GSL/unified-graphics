@@ -124,11 +124,12 @@ def diag_zarr_file(tmp_path):
 
 
 @pytest.fixture
-def app(diag_zarr_file, test_db):
+def app(tmp_path, diag_zarr_file, test_db):
     _app = create_app(
         {
             "SQLALCHEMY_DATABASE_URI": test_db,
             "DIAG_ZARR": diag_zarr_file,
+            "DIAG_PARQUET": f"file://{tmp_path}",
         }
     )
 
