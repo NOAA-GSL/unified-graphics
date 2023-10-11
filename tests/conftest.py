@@ -307,13 +307,12 @@ def diag_dataset():
 
 
 @pytest.fixture
-def diag_parquet(diag_zarr_file):
+def diag_parquet(tmp_path):
     def factory(
         ds: xr.Dataset,
     ) -> Path:
         parquet_file = (
-            Path(diag_zarr_file)
-            / ".."
+            tmp_path
             / "_".join((ds.model, ds.background, ds.system, ds.domain, ds.frequency))
             / ds.name
         )
