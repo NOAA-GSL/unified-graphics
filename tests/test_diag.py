@@ -1,18 +1,49 @@
-import os
 import uuid
-from unittest import mock
+from functools import partial
 
 import numpy as np
 import pytest
 import xarray as xr
+from botocore.session import Session
+from moto.server import ThreadedMotoServer
+from s3fs import S3FileSystem, S3Map
 from werkzeug.datastructures import MultiDict
-from zarr.errors import GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import Analysis, WeatherModel
 
 # Global resources for s3
 test_bucket_name = "osti-modeling-dev-rtma-vis"
+
+
+@pytest.fixture
+def aws_credentials(monkeypatch):
+    credentials = {
+        "AWS_ACCESS_KEY_ID": "test-id",
+        "AWS_SECRET_ACCESS_KEY": "test-key",
+        "AWS_SECURITY_TOKEN": "test-token",
+        "AWS_SESSION_TOKEN": "test-session",
+        "AWS_DEFAULT_REGION": "us-east-1",
+    }
+
+    for k, v in credentials.items():
+        monkeypatch.setenv(k, v)
+
+    return credentials
+
+
+@pytest.fixture(scope="module")
+def moto_server():
+    server = ThreadedMotoServer(port=9000)
+    server.start()
+    yield "http://127.0.0.1:9000"
+    server.stop()
+
+
+@pytest.fixture
+def s3_client(aws_credentials, moto_server):
+    session = Session()
+    return session.create_client("s3", endpoint_url=moto_server)
 
 
 @pytest.fixture
@@ -41,14 +72,15 @@ def test_get_model_metadata(session):
 
     result = diag.get_model_metadata(session)
 
-    assert result
-    assert result.model_list == ["3DRTMA", "RTMA"]
-    assert result.system_list == ["JET", "WCOSS"]
-    assert result.domain_list == ["CONUS"]
-    assert result.frequency_list == ["REALTIME", "RETRO"]
-    assert result.background_list == ["HRRR", "RRFS"]
-    assert result.init_time_list == ["2023-03-17T14:00", "2023-03-17T15:00"]
-    assert result.variable_list == variable_list
+    assert result == diag.ModelMetadata(
+        model_list=["3DRTMA", "RTMA"],
+        system_list=["JET", "WCOSS"],
+        domain_list=["CONUS"],
+        frequency_list=["REALTIME", "RETRO"],
+        background_list=["HRRR", "RRFS"],
+        init_time_list=["2023-03-17T14:00", "2023-03-17T15:00"],
+        variable_list=variable_list,
+    )
 
 
 @pytest.mark.parametrize(
@@ -64,95 +96,61 @@ def test_get_store_file(uri, expected):
     assert result == expected
 
 
-@mock.patch("unified_graphics.diag.S3Map", autospec=True)
-@mock.patch("unified_graphics.diag.S3FileSystem", autospec=True)
-def test_get_store_s3(mock_s3filesystem, mock_s3map):
-    prev_env = dict(**os.environ)
-    key = "test-key"
-    token = "test-token"
-    secret = "test-secret"
+def test_get_store_s3(moto_server, s3_client, monkeypatch):
     client = {"region_name": "us-east-1"}
     uri = "s3://bucket/prefix/diag.zarr"
+    s3_client.create_bucket(Bucket="bucket")
+    s3_client.put_object(Bucket="bucket", Body=b"Test object", Key="prefix/diag.zarr")
 
-    os.environ["AWS_ACCESS_KEY_ID"] = key
-    os.environ["AWS_SECRET_ACCESS_KEY"] = secret
-    os.environ["AWS_SESSION_TOKEN"] = token
+    monkeypatch.setattr(
+        diag,
+        "S3FileSystem",
+        partial(diag.S3FileSystem, endpoint_url=moto_server),
+    )
 
     result = diag.get_store(uri)
 
-    assert result == mock_s3map.return_value
-    mock_s3filesystem.assert_called_once_with(
-        key=key, secret=secret, token=token, client_kwargs=client
+    assert result == S3Map(
+        root=uri,
+        s3=S3FileSystem(
+            client_kwargs=client,
+            endpoint_url=moto_server,
+        ),
+        check=False,
     )
-    mock_s3map.assert_called_once_with(
-        root="bucket/prefix/diag.zarr", s3=mock_s3filesystem.return_value, check=False
+
+
+def test_open_diagnostic(tmp_path, test_dataset):
+    diag_zarr_file = str(tmp_path / "test_diag.zarr")
+    expected = test_dataset()
+    group = "/".join(
+        (
+            expected.model,
+            expected.system,
+            expected.domain,
+            expected.background,
+            expected.frequency,
+            expected.name,
+            expected.initialization_time,
+            expected.loop,
+        )
     )
 
-    os.environ = prev_env
-
-
-def test_open_diagnostic(diag_zarr_file, diag_dataset, diag_zarr):
-    variable = diag.Variable.PRESSURE
-    init_time = "2022-05-13T06:00"
-    loop = diag.MinimLoop.ANALYSIS
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-
-    diag_zarr(
-        [variable.value],
-        init_time,
-        loop.value,
-        model,
-        system,
-        domain,
-        frequency,
-        background,
-    )
+    expected.to_zarr(diag_zarr_file, group=group, consolidated=False)
 
     result = diag.open_diagnostic(
         diag_zarr_file,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        variable,
-        init_time,
-        loop,
+        expected.model,
+        expected.system,
+        expected.domain,
+        expected.background,
+        expected.frequency,
+        diag.Variable(expected.name),
+        expected.initialization_time,
+        diag.MinimLoop(expected.loop),
     )
 
-    xr.testing.assert_equal(
-        result,
-        diag_dataset(
-            str(variable), init_time, str(loop), model, system, frequency, background
-        ),
-    )
-
-
-def test_open_diagnostic_local_does_not_exist(diag_zarr_file):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    expected = r"group not found at path .*$"
-
-    with pytest.raises(GroupNotFoundError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file,
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            diag.Variable.WIND,
-            init_time,
-            diag.MinimLoop.GUESS,
-        )
+    xr.testing.assert_equal(result, expected)
 
 
 @pytest.mark.parametrize(
@@ -184,72 +182,55 @@ def test_open_diagnostic_unknown_uri(uri, expected):
             domain,
             background,
             frequency,
-            diag.Variable.WIND,
             init_time,
+            diag.Variable.WIND,
             diag.MinimLoop.GUESS,
         )
 
 
-@pytest.mark.aws
-def test_open_diagnostic_s3_nonexistent_bucket():
-    init_time = "2022-05-05T14:00"
-    diag_zarr_file = "s3://foo/test.zarr"
-
-    expected = r"Forbidden"
-
-    with pytest.raises(PermissionError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
+@pytest.mark.usefixtures("aws_credentials")
+def test_open_diagnostic_s3(moto_server, test_dataset, monkeypatch):
+    store = "s3://test_open_diagnostic_s3/test_diag.zarr"
+    expected = test_dataset()
+    group = "/".join(
+        (
+            expected.model,
+            expected.system,
+            expected.domain,
+            expected.background,
+            expected.frequency,
+            expected.name,
+            expected.initialization_time,
+            expected.loop,
         )
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3_nonexistent_key():
-    init_time = "2022-05-16T04:00"
-    diag_zarr_file = "s3://osti-modeling-dev-rtma-vis/test/no_such.zarr"
-    expected = r"No such file or directory.*"
-
-    with pytest.raises(FileNotFoundError, match=expected):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
-        )
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3_unauthenticated(test_key_prefix):
-    # Back up the current environment so we don't break anything
-    prev_env = dict(**os.environ)
-
-    init_time = "2022-05-16T04:00"
-    diag_zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
-
-    del os.environ["AWS_ACCESS_KEY_ID"]
-    del os.environ["AWS_SECRET_ACCESS_KEY"]
-    del os.environ["AWS_SESSION_TOKEN"]
-
-    with pytest.raises(PermissionError):
-        diag.open_diagnostic(
-            diag_zarr_file, diag.Variable.WIND, init_time, diag.MinimLoop.GUESS
-        )
-
-    # Restore environment
-    os.environ = prev_env
-
-
-@pytest.mark.aws
-def test_open_diagnostic_s3(test_key_prefix, diag_zarr, diag_dataset):
-    variable = diag.Variable.WIND
-    loop = diag.MinimLoop.ANALYSIS
-    coords = {"component": ["u", "v"]}
-    init_time = "2022-05-05T14:00"
-    zarr_file = f"s3://{test_bucket_name}{test_key_prefix}diag.zarr"
-    diag_zarr([variable.value], init_time, loop.value, zarr_file)
-
-    result = diag.open_diagnostic(zarr_file, variable, init_time, loop)
-
-    xr.testing.assert_equal(
-        result, diag_dataset(variable.value, init_time, loop.value, **coords)
     )
+
+    monkeypatch.setattr(
+        diag,
+        "S3FileSystem",
+        partial(diag.S3FileSystem, endpoint_url=moto_server),
+    )
+
+    expected.to_zarr(
+        store,
+        group=group,
+        consolidated=False,
+        storage_options={"endpoint_url": moto_server},
+    )
+
+    result = diag.open_diagnostic(
+        store,
+        expected.model,
+        expected.system,
+        expected.domain,
+        expected.background,
+        expected.frequency,
+        diag.Variable(expected.name),
+        expected.initialization_time,
+        diag.MinimLoop(expected.loop),
+    )
+
+    xr.testing.assert_equal(result, expected)
 
 
 # Test cases taken from the examples at
@@ -293,15 +274,19 @@ def test_vector_magnitude():
         ([("a", "1::2")], [("a", np.array([1.0]), np.array([2.0]))]),
         ([("a", "2,4::3,1")], [("a", np.array([2.0, 1.0]), np.array([3.0, 4.0]))]),
     ],
+    scope="class",
 )
-def test_get_bounds(mapping, expected):
-    filters = MultiDict(mapping)
+class TestGetBounds:
+    @pytest.fixture(scope="class")
+    def result(self, mapping):
+        filters = MultiDict(mapping)
+        return list(diag.get_bounds(filters))
 
-    result = list(diag.get_bounds(filters))
+    def test_coord(self, result, expected):
+        assert result[0][0] == expected[0][0]
 
-    for (coord, lower, upper), (expected_coord, expected_lower, expected_upper) in zip(
-        result, expected
-    ):
-        assert coord == expected_coord
-        assert (lower == expected_lower).all()
-        assert (upper == expected_upper).all()
+    def test_lower_bounds(self, result, expected):
+        assert (result[0][1] == expected[0][1]).all()
+
+    def test_upper_bounds(self, result, expected):
+        assert (result[0][2] == expected[0][2]).all()

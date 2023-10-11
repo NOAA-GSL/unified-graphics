@@ -7,11 +7,10 @@ An experimental visualization system for 3D-RTMA &amp; RRFS model output.
 **Found a bug?** Use the [Bug report][1] template in the issue tracker to report
 any problems you have with Unified Graphics.
 
-**Need help?** Feel free to ask quesetions in the [Help forum][2].
+**Need help?** Feel free to ask questions in the [Help forum][2].
 
 **Have an idea?** Is there a new feature you’d like to see added, or a change
-you’d like to suggest for the application? Start a conversation in the [Ideas
-forum][3].
+you’d like to suggest for the application? Open a [change request][3].
 
 ## Disclaimer
 
@@ -30,4 +29,4 @@ or the United States Government.
 
 [1]: https://github.com/NOAA-GSL/unified-graphics/issues/new?assignees=&labels=bug&template=bug_report.md&title=
 [2]: https://github.com/NOAA-GSL/unified-graphics/discussions/categories/help
-[3]: https://github.com/NOAA-GSL/unified-graphics/discussions/categories/ideas
+[3]: https://github.com/NOAA-GSL/unified-graphics/issues/new?assignees=&labels=request&template=change_request.md&title=

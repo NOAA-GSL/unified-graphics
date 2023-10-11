@@ -1,4 +1,5 @@
 import logging
+import os.path
 import re
 from collections import namedtuple
 from datetime import datetime
@@ -246,8 +247,13 @@ def prep_dataframe(ds: xr.Dataset) -> pd.DataFrame:
     return df
 
 
-def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
-    """Write one or more xarray Datasets to a Zarr at `path`
+def save(
+    session: Session,
+    zarr_path: Union[Path, str],
+    parquet_dir: Union[Path, str],
+    *args: xr.Dataset,
+):
+    """Write one or more xarray Datasets to a Zarr, Parquet, and PostgreSQL
 
     The `name` and `loop` variables are used along with the
     `initialization_time` (non-dimension) coordinates to define the group to
@@ -255,8 +261,14 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
 
     Parameters
     ----------
-    path : Path
+    session : sqlalchemy.orm.Session
+        SQLAlchemy database session
+    zarr_path : Union[Path, str]
         The path to the location of the Zarr
+    parquet_dir : Union[Path, str]
+        The path to the location where Parquet files are stored
+    *args : xarray.Dataset
+        One or more datasets to save
     """
     logger.info("Started saving dataset to Zarr and the DB")
     for ds in args:
@@ -314,14 +326,13 @@ def save(session: Session, path: Union[Path, str], *args: xr.Dataset):
             analysis.model = wx_model
             session.add(analysis)
 
-        logger.info(f"Saving dataset to Zarr at: {path}")
-        ds.to_zarr(path, group=group, mode="a", consolidated=False)
+        logger.info(f"Saving dataset to Zarr at: {zarr_path}")
+        ds.to_zarr(zarr_path, group=group, mode="a", consolidated=False)
 
-        parquet_path = (
-            Path(path)
-            / ".."
-            / "_".join((model, background, system, domain, frequency))
-            / ds.name
+        parquet_path = os.path.join(
+            parquet_dir,
+            "_".join((model, background, system, domain, frequency)),
+            ds.name,
         )
         logger.info(f"Saving dataframe to Parquet at: {parquet_path}")
         prep_dataframe(ds).to_parquet(

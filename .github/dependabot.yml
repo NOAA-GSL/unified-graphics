@@ -11,6 +11,8 @@ updates:
       interval: "weekly"
     pull-request-branch-name:
       separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+    assignees:
+      - "ian-noaa"
 
   - package-ecosystem: "docker"
     directory: "/"
@@ -18,24 +20,34 @@ updates:
       interval: "weekly"
     pull-request-branch-name:
       separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+    assignees:
+      - "ian-noaa"
 
   - package-ecosystem: "pip"
-    directory: "/services/api"
+    directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     pull-request-branch-name:
       separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
-
-  - package-ecosystem: "pip"
-    directory: "/services/data"
-    schedule:
-      interval: "monthly"
-    pull-request-branch-name:
-      separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+    assignees:
+      - "ian-noaa"
+    groups:
+      pip-dependencies:
+        patterns:
+        # Ideally, we could split this into dev and application dependencies.
+        # However, then we'd have to maintain our dependencies list here as
+        # well as in the pyproject.toml file.
+        - "*"
 
   - package-ecosystem: "npm"
-    directory: "/services/api"
+    directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
     pull-request-branch-name:
       separator: "-" # Use "-" instead of "/" in branch names to avoid issues with docker registries
+    assignees:
+      - "ian-noaa"
+    groups:
+      npm-dependencies:
+        patterns:
+        - "*"

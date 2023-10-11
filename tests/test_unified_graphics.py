@@ -3,33 +3,117 @@ from pathlib import Path
 import pytest  # noqa: F401
 import xarray as xr
 
-
-@pytest.mark.xfail(reason="Needs to be updated to expect HTML response")
-def test_root_endpoint(client):
-    response = client.get("/")
-
-    assert response.status_code == 200
+from unified_graphics import create_app
 
 
-@pytest.mark.parametrize(
-    "variable_name,variable_code,loop",
-    [("temperature", "t", "anl"), ("moisture", "q", "ges")],
-)
-def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    diag_zarr([variable_code], init_time, loop)
-
-    response = client.get(
-        f"/diag/{model}/{system}/{domain}/{background}/{frequency}"
-        f"/{variable_code}/{init_time}/{loop}/"
+def get_group(ds: xr.Dataset) -> str:
+    return "/".join(
+        [
+            ds.model,
+            ds.system,
+            ds.domain,
+            ds.background,
+            ds.frequency,
+            ds.name,
+            ds.initialization_time,
+            ds.loop,
+        ]
     )
 
-    assert response.status_code == 200
+
+def save(store: Path, data: xr.Dataset):
+    data.to_zarr(store, group=get_group(data), consolidated=False)
+
+
+@pytest.fixture(scope="module")
+def model():
+    return {
+        "model": "3DRTMA",
+        "system": "WCOSS",
+        "domain": "CONUS",
+        "background": "HRRR",
+        "frequency": "REALTIME",
+    }
+
+
+@pytest.fixture
+def diag_zarr_path(tmp_path):
+    return tmp_path / "test_diag.zarr"
+
+
+@pytest.fixture
+def t(model, diag_zarr_path, test_dataset):
+    ds = test_dataset(
+        **model,
+        initialization_time="2022-05-16T04:00",
+        loop="ges",
+        variable="t",
+        observation=[1, 0, 2],
+        forecast_unadjusted=[0, 1, -1],
+        longitude=[90, 91, 89],
+        latitude=[22, 23, 24],
+        is_used=[1, 1, 0],
+    )
+
+    save(diag_zarr_path, ds)
+
+    return ds
+
+
+@pytest.fixture
+def uv(model, diag_zarr_path, test_dataset):
+    ds = test_dataset(
+        **model,
+        variable="uv",
+        initialization_time="2022-05-16T04:00",
+        loop="ges",
+        observation=[[0, 1], [1, 0]],
+        forecast_unadjusted=[[0, 0], [1, 1]],
+        longitude=[90, 91],
+        latitude=[22, 23],
+        is_used=[1, 1],
+        component=["u", "v"],
+    )
+
+    save(diag_zarr_path, ds)
+
+    return ds
+
+
+@pytest.fixture
+def app(tmp_path, diag_zarr_path, test_db):
+    _app = create_app(
+        {
+            "SQLALCHEMY_DATABASE_URI": test_db,
+            "DIAG_ZARR": str(diag_zarr_path),
+            "DIAG_PARQUET": f"file://{tmp_path}",
+        }
+    )
+
+    _app.testing = True
+
+    yield _app
+
+
+@pytest.fixture
+def client(app):
+    with app.test_client() as c:
+        yield c
+
+
+@pytest.mark.xfail(reason="Needs to be updated to expect HTML response")
+def test_home_page(client):
+    assert 0
+
+
+def test_scalar_diag(t, client):
+    # Arrange
+    group = get_group(t)
+
+    # Act
+    response = client.get(f"/diag/{group}/")
+
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -37,31 +121,32 @@ def test_scalar_diag(variable_name, variable_code, loop, diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [90, 22]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
             {
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": -1.0,
+                    "unadjusted": -1.0,
+                    "observed": 0.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
             },
         ],
     }
 
 
-def test_scalar_history(diag_parquet, test_dataset, client):
+def test_scalar_history(model, diag_parquet, client, test_dataset):
+    # Arrange
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -82,12 +167,18 @@ def test_scalar_history(diag_parquet, test_dataset, client):
     ]
 
     for run in run_list:
-        data = test_dataset(**run)
+        data = test_dataset(
+            **model,
+            variable="ps",
+            loop="ges",
+            **run,
+        )
         diag_parquet(data)
 
-    response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    # Act
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -106,7 +197,8 @@ def test_scalar_history(diag_parquet, test_dataset, client):
     ]
 
 
-def test_scalar_history_unused(diag_parquet, test_dataset, client):
+def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
+    # Arrange
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -125,12 +217,18 @@ def test_scalar_history_unused(diag_parquet, test_dataset, client):
     ]
 
     for run in run_list:
-        data = test_dataset(**run)
+        data = test_dataset(
+            **model,
+            variable="ps",
+            loop="ges",
+            **run,
+        )
         diag_parquet(data)
 
-    response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    # Act
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -149,7 +247,8 @@ def test_scalar_history_unused(diag_parquet, test_dataset, client):
     ]
 
 
-def test_scalar_history_empty(diag_parquet, test_dataset, client):
+def test_scalar_history_empty(model, diag_parquet, test_dataset, client):
+    # Arrange
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
@@ -162,12 +261,18 @@ def test_scalar_history_empty(diag_parquet, test_dataset, client):
     ]
 
     for run in run_list:
-        data = test_dataset(**run)
+        data = test_dataset(
+            **model,
+            variable="ps",
+            loop="ges",
+            **run,
+        )
         diag_parquet(data)
 
-    response = client.get("/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    # Act
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == []
 
 
@@ -176,22 +281,14 @@ def test_vector_history():
     assert 0, "Not implemented"
 
 
-def test_wind_diag(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    diag_zarr(["uv"], init_time, loop)
+def test_wind_diag(uv, client):
+    # Arrange
+    group = get_group(uv)
 
-    response = client.get(
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/uv/{init_time}/{loop}/"
-    )
+    # Act
+    response = client.get(f"/diag/{group}/")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -200,10 +297,10 @@ def test_wind_diag(diag_zarr, client):
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "loop": loop,
-                    "adjusted": {"u": 0.0, "v": 0.0},
-                    "unadjusted": {"u": 0.0, "v": 0.0},
-                    "observed": {"u": 0.0, "v": 0.0},
+                    "loop": "ges",
+                    "adjusted": {"u": 0.0, "v": 1.0},
+                    "unadjusted": {"u": 0.0, "v": 1.0},
+                    "observed": {"u": 0.0, "v": 1.0},
                 },
                 "geometry": {"type": "Point", "coordinates": [90, 22]},
             },
@@ -212,27 +309,25 @@ def test_wind_diag(diag_zarr, client):
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "loop": loop,
-                    "adjusted": {"u": 0.0, "v": 0.0},
-                    "unadjusted": {"u": 0.0, "v": 0.0},
-                    "observed": {"u": 0.0, "v": 0.0},
+                    "loop": "ges",
+                    "adjusted": {"u": 0.0, "v": -1.0},
+                    "unadjusted": {"u": 0.0, "v": -1.0},
+                    "observed": {"u": 1.0, "v": 0.0},
                 },
-                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
+                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
             },
         ],
     }
 
 
-def test_vector_magnitude(diag_zarr, client):
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    diag_zarr(["uv"], init_time, loop)
+def test_vector_magnitude(uv, client):
+    # Arrange
+    group = get_group(uv)
 
-    response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/uv/{init_time}/{loop}/magnitude/"
-    )
+    # Act
+    response = client.get(f"/diag/{group}/magnitude/")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -241,49 +336,36 @@ def test_vector_magnitude(diag_zarr, client):
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "loop": loop,
-                    "adjusted": 0.0,
-                    "unadjusted": 0.0,
-                    "observed": 0.0,
+                    "loop": "ges",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [90, 22]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
             {
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
                     "variable": "wind",
-                    "loop": loop,
-                    "adjusted": 0.0,
-                    "unadjusted": 0.0,
-                    "observed": 0.0,
+                    "loop": "ges",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
+                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
             },
         ],
     }
 
 
-def test_region_filter_scalar(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    variable = "t"
-    variable_name = "temperature"
-    diag_zarr([variable], init_time, loop)
+def test_region_filter_scalar(t, client):
+    group = get_group(t)
 
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable}/{init_time}/{loop}/"
-    )
-    query = "longitude=-160.1::-159.9&latitude=27::22"
+    url = f"/diag/{group}/"
+    query = "longitude=89.9::90.5&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
-    assert response.status_code == 200
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -291,62 +373,28 @@ def test_region_filter_scalar(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": "ges",
+                    "variable": "temperature",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
         ],
     }
 
 
-def test_range_filter_scalar(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    frequency = "REALTIME"
-    background = "HRRR"
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    variable = "t"
-    variable_name = "temperature"
-    data = xr.Dataset(
-        {
-            "obs_minus_forecast_adjusted": (["nobs"], [0, 1]),
-            "obs_minus_forecast_unadjusted": (["nobs"], [0, 2]),
-            "observation": (["nobs"], [0, 2]),
-            "forecast_adjusted": (["nobs"], [0, 1]),
-            "forecast_unadjusted": (["nobs"], [0, 0]),
-        },
-        coords=dict(
-            longitude=(["nobs"], [90, -160]),
-            latitude=(["nobs"], [22, 25]),
-            is_used=(["nobs"], [False, True]),
-        ),
-        attrs={
-            "name": variable,
-            "loop": loop,
-            "initialization_time": init_time,
-            "model": model,
-            "system": system,
-            "domain": domain,
-            "frequency": frequency,
-            "background": background,
-        },
-    )
-    diag_zarr([variable], init_time, loop, model, system, domain, frequency, data=data)
-
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable}/{init_time}/{loop}/"
-    )
+def test_range_filter_scalar(t, client):
+    # Arrange
+    group = get_group(t)
+    url = f"/diag/{group}/"
     query = "obs_minus_forecast_adjusted=1.5::1"
+
+    # Act
     response = client.get(f"{url}?{query}")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -354,38 +402,27 @@ def test_range_filter_scalar(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 1,
-                    "unadjusted": 2,
-                    "observed": 2,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
         ],
     }
 
 
-def test_region_filter_vector(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    variable = "uv"
-    variable_name = "wind"
-    diag_zarr([variable], init_time, loop)
+def test_region_filter_vector(uv, client):
+    # Arrange
+    group = get_group(uv)
+    url = f"/diag/{group}/"
+    query = "longitude=89.9::90.5&latitude=27::22"
 
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable}/{init_time}/{loop}/"
-    )
-    query = "longitude=-160.1::-159.9&latitude=27::22"
+    # Act
     response = client.get(f"{url}?{query}")
 
-    assert response.status_code == 200
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -393,13 +430,13 @@ def test_region_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": variable_name,
-                    "loop": loop,
-                    "adjusted": {"u": 0.0, "v": 0.0},
-                    "unadjusted": {"u": 0.0, "v": 0.0},
-                    "observed": {"u": 0.0, "v": 0.0},
+                    "variable": "wind",
+                    "loop": uv.loop,
+                    "adjusted": {"u": 0.0, "v": 1.0},
+                    "unadjusted": {"u": 0.0, "v": 1.0},
+                    "observed": {"u": 0.0, "v": 1.0},
                 },
-                "geometry": {"type": "Point", "coordinates": [-160.0, 25.0]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
         ],
     }
@@ -421,57 +458,20 @@ def test_region_filter_vector(diag_zarr, client):
 # the Nan values. You can see the fix in commit 7f92e15fbdcde7fd683143f6bf429f2b45fac3d2
 # that got this working in production, but I was unable to reproduce the issue in
 # the test.
-def test_range_filter_vector(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    frequency = "REALTIME"
-    background = "HRRR"
-    init_time = "2022-05-16T04:00"
-    loop = "ges"
-    variable = "uv"
-    variable_name = "wind"
-    data = xr.Dataset(
-        {
-            "obs_minus_forecast_adjusted": (["nobs", "component"], [[0, 1], [10, 20]]),
-            "obs_minus_forecast_unadjusted": (
-                ["nobs", "component"],
-                [[0, 2], [10, 25]],
-            ),
-            "observation": (["nobs", "component"], [[0, 2], [20, 50]]),
-            "forecast_adjusted": (["nobs", "component"], [[0, 1], [10, 30]]),
-            "forecast_unadjusted": (["nobs", "component"], [[0, 0], [10, 25]]),
-        },
-        coords=dict(
-            component=["u", "v"],
-            longitude=(["nobs"], [90, -160]),
-            latitude=(["nobs"], [22, 25]),
-            is_used=(["nobs"], [True, False]),
-        ),
-        attrs={
-            "name": variable,
-            "loop": loop,
-            "initialization_time": init_time,
-            "model": model,
-            "system": system,
-            "domain": domain,
-            "frequency": frequency,
-            "background": background,
-        },
-    )
-    diag_zarr([variable], init_time, loop, data=data)
+def test_range_filter_vector(uv, client):
+    # Arrange
+    group = get_group(uv)
+    url = f"/diag/{group}/"
 
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable}/{init_time}/{loop}/"
-    )
     # This query is designed so that both observations v components fall within the
     # selected region, but only the first observation's u component does, so only the
     # first observation should be returned
-    query = "obs_minus_forecast_adjusted=1::-1&obs_minus_forecast_adjusted=0::25"
+    query = "obs_minus_forecast_adjusted=1::-0.5&obs_minus_forecast_adjusted=0::25"
+
+    # Act
     response = client.get(f"{url}?{query}")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -479,38 +479,28 @@ def test_range_filter_vector(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "vector",
-                    "variable": variable_name,
-                    "loop": loop,
-                    "adjusted": {"u": 0, "v": 1},
-                    "unadjusted": {"u": 0, "v": 2},
-                    "observed": {"u": 0, "v": 2},
+                    "variable": "wind",
+                    "loop": uv.loop,
+                    "adjusted": {"u": 0.0, "v": 1.0},
+                    "unadjusted": {"u": 0.0, "v": 1.0},
+                    "observed": {"u": 0.0, "v": 1.0},
                 },
-                "geometry": {"type": "Point", "coordinates": [90, 22]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
         ],
     }
 
 
-def test_unused_filter(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    variable_code = "t"
-    variable_name = "temperature"
-    loop = "ges"
-    init_time = "2022-05-16T04:00"
-    diag_zarr([variable_code], init_time, loop)
-
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
-    )
+def test_unused_filter(t, client):
+    # Arrange
+    group = get_group(t)
+    url = f"/diag/{group}/"
     query = "is_used=false"
+
+    # Act
     response = client.get(f"{url}?{query}")
 
-    assert response.status_code == 200
+    # Assert
     assert response.json == {
         "type": "FeatureCollection",
         "features": [
@@ -518,34 +508,22 @@ def test_unused_filter(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": 3.0,
+                    "unadjusted": 3.0,
+                    "observed": 2.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [91, 23]},
+                "geometry": {"type": "Point", "coordinates": [89.0, 24.0]},
             },
         ],
     }
 
 
-def test_all_obs_filter(diag_zarr, client):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    variable_code = "t"
-    variable_name = "temperature"
-    loop = "ges"
-    init_time = "2022-05-16T04:00"
-    diag_zarr([variable_code], init_time, loop)
+def test_all_obs_filter(t, client):
+    group = get_group(t)
 
-    url = (
-        f"/diag/{model}/{system}/{domain}/{background}"
-        f"/{frequency}/{variable_code}/{init_time}/{loop}/"
-    )
+    url = f"/diag/{group}/"
     query = "is_used=true::false"
     response = client.get(f"{url}?{query}")
 
@@ -557,37 +535,37 @@ def test_all_obs_filter(diag_zarr, client):
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": 1.0,
+                    "unadjusted": 1.0,
+                    "observed": 1.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [90, 22]},
+                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
             },
             {
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": -1.0,
+                    "unadjusted": -1.0,
+                    "observed": 0.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [91, 23]},
+                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
             },
             {
                 "type": "Feature",
                 "properties": {
                     "type": "scalar",
-                    "loop": loop,
-                    "variable": variable_name,
-                    "adjusted": 0,
-                    "unadjusted": 0,
-                    "observed": 0,
+                    "loop": t.loop,
+                    "variable": "temperature",
+                    "adjusted": 3.0,
+                    "unadjusted": 3.0,
+                    "observed": 2.0,
                 },
-                "geometry": {"type": "Point", "coordinates": [-160, 25]},
+                "geometry": {"type": "Point", "coordinates": [89.0, 24.0]},
             },
         ],
     }
