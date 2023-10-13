@@ -99,3 +99,19 @@ pip3 install --user pre-commit
 The `pre-commit` script will check all of the files in your index with our
 linters and formatters and warn you if any of the files fail linting and
 formatting checks.
+
+
+## Checking production infrastructure
+
+The applications here are automatically deployed to an AWS account. If you need to check the logs in production you can do so by logging into the appropriate AWS console and then:
+
+For the ETL application:
+
+* Going to "Cloudwatch" -> "Log Groups". Logs are under the following log groups:
+	* `/aws/lambda/rtma-vis-netcdf-processor`
+	* `/aws/lambda/rtma-vis-nodd-processor`
+
+For the web app:
+
+* Connect via Session Manager to the `kubernetes-readonly-rtma-vis` EC2 instance
+* Use kubectl to read the logs directly (`kubectl logs unified-graphics-api...`)
