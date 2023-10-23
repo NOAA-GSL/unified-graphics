@@ -19,11 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
       - name: Install dependencies
-        run: npm ci
+        run: npm install prettier
       - name: Lint
-        run: npm run lint:prettier:docs
+        run: npx prettier --check **/*.md
