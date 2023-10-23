@@ -65,7 +65,8 @@ service is as simple as:
 
 ```
 npm run vendor && npm run build
-npm test
+npm run lint
+npm run format
 ```
 
 ## Coding Style
