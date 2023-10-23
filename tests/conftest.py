@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Optional
 
 import alembic.command
@@ -85,6 +86,7 @@ def session(engine):
         s.rollback()
 
 
+# FIXME: Replace diag_dataset with this fixture
 @pytest.fixture(scope="class")
 def test_dataset():
     def factory(
@@ -99,7 +101,7 @@ def test_dataset():
         loop: str = "ges",
         longitude: list[float] = [90, 91],
         latitude: list[float] = [22, 23],
-        is_used: list[int] = [1, 0],
+        is_used: list[bool] = [True, False],
         observation: list[float] = [1, 0],
         forecast_unadjusted: list[float] = [0, 1],
         forecast_adjusted: Optional[list[float]] = None,
@@ -126,7 +128,7 @@ def test_dataset():
             coords=dict(
                 longitude=(["nobs"], np.array(longitude, dtype=np.float64)),
                 latitude=(["nobs"], np.array(latitude, dtype=np.float64)),
-                is_used=(["nobs"], np.array(is_used, dtype=np.int8)),
+                is_used=(["nobs"], np.array(is_used)),
                 **kwargs,
             ),
             attrs={
@@ -140,5 +142,28 @@ def test_dataset():
                 "background": background,
             },
         )
+
+    return factory
+
+
+@pytest.fixture
+def diag_parquet(tmp_path):
+    def factory(
+        ds: xr.Dataset,
+    ) -> Path:
+        parquet_file = (
+            tmp_path
+            / "_".join((ds.model, ds.background, ds.system, ds.domain, ds.frequency))
+            / ds.name
+        )
+        df = ds.to_dataframe()
+        df["loop"] = ds.loop
+        df["initialization_time"] = ds.initialization_time
+
+        df.to_parquet(
+            parquet_file, partition_cols=["loop"], index=True, engine="pyarrow"
+        )
+
+        return parquet_file
 
     return factory

@@ -2,10 +2,12 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generator, List, Optional, Union
+from pathlib import Path
+from typing import Generator, List, Union
 from urllib.parse import urlparse
 
 import numpy as np
+import pandas as pd
 import sqlalchemy as sa
 import xarray as xr
 import zarr  # type: ignore
@@ -73,44 +75,6 @@ class Observation:
             "properties": properties,
             "geometry": {"type": "Point", "coordinates": list(self.position)},
         }
-
-
-@dataclass
-class SummaryStatistics:
-    min: float
-    max: float
-    mean: float
-
-    @classmethod
-    def from_data_array(cls, array: xr.DataArray) -> "SummaryStatistics":
-        return cls(
-            min=float(array.min()),
-            max=float(array.max()),
-            mean=float(array.mean()),
-        )
-
-
-@dataclass
-class DiagSummary:
-    initialization_time: str
-    obs_minus_forecast_adjusted: SummaryStatistics
-    obs_minus_forecast_unadjusted: SummaryStatistics
-    observation: SummaryStatistics
-    obs_count: int
-
-    @classmethod
-    def from_dataset(cls, dataset: xr.Dataset) -> "DiagSummary":
-        return cls(
-            initialization_time=dataset.attrs["initialization_time"],
-            obs_minus_forecast_adjusted=SummaryStatistics.from_data_array(
-                dataset["obs_minus_forecast_adjusted"]
-            ),
-            obs_minus_forecast_unadjusted=SummaryStatistics.from_data_array(
-                dataset["obs_minus_forecast_unadjusted"]
-            ),
-            observation=SummaryStatistics.from_data_array(dataset["observation"]),
-            obs_count=len(dataset["nobs"]),
-        )
 
 
 ModelMetadata = namedtuple(
@@ -486,65 +450,41 @@ def get_model_run_list(
         return group.group_keys()
 
 
-def summary(
-    diag_zarr: str,
+def history(
+    parquet_path: str,
     model: str,
     system: str,
     domain: str,
     background: str,
     frequency: str,
-    initialization_time: str,
     variable: Variable,
     loop: MinimLoop,
     filters: MultiDict,
-) -> Optional[DiagSummary]:
-    store = get_store(diag_zarr)
-    path = "/".join(
-        [
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            variable.value,
-            initialization_time,
-            loop.value,
-        ]
+) -> pd.DataFrame:
+    # FIXME: This fails when diag_zarr is a file:// URL. Pandas ends up trying to use
+    # urlopen to read the file, but it's a directory. For now, we strip file://, but
+    # this is a hack.
+    parquet_file = (
+        Path(parquet_path.replace("file://", ""))
+        / "_".join((model, background, system, domain, frequency))
+        / variable.value
     )
 
-    ds = xr.open_zarr(store, group=path, consolidated=False)
-    ds = apply_filters(ds, filters)
-    return DiagSummary.from_dataset(ds) if len(ds["nobs"]) > 0 else None
+    df = pd.read_parquet(
+        parquet_file,
+        columns=["initialization_time", "obs_minus_forecast_unadjusted"],
+        filters=(("loop", "=", loop.value), ("is_used", "=", True)),
+    )
 
+    if df.empty:
+        return df
 
-def history(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    variable: Variable,
-    loop: MinimLoop,
-    filters: MultiDict,
-):
-    for init_time in get_model_run_list(
-        diag_zarr, model, system, domain, background, frequency, variable
-    ):
-        result = summary(
-            diag_zarr,
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            init_time,
-            variable,
-            loop,
-            filters,
-        )
+    df = (
+        df.sort_values("initialization_time")
+        .groupby("initialization_time")
+        .describe()
+        .droplevel(0, axis=1)  # Drop a level from the columns created by the groupby
+        .reset_index()
+    )
 
-        if not result:
-            continue
-
-        yield result
+    return df[["initialization_time", "min", "max", "mean", "count"]]
