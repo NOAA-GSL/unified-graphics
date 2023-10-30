@@ -2,7 +2,6 @@ import os
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Generator, List, Union
 from urllib.parse import urlparse
 
