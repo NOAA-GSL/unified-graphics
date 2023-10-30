@@ -350,3 +350,82 @@ def test_history(tmp_path, test_dataset, diag_parquet):
             }
         )
     )
+
+
+def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monkeypatch):
+    bucket = "test_history_s3"
+    store = f"s3://{bucket}/"
+    s3_client.create_bucket(Bucket=bucket)
+
+    storage_options = {"client_kwargs": {"endpoint_url": moto_server}}
+    monkeypatch.setattr(
+        diag.pd,
+        "read_parquet",
+        partial(pd.read_parquet, storage_options=storage_options),
+    )
+
+    run_list = [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "observation": [10, 20],
+            "forecast_unadjusted": [5, 10],
+            "is_used": [True, True],
+            # O - F [5, 10]
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "observation": [1, 2, 3],
+            "forecast_unadjusted": [5, 10, 3],
+            "longitude": [0, 0, 0],
+            "latitude": [0, 0, 0],
+            "is_used": [True, True, True],
+            # O - F [-4, -8, 0]
+        },
+    ]
+
+    for run in run_list:
+        data = test_dataset(
+            model="RTMA",
+            system="WCOSS",
+            domain="CONUS",
+            background="RRFS",
+            frequency="REALTIME",
+            variable="ps",
+            loop="ges",
+            **run,
+        ).to_dataframe()
+        data["loop"] = "ges"
+        data["initialization_time"] = run["initialization_time"]
+
+        data.to_parquet(
+            f"s3://{bucket}/RTMA_RRFS_WCOSS_CONUS_REALTIME/ps",
+            partition_cols=["loop"],
+            index=True,
+            engine="pyarrow",
+            storage_options=storage_options,
+        )
+
+    result = diag.history(
+        store,
+        "RTMA",
+        "WCOSS",
+        "CONUS",
+        "RRFS",
+        "REALTIME",
+        diag.Variable.PRESSURE,
+        diag.MinimLoop.GUESS,
+        MultiDict(),
+    )
+
+    pd.testing.assert_frame_equal(
+        result,
+        pd.DataFrame(
+            {
+                "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
+                "min": [5.0, -8.0],
+                "max": [10.0, 0.0],
+                "mean": [7.5, -4.0],
+                "count": [2.0, 3.0]
+            }
+        )
+    )
