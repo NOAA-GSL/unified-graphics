@@ -18,6 +18,7 @@ bp = Blueprint("api", __name__)
 
 @bp.errorhandler(GroupNotFoundError)
 def handle_diag_group_not_found(e):
+    current_app.logger.exception("Unable to read diagnostic group")
     if isinstance(e, FSPathExistNotDir):
         return jsonify(msg="Unable to read diagnostic file group"), 500
 
@@ -29,6 +30,7 @@ def handle_diag_group_not_found(e):
 # types of 404s, such as a missing variable, init time, or zarr
 @bp.errorhandler(FileNotFoundError)
 def handle_diag_file_not_found(e):
+    current_app.logger.exception("Diagnostic file not found")
     return jsonify(msg="Diagnostic file not found"), 404
 
 
@@ -37,6 +39,7 @@ def handle_diag_file_not_found(e):
 # types of 500s, such as an unknown variable
 @bp.errorhandler(ValueError)
 def handle_diag_file_read_error(e):
+    current_app.logger.exception("Unable to read diagnostic file")
     # FIXME: Some ValueErrors should be 400s
     return jsonify(msg="Unable to read diagnostic file"), 500
 
