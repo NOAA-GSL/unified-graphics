@@ -461,13 +461,10 @@ def history(
     loop: MinimLoop,
     filters: MultiDict,
 ) -> pd.DataFrame:
-    # FIXME: This fails when diag_zarr is a file:// URL. Pandas ends up trying to use
-    # urlopen to read the file, but it's a directory. For now, we strip file://, but
-    # this is a hack.
-    parquet_file = (
-        Path(parquet_path.replace("file://", ""))
-        / "_".join((model, background, system, domain, frequency))
-        / variable.value
+    parquet_file = os.path.join(
+        parquet_path,
+        '_'.join((model, background, system, domain, frequency)),
+        variable.value,
     )
 
     df = pd.read_parquet(
