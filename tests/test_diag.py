@@ -2,6 +2,7 @@ import uuid
 from functools import partial
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 from botocore.session import Session
@@ -290,3 +291,62 @@ class TestGetBounds:
 
     def test_upper_bounds(self, result, expected):
         assert (result[0][2] == expected[0][2]).all()
+
+
+def test_history(tmp_path, test_dataset, diag_parquet):
+    run_list = [
+        {
+            "initialization_time": "2022-05-16T04:00",
+            "observation": [10, 20],
+            "forecast_unadjusted": [5, 10],
+            "is_used": [True, True],
+            # O - F [5, 10]
+        },
+        {
+            "initialization_time": "2022-05-16T07:00",
+            "observation": [1, 2, 3],
+            "forecast_unadjusted": [5, 10, 3],
+            "longitude": [0, 0, 0],
+            "latitude": [0, 0, 0],
+            "is_used": [True, True, True],
+            # O - F [-4, -8, 0]
+        },
+    ]
+
+    for run in run_list:
+        data = test_dataset(
+            model="RTMA",
+            system="WCOSS",
+            domain="CONUS",
+            background="RRFS",
+            frequency="REALTIME",
+            variable="ps",
+            loop="ges",
+            **run,
+        )
+        diag_parquet(data)
+
+    result = diag.history(
+        f"file://{tmp_path}/",
+        "RTMA",
+        "WCOSS",
+        "CONUS",
+        "RRFS",
+        "REALTIME",
+        diag.Variable.PRESSURE,
+        diag.MinimLoop.GUESS,
+        MultiDict(),
+    )
+
+    pd.testing.assert_frame_equal(
+        result,
+        pd.DataFrame(
+            {
+                "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
+                "min": [5.0, -8.0],
+                "max": [10.0, 0.0],
+                "mean": [7.5, -4.0],
+                "count": [2.0, 3.0]
+            }
+        )
+    )
