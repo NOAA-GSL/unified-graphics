@@ -346,9 +346,9 @@ def test_history(tmp_path, test_dataset, diag_parquet):
                 "min": [5.0, -8.0],
                 "max": [10.0, 0.0],
                 "mean": [7.5, -4.0],
-                "count": [2.0, 3.0]
+                "count": [2.0, 3.0],
             }
-        )
+        ),
     )
 
 
@@ -425,7 +425,7 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
                 "min": [5.0, -8.0],
                 "max": [10.0, 0.0],
                 "mean": [7.5, -4.0],
-                "count": [2.0, 3.0]
+                "count": [2.0, 3.0],
             }
-        )
+        ),
     )

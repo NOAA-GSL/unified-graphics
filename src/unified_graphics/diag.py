@@ -463,7 +463,7 @@ def history(
 ) -> pd.DataFrame:
     parquet_file = os.path.join(
         parquet_path,
-        '_'.join((model, background, system, domain, frequency)),
+        "_".join((model, background, system, domain, frequency)),
         variable.value,
     )
 
