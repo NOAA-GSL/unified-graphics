@@ -8,7 +8,7 @@ We're using a Kustomize-style layout. `base` contains the default k8s manifests,
 
 ### Start app via CLI
 
-Currently, you will need to create a `kuberenetes/overlays/dev/api/.env` file with the required AWS keys to pass in to the container. That file should look like so:
+Currently, you will need to create a `kuberenetes/overlays/dev/app/.env` file with the required AWS keys to pass in to the container. That file should look like so:
 
 ```shell
 AWS_ACCESS_KEY_ID=<aws access key value>

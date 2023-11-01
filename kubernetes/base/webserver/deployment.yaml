@@ -2,27 +2,27 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: api
+    app.kubernetes.io/name: webserver
     # app.kubernetes.io/instance:
     app.kubernetes.io/part-of: unified-graphics
-    app.kubernetes.io/component: backend
-    app: unified-graphics-api
-    tier: backend
-  name: unified-graphics-api
+    app.kubernetes.io/component: frontend
+    app: unified-graphics-webserver
+    tier: frontend
+  name: unified-graphics-webserver
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: unified-graphics-api
+      app: unified-graphics-webserver
   template:
     metadata:
       labels:
-        app: unified-graphics-api
+        app: unified-graphics-webserver
     spec:
       containers:
-        - image: unified-graphics/api
+        - image: unified-graphics/webserver
           imagePullPolicy: Always # Since we're tracking a long-lived tag, we'll want to always check for updated images
-          name: unified-graphics-api
+          name: unified-graphics-webserver
           ports:
             - containerPort: 80
               protocol: TCP

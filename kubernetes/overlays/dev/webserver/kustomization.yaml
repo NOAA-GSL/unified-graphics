@@ -1,0 +1,14 @@
+bases:
+  - ../../../base/webserver
+images:
+  - name: unified-graphics/webserver
+    newName: ghcr.io/noaa-gsl/unified-graphics/webserver
+    newTag: main
+
+patchesStrategicMerge:
+  - "deployment.yaml"
+
+configMapGenerator:
+  - name: unified-graphics-webserver-config
+    envs:
+      - dev.webserver.env

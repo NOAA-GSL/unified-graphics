@@ -11,7 +11,7 @@ spec:
         app: migrations
     spec:
       containers:
-        - image: unified-graphics/api
+        - image: unified-graphics/app
           name: migrations
           imagePullPolicy: Always
           command: ["alembic", "upgrade", "head"]

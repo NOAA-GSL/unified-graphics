@@ -1,6 +1,6 @@
 resources:
-  - api
-  - ui
+  - app
+  - webserver
   - db
   - ingress.yaml
 commonLabels:
