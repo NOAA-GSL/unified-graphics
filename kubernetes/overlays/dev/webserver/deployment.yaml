@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: unified-graphics-ui
+  name: unified-graphics-webserver
 spec:
   template:
     spec:
       containers:
-        - name: unified-graphics-ui
+        - name: unified-graphics-webserver
           envFrom:
             - configMapRef:
-                name: unified-graphics-ui-config
+                name: unified-graphics-webserver-config
           # FIXME - we should explore dissallowing privilege escalation
           securityContext:
             allowPrivilegeEscalation: true # Default behavior

@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: unified-graphics-ui
+  name: unified-graphics-webserver
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: unified-graphics-ui
+                name: unified-graphics-webserver
                 port:
                   number: 80
