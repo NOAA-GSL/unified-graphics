@@ -17,7 +17,7 @@ jobs:
         uses: bots-house/ghcr-delete-image-action@v1.1.0
         with:
           owner: noaa-gsl
-          name: unified-graphics/api
+          name: unified-graphics/app
           token: ${{ secrets.GHCR_CLEANUP_PAT }}
           tag: ${{ github.head_ref }}
       - name: Cleanup images
@@ -43,7 +43,7 @@ jobs:
       - name: Cleanup image
         run: |
           aws ecr batch-delete-image \
-            --repository-name rtma-vis/api \
+            --repository-name rtma-vis/app \
             --image-ids imageTag=${{ github.head_ref }}
       - name: Cleanup image
         run: |

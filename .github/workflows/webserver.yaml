@@ -1,4 +1,4 @@
-name: "UI Service Build"
+name: "Webserver Service Build"
 on:
   push:
     tags:
@@ -25,7 +25,7 @@ on:
       - "docker/webserver/**"
   workflow_dispatch: # Manually
 env:
-  REGISTRY: ghcr.io/noaa-gsl/unified-graphics/ui
+  REGISTRY: ghcr.io/noaa-gsl/unified-graphics/webserver
 
 jobs:
   lint:
@@ -152,5 +152,5 @@ jobs:
       - name: retag image and push
         run: |
           docker pull ${{ env.REGISTRY }}:${{ env.BRANCH }}
-          docker tag ${{ env.REGISTRY }}:${{ env.BRANCH }} ${{ secrets.AWS_REGISTRY }}/ui:${{ env.BRANCH }}
-          docker push ${{ secrets.AWS_REGISTRY }}/ui:${{ env.BRANCH }}
+          docker tag ${{ env.REGISTRY }}:${{ env.BRANCH }} ${{ secrets.AWS_REGISTRY }}/webserver:${{ env.BRANCH }}
+          docker push ${{ secrets.AWS_REGISTRY }}/webserver:${{ env.BRANCH }}
