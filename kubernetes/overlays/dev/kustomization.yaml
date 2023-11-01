@@ -1,5 +1,5 @@
 resources:
-  - api
+  - app
   - ui
   - db
   - ingress.yaml

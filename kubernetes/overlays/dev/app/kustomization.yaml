@@ -1,12 +1,12 @@
 bases:
-  - ../../../base/api
+  - ../../../base/app
 
 resources:
   - "rbac.yaml"
 
 images:
-  - name: unified-graphics/api
-    newName: ghcr.io/noaa-gsl/unified-graphics/api
+  - name: unified-graphics/app
+    newName: ghcr.io/noaa-gsl/unified-graphics/app
     newTag: main
 
 patchesStrategicMerge:
@@ -14,12 +14,12 @@ patchesStrategicMerge:
   - "job.yaml"
 
 configMapGenerator:
-  - name: unified-graphics-api-config
+  - name: unified-graphics-app-config
     envs:
-      - dev.api.env
+      - dev.app.env
 
 secretGenerator:
-  - name: unified-graphics-api-secret
+  - name: unified-graphics-app-secret
     envs:
     - .env # Should contain AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_SECRET_TOKEN, FLASK_SQLALCHEMY_DATABASE_URI
   - name: unified-graphics-migrations-secret
