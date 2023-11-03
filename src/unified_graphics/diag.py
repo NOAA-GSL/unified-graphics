@@ -349,7 +349,7 @@ def wind(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame | pd.Series:
     data = open_diagnostic(
         diag_zarr,
         model,
@@ -364,32 +364,7 @@ def wind(
 
     data = apply_filters(data, filters)
 
-    omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values
-    omf_adj_v = data["obs_minus_forecast_adjusted"].sel(component="v").values
-    omf_una_u = data["obs_minus_forecast_unadjusted"].sel(component="u").values
-    omf_una_v = data["obs_minus_forecast_unadjusted"].sel(component="v").values
-    obs_u = data["observation"].sel(component="u").values
-    obs_v = data["observation"].sel(component="v").values
-    lng = data["longitude"].values
-    lat = data["latitude"].values
-
-    return [
-        Observation(
-            "wind",
-            VariableType.VECTOR,
-            loop,
-            adjusted=Vector(
-                round(float(omf_adj_u[idx]), 5), round(float(omf_adj_v[idx]), 5)
-            ),
-            unadjusted=Vector(
-                round(float(omf_una_u[idx]), 5), round(float(omf_una_v[idx]), 5)
-            ),
-            observed=Vector(round(float(obs_u[idx]), 5), round(float(obs_v[idx]), 5)),
-            position=Coordinate(round(float(lng[idx]), 5), round(float(lat[idx]), 5)),
-        )
-        for idx in range(data.dims["nobs"])
-    ]
-
+    return data.to_dataframe()
 
 def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
     for obs in dataset:

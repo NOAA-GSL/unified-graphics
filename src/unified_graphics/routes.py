@@ -166,16 +166,25 @@ def diagnostics(
 ):
     def generate(df):
         yield "["
-        for idx, obs in enumerate(df.itertuples()):
+        for idx, (_, obs) in enumerate(df.iterrows()):
             if idx > 0:
                 yield ","
-            yield json.dumps({
-                "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
-                "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
-                "observation": obs.observation,
-                "longitude": obs.longitude,
-                "latitude": obs.latitude,
-            })
+            if "component" in obs.index.names:
+                yield json.dumps({
+                    "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted.to_dict(),
+                    "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted.to_dict(),
+                    "observation": obs.observation.to_dict(),
+                    "longitude": obs.longitude["u"],
+                    "latitude": obs.latitude["u"],
+                })
+            else:
+                yield json.dumps({
+                    "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
+                    "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
+                    "observation": obs.observation,
+                    "longitude": obs.longitude,
+                    "latitude": obs.latitude,
+                })
 
         yield "]"
 
@@ -196,6 +205,10 @@ def diagnostics(
         diag.MinimLoop(loop),
         request.args,
     )
+
+    if "component" in data.index.names:
+        data = data.unstack()
+
     return generate(data), {"Content-Type": "application/json"}
 
 
