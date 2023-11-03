@@ -226,7 +226,7 @@ def scalar(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     data = open_diagnostic(
         diag_zarr,
         model,
@@ -240,22 +240,7 @@ def scalar(
     )
     data = apply_filters(data, filters)
 
-    return [
-        Observation(
-            variable.name.lower(),
-            VariableType.SCALAR,
-            loop,
-            adjusted=float(data["obs_minus_forecast_adjusted"].values[idx]),
-            unadjusted=float(data["obs_minus_forecast_unadjusted"].values[idx]),
-            observed=float(data["observation"].values[idx]),
-            position=Coordinate(
-                float(data["longitude"].values[idx]),
-                float(data["latitude"].values[idx]),
-            ),
-        )
-        for idx in range(data.dims["nobs"])
-    ]
-
+    return data.to_dataframe()
 
 def temperature(
     diag_zarr: str,
@@ -267,7 +252,7 @@ def temperature(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,
@@ -292,7 +277,7 @@ def moisture(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,
@@ -317,7 +302,7 @@ def pressure(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,

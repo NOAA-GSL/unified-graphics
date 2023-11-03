@@ -1,3 +1,5 @@
+import json
+
 from flask import (
     Blueprint,
     current_app,
@@ -162,6 +164,21 @@ def history(model, system, domain, background, frequency, variable, loop):
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
+    def generate(df):
+        yield "["
+        for idx, obs in enumerate(df.itertuples()):
+            if idx > 0:
+                yield ","
+            yield json.dumps({
+                "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
+                "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
+                "observation": obs.observation,
+                "longitude": obs.longitude,
+                "latitude": obs.latitude,
+            })
+
+        yield "]"
+
     try:
         v = diag.Variable(variable)
     except ValueError:
@@ -179,12 +196,7 @@ def diagnostics(
         diag.MinimLoop(loop),
         request.args,
     )
-
-    response = jsonify(
-        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
-    )
-
-    return response
+    return generate(data), {"Content-Type": "application/json"}
 
 
 @bp.route(
