@@ -22,7 +22,7 @@ zarr = "^2.16.1"
 flask-sqlalchemy = "^3.1.1"
 psycopg = {version = "^3.1.12", extras = ["binary", "pool"]}
 alembic = "^1.12.1"
-pyarrow = "^13.0.0"
+pyarrow = "^14.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
