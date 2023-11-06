@@ -366,32 +366,16 @@ def wind(
 
     return data.to_dataframe()
 
-def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
-    for obs in dataset:
-        if isinstance(obs.adjusted, Vector):
-            adjusted = vector_magnitude(obs.adjusted.u, obs.adjusted.v)
-        else:
-            adjusted = abs(obs.adjusted)
 
-        if isinstance(obs.unadjusted, Vector):
-            unadjusted = vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
-        else:
-            unadjusted = abs(obs.unadjusted)
-
-        if isinstance(obs.observed, Vector):
-            observed = vector_magnitude(obs.observed.u, obs.observed.v)
-        else:
-            observed = abs(obs.observed)
-
-        yield Observation(
-            obs.variable,
-            obs.variable_type,
-            obs.loop,
-            adjusted=adjusted,
-            unadjusted=unadjusted,
-            observed=observed,
-            position=obs.position,
-        )
+def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
+    return dataset.groupby(level=0).aggregate({
+        "obs_minus_forecast_adjusted": np.linalg.norm,
+        "obs_minus_forecast_unadjusted": np.linalg.norm,
+        "observation": np.linalg.norm,
+        "longitude": "first",
+        "latitude": "first",
+        "is_used": "first",
+    })
 
 
 def get_model_run_list(
