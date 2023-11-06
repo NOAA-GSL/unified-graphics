@@ -164,27 +164,24 @@ def history(model, system, domain, background, frequency, variable, loop):
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
+    def vec_to_dict(s) -> dict:
+        c = s.copy()
+        c.index = s.index.droplevel(0)
+        return c.to_dict()
+
     def generate(df):
         yield "["
-        for idx, (_, obs) in enumerate(df.iterrows()):
+        for idx, obs in enumerate(df.itertuples()):
+            print(obs)
             if idx > 0:
                 yield ","
-            if "component" in obs.index.names:
-                yield json.dumps({
-                    "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted.to_dict(),
-                    "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted.to_dict(),
-                    "observation": obs.observation.to_dict(),
-                    "longitude": obs.longitude["u"],
-                    "latitude": obs.latitude["u"],
-                })
-            else:
-                yield json.dumps({
-                    "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
-                    "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
-                    "observation": obs.observation,
-                    "longitude": obs.longitude,
-                    "latitude": obs.latitude,
-                })
+            yield json.dumps({
+                "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
+                "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
+                "observation": obs.observation,
+                "longitude": obs.longitude,
+                "latitude": obs.latitude,
+            })
 
         yield "]"
 
@@ -207,7 +204,14 @@ def diagnostics(
     )
 
     if "component" in data.index.names:
-        data = data.unstack()
+        data = data.groupby(level=0).aggregate({
+            "obs_minus_forecast_adjusted": vec_to_dict,
+            "obs_minus_forecast_unadjusted": vec_to_dict,
+            "observation": vec_to_dict,
+            "longitude": "first",
+            "latitude": "first",
+            "is_used": "first",
+        })
 
     return generate(data), {"Content-Type": "application/json"}
 
