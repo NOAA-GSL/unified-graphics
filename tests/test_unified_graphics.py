@@ -374,9 +374,9 @@ def test_range_filter_vector(uv, client):
     # Assert
     assert response.json == [
         {
-            "adjusted": {"u": 0.0, "v": 1.0},
-            "unadjusted": {"u": 0.0, "v": 1.0},
-            "observed": {"u": 0.0, "v": 1.0},
+            "obs_minus_forecast_adjusted": {"u": 0.0, "v": 1.0},
+            "obs_minus_forecast_unadjusted": {"u": 0.0, "v": 1.0},
+            "observation": {"u": 0.0, "v": 1.0},
             "longitude": 90.0,
             "latitude": 22.0,
         },
