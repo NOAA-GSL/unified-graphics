@@ -116,7 +116,7 @@ export default class ChartHistogram extends ChartElement {
       case "src":
         fetch(newValue)
           .then((response) => response.json())
-          .then((data) => data.features.map((d) => d.properties.adjusted))
+          .then((data) => data.map((d) => d.obs_minus_forecast_adjusted))
           .then((data) => (this.data = data));
         break;
       default:
