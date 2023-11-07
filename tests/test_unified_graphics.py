@@ -115,9 +115,22 @@ def test_scalar_diag(t, client):
 
     # Assert
     assert response.json == [
-        {"obs_minus_forecast_adjusted": 1.0, "obs_minus_forecast_unadjusted": 1.0, "observation": 1.0, "longitude": 90.0, "latitude": 22.0},
-        {"obs_minus_forecast_adjusted": -1.0, "obs_minus_forecast_unadjusted": -1.0, "observation": 0.0, "longitude": 91.0, "latitude": 23.0},
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": -1.0,
+            "obs_minus_forecast_unadjusted": -1.0,
+            "observation": 0.0,
+            "longitude": 91.0,
+            "latitude": 23.0,
+        },
     ]
+
 
 def test_scalar_history(model, diag_parquet, client, test_dataset):
     # Arrange
@@ -300,8 +313,20 @@ def test_vector_magnitude(uv, client):
 
     # Assert
     assert response.json == [
-        {"obs_minus_forecast_adjusted": 1.0, "obs_minus_forecast_unadjusted": 1.0, "observation": 1.0, "longitude": 90.0, "latitude": 22.0},
-        {"obs_minus_forecast_adjusted": 1.0, "obs_minus_forecast_unadjusted": 1.0, "observation": 1.0, "longitude": 91.0, "latitude": 23.0},
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 91.0,
+            "latitude": 23.0,
+        },
     ]
 
 
@@ -318,7 +343,7 @@ def test_region_filter_scalar(t, client):
             "obs_minus_forecast_unadjusted": 1.0,
             "observation": 1.0,
             "longitude": 90.0,
-            "latitude": 22.0
+            "latitude": 22.0,
         },
     ]
 

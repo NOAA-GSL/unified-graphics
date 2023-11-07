@@ -139,7 +139,10 @@ export default class Chart2DHistogram extends ChartElement {
 
   set data(value) {
     this.#data = value.map((record) => {
-      return { u: record["obs_minus_forecast_adjusted_u"], v: record["obs_minus_forecast_adjusted_v"] };
+      return {
+        u: record["obs_minus_forecast_adjusted_u"],
+        v: record["obs_minus_forecast_adjusted_v"],
+      };
     });
 
     // FIXME: This is duplicated across all charts to ensure that they fire

@@ -149,9 +149,7 @@ export default class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(observations, (feature) =>
-      get(feature, this.fill)
-    );
+    const [lower, upper] = extent(observations, (feature) => get(feature, this.fill));
 
     const isDiverging = lower / Math.abs(lower) !== upper / Math.abs(upper);
     const largestBound = Math.max(Math.abs(lower), Math.abs(upper));

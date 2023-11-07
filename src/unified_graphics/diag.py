@@ -1,8 +1,7 @@
 import os
 from collections import namedtuple
-from dataclasses import dataclass
 from enum import Enum
-from typing import Generator, List, Union
+from typing import Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -22,58 +21,11 @@ class MinimLoop(Enum):
     ANALYSIS = "anl"
 
 
-class ValueType(Enum):
-    OBSERVATION = "observation"
-    FORECAST = "forecast"
-
-
 class Variable(Enum):
     MOISTURE = "q"
     PRESSURE = "ps"
     TEMPERATURE = "t"
     WIND = "uv"
-
-
-class VariableType(Enum):
-    SCALAR = "scalar"
-    VECTOR = "vector"
-
-
-Coordinate = namedtuple("Coordinate", "longitude latitude")
-Vector = namedtuple("Vector", "u v")
-
-
-@dataclass
-class Observation:
-    variable: str
-    variable_type: VariableType
-    loop: MinimLoop
-    adjusted: Union[float, Vector]
-    unadjusted: Union[float, Vector]
-    observed: Union[float, Vector]
-    position: Coordinate
-
-    def to_geojson(self):
-        properties = {
-            "type": self.variable_type.value,
-            "variable": self.variable,
-            "loop": self.loop.value,
-        }
-
-        if isinstance(self.adjusted, float):
-            properties["adjusted"] = self.adjusted
-            properties["unadjusted"] = self.unadjusted
-            properties["observed"] = self.observed
-        else:
-            properties["adjusted"] = self.adjusted._asdict()
-            properties["unadjusted"] = self.unadjusted._asdict()
-            properties["observed"] = self.observed._asdict()
-
-        return {
-            "type": "Feature",
-            "properties": properties,
-            "geometry": {"type": "Point", "coordinates": list(self.position)},
-        }
 
 
 ModelMetadata = namedtuple(
@@ -242,6 +194,7 @@ def scalar(
 
     return data.to_dataframe()
 
+
 def temperature(
     diag_zarr: str,
     model: str,
@@ -317,28 +270,6 @@ def pressure(
     )
 
 
-def vector_direction(u, v):
-    direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
-
-    # Anywhere the magnitude of the vector is 0
-    calm = (np.abs(u) == 0) & (np.abs(v) == 0)
-
-    # numpy.arctan2 treats 0.0 and -0.0 differently. Whenever the second
-    # argument to the function is -0.0, it return pi or -pi depending on the
-    # sign of the first argument. Whenever the second argument is 0.0, it will
-    # return 0.0 or -0.0 depending on the sign of the first argument. We
-    # normalize all calm vectors (magnitude 0) to have a direction of 0.0, per
-    # the NCAR Command Language docs.
-    # http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
-    direction[calm] = 0.0
-
-    return direction
-
-
-def vector_magnitude(u, v):
-    return np.sqrt(u**2 + v**2)
-
-
 def wind(
     diag_zarr: str,
     model: str,
@@ -368,13 +299,15 @@ def wind(
 
 
 def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
-    return dataset.groupby(level=0).aggregate({
-        "obs_minus_forecast_adjusted": np.linalg.norm,
-        "obs_minus_forecast_unadjusted": np.linalg.norm,
-        "observation": np.linalg.norm,
-        "longitude": "first",
-        "latitude": "first",
-    })
+    return dataset.groupby(level=0).aggregate(
+        {
+            "obs_minus_forecast_adjusted": np.linalg.norm,
+            "obs_minus_forecast_unadjusted": np.linalg.norm,
+            "observation": np.linalg.norm,
+            "longitude": "first",
+            "latitude": "first",
+        }
+    )
 
 
 def get_model_run_list(

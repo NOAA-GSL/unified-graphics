@@ -1,5 +1,3 @@
-import json
-
 from flask import (
     Blueprint,
     current_app,
@@ -180,13 +178,15 @@ def diagnostics(
         initialization_time,
         diag.MinimLoop(loop),
         request.args,
-    )[[
-        "obs_minus_forecast_adjusted",
-        "obs_minus_forecast_unadjusted",
-        "observation",
-        "longitude",
-        "latitude",
-    ]]
+    )[
+        [
+            "obs_minus_forecast_adjusted",
+            "obs_minus_forecast_unadjusted",
+            "observation",
+            "longitude",
+            "latitude",
+        ]
+    ]
 
     if "component" in data.index.names:
         data = data.unstack()
@@ -218,13 +218,15 @@ def magnitude(
         initialization_time,
         diag.MinimLoop(loop),
         request.args,
-    )[[
-        "obs_minus_forecast_adjusted",
-        "obs_minus_forecast_unadjusted",
-        "observation",
-        "longitude",
-        "latitude",
-    ]]
+    )[
+        [
+            "obs_minus_forecast_adjusted",
+            "obs_minus_forecast_unadjusted",
+            "observation",
+            "longitude",
+            "latitude",
+        ]
+    ]
     data = diag.magnitude(data)
 
     return data.to_json(orient="records"), {"Content-Type": "application/json"}
