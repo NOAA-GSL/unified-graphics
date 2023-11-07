@@ -264,8 +264,30 @@ def test_wind_diag(uv, client):
 
     # Assert
     assert response.json == [
-        {"obs_minus_forecast_adjusted": {"u": 0.0, "v": 1.0}, "obs_minus_forecast_unadjusted": {"u": 0.0, "v": 1.0}, "observation": {"u": 0.0, "v": 1.0}, "longitude": 90.0, "latitude": 22.0},
-        {"obs_minus_forecast_adjusted": {"u": 0.0, "v": -1.0}, "obs_minus_forecast_unadjusted": {"u": 0.0, "v": -1.0}, "observation": {"u": 1.0, "v": 0.0}, "longitude": 91.0, "latitude": 23.0},
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": -1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": -1.0,
+            "observation_u": 1.0,
+            "observation_v": 0.0,
+            "longitude_u": 91.0,
+            "longitude_v": 91.0,
+            "latitude_u": 23.0,
+            "latitude_v": 23.0,
+        },
     ]
 
 
@@ -333,11 +355,16 @@ def test_region_filter_vector(uv, client):
 
     assert response.json == [
         {
-            "obs_minus_forecast_adjusted": {"u": 0.0, "v": 1.0},
-            "obs_minus_forecast_unadjusted": {"u": 0.0, "v": 1.0},
-            "observation": {"u": 0.0, "v": 1.0},
-            "longitude": 90.0,
-            "latitude": 22.0
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
         },
     ]
 
@@ -374,11 +401,16 @@ def test_range_filter_vector(uv, client):
     # Assert
     assert response.json == [
         {
-            "obs_minus_forecast_adjusted": {"u": 0.0, "v": 1.0},
-            "obs_minus_forecast_unadjusted": {"u": 0.0, "v": 1.0},
-            "observation": {"u": 0.0, "v": 1.0},
-            "longitude": 90.0,
-            "latitude": 22.0,
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
         },
     ]
 
