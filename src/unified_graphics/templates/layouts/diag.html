@@ -41,7 +41,7 @@
     <chart-container class="padding-2 radius-md bg-white shadow-1">
       <chart-map id="observations-{{ minim_loop }}"
         src="{{ map_url[minim_loop] }}"
-        fill="properties.adjusted"></chart-map>
+        fill="obs_minus_forecast_adjusted"></chart-map>
       <color-ramp slot="legend" for="observations-{{ minim_loop }}" class="font-ui-3xs" format="s"
         >Observation &minus; Forecast</color-ramp>
     </chart-container>

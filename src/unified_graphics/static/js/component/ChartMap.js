@@ -149,7 +149,7 @@ export default class ChartMap extends ChartElement {
     if (!observations) return scaleQuantize().range(schemePurples[9]);
 
     /** @type number[] */
-    const [lower, upper] = extent(observations.features, (feature) =>
+    const [lower, upper] = extent(observations, (feature) =>
       get(feature, this.fill)
     );
 
@@ -203,7 +203,7 @@ export default class ChartMap extends ChartElement {
 
     if (!(borders || observations)) return;
 
-    this.#projection.fitSize([width, height], observations ?? borders);
+    this.#projection.fitSize([width, height], borders);
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -230,9 +230,10 @@ export default class ChartMap extends ChartElement {
     const fill = this.scale;
     const radius = 2;
 
-    observations.features.forEach((feature) => {
+    console.log(observations);
+    observations.forEach((feature) => {
       const value = get(feature, fillProp);
-      const [x, y] = this.#projection(feature.geometry.coordinates);
+      const [x, y] = this.#projection([feature.longitude, feature.latitude]);
 
       ctx.save();
       ctx.fillStyle = fill(value);
