@@ -138,11 +138,9 @@ export default class Chart2DHistogram extends ChartElement {
   }
 
   set data(value) {
-    if (Array.isArray(value)) {
-      this.#data = value;
-    } else {
-      this.#data = value.features.map((d) => d.properties.adjusted);
-    }
+    this.#data = value.map((record) => {
+      return { u: record["obs_minus_forecast_adjusted_u"], v: record["obs_minus_forecast_adjusted_v"] };
+    });
 
     // FIXME: This is duplicated across all charts to ensure that they fire
     // this event. This event is used by the ColorRamp component so that it
