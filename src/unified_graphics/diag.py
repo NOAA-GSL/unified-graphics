@@ -374,7 +374,6 @@ def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
         "observation": np.linalg.norm,
         "longitude": "first",
         "latitude": "first",
-        "is_used": "first",
     })
 
 
