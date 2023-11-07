@@ -164,27 +164,6 @@ def history(model, system, domain, background, frequency, variable, loop):
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    def vec_to_dict(s) -> dict:
-        c = s.copy()
-        c.index = s.index.droplevel(0)
-        return c.to_dict()
-
-    def generate(df):
-        yield "["
-        for idx, obs in enumerate(df.itertuples()):
-            print(obs)
-            if idx > 0:
-                yield ","
-            yield json.dumps({
-                "obs_minus_forecast_adjusted": obs.obs_minus_forecast_adjusted,
-                "obs_minus_forecast_unadjusted": obs.obs_minus_forecast_unadjusted,
-                "observation": obs.observation,
-                "longitude": obs.longitude,
-                "latitude": obs.latitude,
-            })
-
-        yield "]"
-
     try:
         v = diag.Variable(variable)
     except ValueError:
@@ -201,19 +180,19 @@ def diagnostics(
         initialization_time,
         diag.MinimLoop(loop),
         request.args,
-    )
+    )[[
+        "obs_minus_forecast_adjusted",
+        "obs_minus_forecast_unadjusted",
+        "observation",
+        "longitude",
+        "latitude",
+    ]]
 
     if "component" in data.index.names:
-        data = data.groupby(level=0).aggregate({
-            "obs_minus_forecast_adjusted": vec_to_dict,
-            "obs_minus_forecast_unadjusted": vec_to_dict,
-            "observation": vec_to_dict,
-            "longitude": "first",
-            "latitude": "first",
-            "is_used": "first",
-        })
+        data = data.unstack()
+        data.columns = ["_".join(col) for col in data.columns]
 
-    return generate(data), {"Content-Type": "application/json"}
+    return data.to_json(orient="records"), {"Content-Type": "application/json"}
 
 
 @bp.route(
