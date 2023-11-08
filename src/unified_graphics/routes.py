@@ -178,13 +178,21 @@ def diagnostics(
         initialization_time,
         diag.MinimLoop(loop),
         request.args,
-    )
+    )[
+        [
+            "obs_minus_forecast_adjusted",
+            "obs_minus_forecast_unadjusted",
+            "observation",
+            "longitude",
+            "latitude",
+        ]
+    ]
 
-    response = jsonify(
-        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
-    )
+    if "component" in data.index.names:
+        data = data.unstack()
+        data.columns = ["_".join(col) for col in data.columns]
 
-    return response
+    return data.to_json(orient="records"), {"Content-Type": "application/json"}
 
 
 @bp.route(
@@ -210,11 +218,15 @@ def magnitude(
         initialization_time,
         diag.MinimLoop(loop),
         request.args,
-    )
+    )[
+        [
+            "obs_minus_forecast_adjusted",
+            "obs_minus_forecast_unadjusted",
+            "observation",
+            "longitude",
+            "latitude",
+        ]
+    ]
     data = diag.magnitude(data)
 
-    response = jsonify(
-        {"type": "FeatureCollection", "features": [obs.to_geojson() for obs in data]}
-    )
-
-    return response
+    return data.to_json(orient="records"), {"Content-Type": "application/json"}

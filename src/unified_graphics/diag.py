@@ -1,8 +1,7 @@
 import os
 from collections import namedtuple
-from dataclasses import dataclass
 from enum import Enum
-from typing import Generator, List, Union
+from typing import Union
 from urllib.parse import urlparse
 
 import numpy as np
@@ -22,58 +21,11 @@ class MinimLoop(Enum):
     ANALYSIS = "anl"
 
 
-class ValueType(Enum):
-    OBSERVATION = "observation"
-    FORECAST = "forecast"
-
-
 class Variable(Enum):
     MOISTURE = "q"
     PRESSURE = "ps"
     TEMPERATURE = "t"
     WIND = "uv"
-
-
-class VariableType(Enum):
-    SCALAR = "scalar"
-    VECTOR = "vector"
-
-
-Coordinate = namedtuple("Coordinate", "longitude latitude")
-Vector = namedtuple("Vector", "u v")
-
-
-@dataclass
-class Observation:
-    variable: str
-    variable_type: VariableType
-    loop: MinimLoop
-    adjusted: Union[float, Vector]
-    unadjusted: Union[float, Vector]
-    observed: Union[float, Vector]
-    position: Coordinate
-
-    def to_geojson(self):
-        properties = {
-            "type": self.variable_type.value,
-            "variable": self.variable,
-            "loop": self.loop.value,
-        }
-
-        if isinstance(self.adjusted, float):
-            properties["adjusted"] = self.adjusted
-            properties["unadjusted"] = self.unadjusted
-            properties["observed"] = self.observed
-        else:
-            properties["adjusted"] = self.adjusted._asdict()
-            properties["unadjusted"] = self.unadjusted._asdict()
-            properties["observed"] = self.observed._asdict()
-
-        return {
-            "type": "Feature",
-            "properties": properties,
-            "geometry": {"type": "Point", "coordinates": list(self.position)},
-        }
 
 
 ModelMetadata = namedtuple(
@@ -226,7 +178,7 @@ def scalar(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     data = open_diagnostic(
         diag_zarr,
         model,
@@ -240,21 +192,7 @@ def scalar(
     )
     data = apply_filters(data, filters)
 
-    return [
-        Observation(
-            variable.name.lower(),
-            VariableType.SCALAR,
-            loop,
-            adjusted=float(data["obs_minus_forecast_adjusted"].values[idx]),
-            unadjusted=float(data["obs_minus_forecast_unadjusted"].values[idx]),
-            observed=float(data["observation"].values[idx]),
-            position=Coordinate(
-                float(data["longitude"].values[idx]),
-                float(data["latitude"].values[idx]),
-            ),
-        )
-        for idx in range(data.dims["nobs"])
-    ]
+    return data.to_dataframe()
 
 
 def temperature(
@@ -267,7 +205,7 @@ def temperature(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,
@@ -292,7 +230,7 @@ def moisture(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,
@@ -317,7 +255,7 @@ def pressure(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame:
     return scalar(
         diag_zarr,
         model,
@@ -332,28 +270,6 @@ def pressure(
     )
 
 
-def vector_direction(u, v):
-    direction = (90 - np.degrees(np.arctan2(-v, -u))) % 360
-
-    # Anywhere the magnitude of the vector is 0
-    calm = (np.abs(u) == 0) & (np.abs(v) == 0)
-
-    # numpy.arctan2 treats 0.0 and -0.0 differently. Whenever the second
-    # argument to the function is -0.0, it return pi or -pi depending on the
-    # sign of the first argument. Whenever the second argument is 0.0, it will
-    # return 0.0 or -0.0 depending on the sign of the first argument. We
-    # normalize all calm vectors (magnitude 0) to have a direction of 0.0, per
-    # the NCAR Command Language docs.
-    # http://ncl.ucar.edu/Document/Functions/Contributed/wind_direction.shtml
-    direction[calm] = 0.0
-
-    return direction
-
-
-def vector_magnitude(u, v):
-    return np.sqrt(u**2 + v**2)
-
-
 def wind(
     diag_zarr: str,
     model: str,
@@ -364,7 +280,7 @@ def wind(
     initialization_time: str,
     loop: MinimLoop,
     filters: MultiDict,
-) -> List[Observation]:
+) -> pd.DataFrame | pd.Series:
     data = open_diagnostic(
         diag_zarr,
         model,
@@ -379,59 +295,19 @@ def wind(
 
     data = apply_filters(data, filters)
 
-    omf_adj_u = data["obs_minus_forecast_adjusted"].sel(component="u").values
-    omf_adj_v = data["obs_minus_forecast_adjusted"].sel(component="v").values
-    omf_una_u = data["obs_minus_forecast_unadjusted"].sel(component="u").values
-    omf_una_v = data["obs_minus_forecast_unadjusted"].sel(component="v").values
-    obs_u = data["observation"].sel(component="u").values
-    obs_v = data["observation"].sel(component="v").values
-    lng = data["longitude"].values
-    lat = data["latitude"].values
-
-    return [
-        Observation(
-            "wind",
-            VariableType.VECTOR,
-            loop,
-            adjusted=Vector(
-                round(float(omf_adj_u[idx]), 5), round(float(omf_adj_v[idx]), 5)
-            ),
-            unadjusted=Vector(
-                round(float(omf_una_u[idx]), 5), round(float(omf_una_v[idx]), 5)
-            ),
-            observed=Vector(round(float(obs_u[idx]), 5), round(float(obs_v[idx]), 5)),
-            position=Coordinate(round(float(lng[idx]), 5), round(float(lat[idx]), 5)),
-        )
-        for idx in range(data.dims["nobs"])
-    ]
+    return data.to_dataframe()
 
 
-def magnitude(dataset: List[Observation]) -> Generator[Observation, None, None]:
-    for obs in dataset:
-        if isinstance(obs.adjusted, Vector):
-            adjusted = vector_magnitude(obs.adjusted.u, obs.adjusted.v)
-        else:
-            adjusted = abs(obs.adjusted)
-
-        if isinstance(obs.unadjusted, Vector):
-            unadjusted = vector_magnitude(obs.unadjusted.u, obs.unadjusted.v)
-        else:
-            unadjusted = abs(obs.unadjusted)
-
-        if isinstance(obs.observed, Vector):
-            observed = vector_magnitude(obs.observed.u, obs.observed.v)
-        else:
-            observed = abs(obs.observed)
-
-        yield Observation(
-            obs.variable,
-            obs.variable_type,
-            obs.loop,
-            adjusted=adjusted,
-            unadjusted=unadjusted,
-            observed=observed,
-            position=obs.position,
-        )
+def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
+    return dataset.groupby(level=0).aggregate(
+        {
+            "obs_minus_forecast_adjusted": np.linalg.norm,
+            "obs_minus_forecast_unadjusted": np.linalg.norm,
+            "observation": np.linalg.norm,
+            "longitude": "first",
+            "latitude": "first",
+        }
+    )
 
 
 def get_model_run_list(

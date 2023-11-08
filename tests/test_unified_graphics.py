@@ -114,35 +114,22 @@ def test_scalar_diag(t, client):
     response = client.get(f"/diag/{group}/")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": -1.0,
-                    "unadjusted": -1.0,
-                    "observed": 0.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": -1.0,
+            "obs_minus_forecast_unadjusted": -1.0,
+            "observation": 0.0,
+            "longitude": 91.0,
+            "latitude": 23.0,
+        },
+    ]
 
 
 def test_scalar_history(model, diag_parquet, client, test_dataset):
@@ -289,35 +276,32 @@ def test_wind_diag(uv, client):
     response = client.get(f"/diag/{group}/")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": "ges",
-                    "adjusted": {"u": 0.0, "v": 1.0},
-                    "unadjusted": {"u": 0.0, "v": 1.0},
-                    "observed": {"u": 0.0, "v": 1.0},
-                },
-                "geometry": {"type": "Point", "coordinates": [90, 22]},
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": "ges",
-                    "adjusted": {"u": 0.0, "v": -1.0},
-                    "unadjusted": {"u": 0.0, "v": -1.0},
-                    "observed": {"u": 1.0, "v": 0.0},
-                },
-                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": -1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": -1.0,
+            "observation_u": 1.0,
+            "observation_v": 0.0,
+            "longitude_u": 91.0,
+            "longitude_v": 91.0,
+            "latitude_u": 23.0,
+            "latitude_v": 23.0,
+        },
+    ]
 
 
 def test_vector_magnitude(uv, client):
@@ -328,35 +312,22 @@ def test_vector_magnitude(uv, client):
     response = client.get(f"/diag/{group}/magnitude/")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": "ges",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": "ges",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 91.0,
+            "latitude": 23.0,
+        },
+    ]
 
 
 def test_region_filter_scalar(t, client):
@@ -366,23 +337,15 @@ def test_region_filter_scalar(t, client):
     query = "longitude=89.9::90.5&latitude=27::22"
     response = client.get(f"{url}?{query}")
 
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": "ges",
-                    "variable": "temperature",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+    ]
 
 
 def test_range_filter_scalar(t, client):
@@ -395,23 +358,15 @@ def test_range_filter_scalar(t, client):
     response = client.get(f"{url}?{query}")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+    ]
 
 
 def test_region_filter_vector(uv, client):
@@ -423,23 +378,20 @@ def test_region_filter_vector(uv, client):
     # Act
     response = client.get(f"{url}?{query}")
 
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": uv.loop,
-                    "adjusted": {"u": 0.0, "v": 1.0},
-                    "unadjusted": {"u": 0.0, "v": 1.0},
-                    "observed": {"u": 0.0, "v": 1.0},
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
+        },
+    ]
 
 
 # BUG: This test is missing a test case
@@ -472,23 +424,20 @@ def test_range_filter_vector(uv, client):
     response = client.get(f"{url}?{query}")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "vector",
-                    "variable": "wind",
-                    "loop": uv.loop,
-                    "adjusted": {"u": 0.0, "v": 1.0},
-                    "unadjusted": {"u": 0.0, "v": 1.0},
-                    "observed": {"u": 0.0, "v": 1.0},
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted_u": 0.0,
+            "obs_minus_forecast_adjusted_v": 1.0,
+            "obs_minus_forecast_unadjusted_u": 0.0,
+            "obs_minus_forecast_unadjusted_v": 1.0,
+            "observation_u": 0.0,
+            "observation_v": 1.0,
+            "longitude_u": 90.0,
+            "longitude_v": 90.0,
+            "latitude_u": 22.0,
+            "latitude_v": 22.0,
+        },
+    ]
 
 
 def test_unused_filter(t, client):
@@ -501,23 +450,15 @@ def test_unused_filter(t, client):
     response = client.get(f"{url}?{query}")
 
     # Assert
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": 3.0,
-                    "unadjusted": 3.0,
-                    "observed": 2.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [89.0, 24.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 3.0,
+            "obs_minus_forecast_unadjusted": 3.0,
+            "observation": 2.0,
+            "longitude": 89.0,
+            "latitude": 24.0,
+        },
+    ]
 
 
 def test_all_obs_filter(t, client):
@@ -528,47 +469,29 @@ def test_all_obs_filter(t, client):
     response = client.get(f"{url}?{query}")
 
     assert response.status_code == 200
-    assert response.json == {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": 1.0,
-                    "unadjusted": 1.0,
-                    "observed": 1.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [90.0, 22.0]},
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": -1.0,
-                    "unadjusted": -1.0,
-                    "observed": 0.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [91.0, 23.0]},
-            },
-            {
-                "type": "Feature",
-                "properties": {
-                    "type": "scalar",
-                    "loop": t.loop,
-                    "variable": "temperature",
-                    "adjusted": 3.0,
-                    "unadjusted": 3.0,
-                    "observed": 2.0,
-                },
-                "geometry": {"type": "Point", "coordinates": [89.0, 24.0]},
-            },
-        ],
-    }
+    assert response.json == [
+        {
+            "obs_minus_forecast_adjusted": 1.0,
+            "obs_minus_forecast_unadjusted": 1.0,
+            "observation": 1.0,
+            "longitude": 90.0,
+            "latitude": 22.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": -1.0,
+            "obs_minus_forecast_unadjusted": -1.0,
+            "observation": 0.0,
+            "longitude": 91.0,
+            "latitude": 23.0,
+        },
+        {
+            "obs_minus_forecast_adjusted": 3.0,
+            "obs_minus_forecast_unadjusted": 3.0,
+            "observation": 2.0,
+            "longitude": 89.0,
+            "latitude": 24.0,
+        },
+    ]
 
 
 @pytest.mark.parametrize("variable", ["t", "q", "ps", "uv"])
