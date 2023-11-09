@@ -116,6 +116,7 @@ jobs:
           output: "trivy-results.sarif"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
+          limit-severities-for-sarif: true
           exit-code: "1"
         env:
           TRIVY_USERNAME: ${{ github.actor }}
