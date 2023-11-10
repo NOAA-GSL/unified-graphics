@@ -37,7 +37,8 @@ export default class ChartTimeSeries extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="data">
       <path id="range"></path>
-      <path id="mean"></path>
+      <path id="iqr"></path>
+      <path id="median"></path>
       <line id="current"></line>
     </g>
     <g class="x-axis"></g>
@@ -50,11 +51,15 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   #range {
+    fill: #f0f0f0;
+  }
+
+  #iqr {
     fill: #dfe1e2;
   }
 
   #current,
-  #mean {
+  #median {
     fill: transparent;
     stroke: #1b1b1b;
   }`;
@@ -196,9 +201,14 @@ export default class ChartTimeSeries extends ChartElement {
       .y0((d) => yScale(d.min))
       .y1((d) => yScale(d.max))
       .curve(curveBumpX);
-    const meanLine = line()
+    const interquartileRange = area()
       .x((d) => xScale(d.initialization_time))
-      .y((d) => yScale(d.mean))
+      .y0((d) => yScale(d["25%"]))
+      .y1((d) => yScale(d["75%"]))
+      .curve(curveBumpX);
+    const medianLine = line()
+      .x((d) => xScale(d.initialization_time))
+      .y((d) => yScale(d["50%"]))
       .curve(curveBumpX);
 
     this.#svg.attr("viewBox", `0 0 ${this.width} ${this.height}`);
@@ -206,7 +216,8 @@ export default class ChartTimeSeries extends ChartElement {
       .select(".data")
       .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
     this.#svg.select("#range").datum(data).attr("d", rangeArea);
-    this.#svg.select("#mean").datum(data).attr("d", meanLine);
+    this.#svg.select("#iqr").datum(data).attr("d", interquartileRange);
+    this.#svg.select("#median").datum(data).attr("d", medianLine);
 
     if (this.current) {
       this.#svg
