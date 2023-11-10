@@ -2,7 +2,6 @@ import {
   area,
   axisBottom,
   axisLeft,
-  curveBumpX,
   extent,
   format,
   line,
@@ -199,17 +198,14 @@ export default class ChartTimeSeries extends ChartElement {
     const rangeArea = area()
       .x((d) => xScale(d.initialization_time))
       .y0((d) => yScale(d.min))
-      .y1((d) => yScale(d.max))
-      .curve(curveBumpX);
+      .y1((d) => yScale(d.max));
     const interquartileRange = area()
       .x((d) => xScale(d.initialization_time))
       .y0((d) => yScale(d["25%"]))
-      .y1((d) => yScale(d["75%"]))
-      .curve(curveBumpX);
+      .y1((d) => yScale(d["75%"]));
     const medianLine = line()
       .x((d) => xScale(d.initialization_time))
-      .y((d) => yScale(d["50%"]))
-      .curve(curveBumpX);
+      .y((d) => yScale(d["50%"]));
 
     this.#svg.attr("viewBox", `0 0 ${this.width} ${this.height}`);
     this.#svg
