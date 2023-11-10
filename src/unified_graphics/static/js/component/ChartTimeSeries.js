@@ -54,7 +54,7 @@ export default class ChartTimeSeries extends ChartElement {
   }
 
   #iqr {
-    fill: #dfe1e2;
+    fill: #a9aeb1;
   }
 
   #current,
