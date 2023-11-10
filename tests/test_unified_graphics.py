@@ -170,16 +170,22 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
         {
             "initialization_time": "2022-05-16T04:00",
             "min": 5.0,
+            "25%": 6.25,
+            "50%": 7.5,
+            "75%": 8.75,
             "max": 10.0,
             "mean": 7.5,
-            "count": 2,
+            "count": 2.0,
         },
         {
             "initialization_time": "2022-05-16T07:00",
             "min": -8.0,
+            "25%": -6.0,
+            "50%": -4.0,
+            "75%": -2.0,
             "max": 0.0,
             "mean": -4.0,
-            "count": 3,
+            "count": 3.0,
         },
     ]
 
@@ -220,16 +226,22 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
         {
             "initialization_time": "2022-05-16T04:00",
             "min": 5.0,
+            "25%": 5.0,
+            "50%": 5.0,
+            "75%": 5.0,
             "max": 5.0,
             "mean": 5.0,
-            "count": 1,
+            "count": 1.0,
         },
         {
             "initialization_time": "2022-05-16T07:00",
             "min": -8.0,
+            "25%": -8.0,
+            "50%": -8.0,
+            "75%": -8.0,
             "max": -8.0,
             "mean": -8.0,
-            "count": 1,
+            "count": 1.0,
         },
     ]
 
