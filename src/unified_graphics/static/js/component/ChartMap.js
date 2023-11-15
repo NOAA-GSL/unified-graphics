@@ -228,7 +228,6 @@ export default class ChartMap extends ChartElement {
     const fill = this.scale;
     const radius = 2;
 
-    console.log(observations);
     observations.forEach((feature) => {
       const value = get(feature, fillProp);
       const [x, y] = this.#projection([feature.longitude, feature.latitude]);

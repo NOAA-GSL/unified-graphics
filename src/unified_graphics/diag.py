@@ -357,6 +357,6 @@ def history(
         .describe()
         .droplevel(0, axis=1)  # Drop a level from the columns created by the groupby
         .reset_index()
-    )
+    )[["initialization_time", "min", "25%", "50%", "75%", "max", "mean", "count"]]
 
-    return df[["initialization_time", "min", "max", "mean", "count"]]
+    return df

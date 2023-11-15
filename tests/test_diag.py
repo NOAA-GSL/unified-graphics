@@ -263,19 +263,21 @@ def test_history(tmp_path, test_dataset, diag_parquet):
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
-            "observation": [10, 20],
-            "forecast_unadjusted": [5, 10],
-            "is_used": [True, True],
-            # O - F [5, 10]
+            "observation": [10, 14, 18, 20],
+            "forecast_unadjusted": [5, 7, 10, 10],
+            "longitude": [0, 0, 0, 0],
+            "latitude": [0, 0, 0, 0],
+            "is_used": [True, True, True, True],
+            # O - F [5, 7, 8, 10]
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "observation": [1, 2, 3],
-            "forecast_unadjusted": [5, 10, 3],
-            "longitude": [0, 0, 0],
-            "latitude": [0, 0, 0],
-            "is_used": [True, True, True],
-            # O - F [-4, -8, 0]
+            "observation": [1, 2, 3, 4, 5],
+            "forecast_unadjusted": [3, 5, 6, 7, 10],
+            "longitude": [0, 0, 0, 0, 0],
+            "latitude": [0, 0, 0, 0, 0],
+            "is_used": [True, True, True, True, True],
+            # O - F [-2, -3, -3, -3, -5]
         },
     ]
 
@@ -309,10 +311,13 @@ def test_history(tmp_path, test_dataset, diag_parquet):
         pd.DataFrame(
             {
                 "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
-                "min": [5.0, -8.0],
-                "max": [10.0, 0.0],
-                "mean": [7.5, -4.0],
-                "count": [2.0, 3.0],
+                "min": [5.0, -5.0],
+                "25%": [6.5, -3.0],
+                "50%": [7.5, -3.0],
+                "75%": [8.5, -3.0],
+                "max": [10.0, -2.0],
+                "mean": [7.5, -3.2],
+                "count": [4.0, 5.0],
             }
         ),
     )
@@ -333,19 +338,21 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
     run_list = [
         {
             "initialization_time": "2022-05-16T04:00",
-            "observation": [10, 20],
-            "forecast_unadjusted": [5, 10],
-            "is_used": [True, True],
-            # O - F [5, 10]
+            "observation": [10, 14, 18, 20],
+            "forecast_unadjusted": [5, 7, 10, 10],
+            "longitude": [0, 0, 0, 0],
+            "latitude": [0, 0, 0, 0],
+            "is_used": [True, True, True, True],
+            # O - F [5, 7, 8, 10]
         },
         {
             "initialization_time": "2022-05-16T07:00",
-            "observation": [1, 2, 3],
-            "forecast_unadjusted": [5, 10, 3],
-            "longitude": [0, 0, 0],
-            "latitude": [0, 0, 0],
-            "is_used": [True, True, True],
-            # O - F [-4, -8, 0]
+            "observation": [1, 2, 3, 4, 5],
+            "forecast_unadjusted": [3, 5, 6, 7, 10],
+            "longitude": [0, 0, 0, 0, 0],
+            "latitude": [0, 0, 0, 0, 0],
+            "is_used": [True, True, True, True, True],
+            # O - F [-2, -3, -3, -3, -5]
         },
     ]
 
@@ -388,10 +395,13 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
         pd.DataFrame(
             {
                 "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
-                "min": [5.0, -8.0],
-                "max": [10.0, 0.0],
-                "mean": [7.5, -4.0],
-                "count": [2.0, 3.0],
+                "min": [5.0, -5.0],
+                "25%": [6.5, -3.0],
+                "50%": [7.5, -3.0],
+                "75%": [8.5, -3.0],
+                "max": [10.0, -2.0],
+                "mean": [7.5, -3.2],
+                "count": [4.0, 5.0],
             }
         ),
     )
