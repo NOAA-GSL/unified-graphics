@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from functools import partial
 
 import numpy as np
@@ -303,6 +304,7 @@ def test_history(tmp_path, test_dataset, diag_parquet):
         "REALTIME",
         diag.Variable.PRESSURE,
         diag.MinimLoop.GUESS,
+        datetime.fromisoformat(run_list[1]["initialization_time"]),
         MultiDict(),
     )
 
@@ -387,6 +389,7 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
         "REALTIME",
         diag.Variable.PRESSURE,
         diag.MinimLoop.GUESS,
+        datetime.fromisoformat(run_list[0]["initialization_time"]),
         MultiDict(),
     )
 
@@ -394,14 +397,14 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
         result,
         pd.DataFrame(
             {
-                "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
-                "min": [5.0, -5.0],
-                "25%": [6.5, -3.0],
-                "50%": [7.5, -3.0],
-                "75%": [8.5, -3.0],
-                "max": [10.0, -2.0],
-                "mean": [7.5, -3.2],
-                "count": [4.0, 5.0],
+                "initialization_time": ["2022-05-16T04:00"],
+                "min": [5.0],
+                "25%": [6.5],
+                "50%": [7.5],
+                "75%": [8.5],
+                "max": [10.0],
+                "mean": [7.5],
+                "count": [4.0],
             }
         ),
     )
