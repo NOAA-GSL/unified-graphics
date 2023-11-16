@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from functools import partial
 
 import numpy as np
@@ -262,7 +263,7 @@ class TestGetBounds:
 def test_history(tmp_path, test_dataset, diag_parquet):
     run_list = [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T04:00"),
             "observation": [10, 14, 18, 20],
             "forecast_unadjusted": [5, 7, 10, 10],
             "longitude": [0, 0, 0, 0],
@@ -271,7 +272,7 @@ def test_history(tmp_path, test_dataset, diag_parquet):
             # O - F [5, 7, 8, 10]
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T07:00"),
             "observation": [1, 2, 3, 4, 5],
             "forecast_unadjusted": [3, 5, 6, 7, 10],
             "longitude": [0, 0, 0, 0, 0],
@@ -303,6 +304,7 @@ def test_history(tmp_path, test_dataset, diag_parquet):
         "REALTIME",
         diag.Variable.PRESSURE,
         diag.MinimLoop.GUESS,
+        run_list[1]["initialization_time"],
         MultiDict(),
     )
 
@@ -310,7 +312,9 @@ def test_history(tmp_path, test_dataset, diag_parquet):
         result,
         pd.DataFrame(
             {
-                "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
+                "initialization_time": np.array(
+                    [r["initialization_time"] for r in run_list], dtype="datetime64[us]"
+                ),
                 "min": [5.0, -5.0],
                 "25%": [6.5, -3.0],
                 "50%": [7.5, -3.0],
@@ -337,7 +341,7 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
 
     run_list = [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T04:00"),
             "observation": [10, 14, 18, 20],
             "forecast_unadjusted": [5, 7, 10, 10],
             "longitude": [0, 0, 0, 0],
@@ -346,7 +350,7 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
             # O - F [5, 7, 8, 10]
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T07:00"),
             "observation": [1, 2, 3, 4, 5],
             "forecast_unadjusted": [3, 5, 6, 7, 10],
             "longitude": [0, 0, 0, 0, 0],
@@ -387,6 +391,7 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
         "REALTIME",
         diag.Variable.PRESSURE,
         diag.MinimLoop.GUESS,
+        run_list[0]["initialization_time"],
         MultiDict(),
     )
 
@@ -394,14 +399,16 @@ def test_history_s3(aws_credentials, moto_server, s3_client, test_dataset, monke
         result,
         pd.DataFrame(
             {
-                "initialization_time": ["2022-05-16T04:00", "2022-05-16T07:00"],
-                "min": [5.0, -5.0],
-                "25%": [6.5, -3.0],
-                "50%": [7.5, -3.0],
-                "75%": [8.5, -3.0],
-                "max": [10.0, -2.0],
-                "mean": [7.5, -3.2],
-                "count": [4.0, 5.0],
+                "initialization_time": np.array(
+                    ["2022-05-16T04:00"], dtype="datetime64[us]"
+                ),
+                "min": [5.0],
+                "25%": [6.5],
+                "50%": [7.5],
+                "75%": [8.5],
+                "max": [10.0],
+                "mean": [7.5],
+                "count": [4.0],
             }
         ),
     )

@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Union
 from urllib.parse import urlparse
@@ -334,6 +335,7 @@ def history(
     frequency: str,
     variable: Variable,
     loop: MinimLoop,
+    initialization_time: datetime,
     filters: MultiDict,
 ) -> pd.DataFrame:
     parquet_file = os.path.join(
@@ -342,10 +344,16 @@ def history(
         variable.value,
     )
 
+    start = initialization_time - timedelta(weeks=2)
     df = pd.read_parquet(
         parquet_file,
         columns=["initialization_time", "obs_minus_forecast_unadjusted"],
-        filters=(("loop", "=", loop.value), ("is_used", "=", True)),
+        filters=(
+            ("loop", "=", loop.value),
+            ("is_used", "=", True),
+            ("initialization_time", ">=", start),
+            ("initialization_time", "<=", initialization_time),
+        ),
     )
 
     if df.empty:

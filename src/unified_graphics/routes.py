@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import (
     Blueprint,
     current_app,
@@ -138,6 +140,8 @@ def serviceworker():
 
 @bp.route("/diag/<model>/<system>/<domain>/<background>/<frequency>/<variable>/<loop>/")
 def history(model, system, domain, background, frequency, variable, loop):
+    args = request.args.copy()
+    initialization_time = datetime.fromisoformat(args.pop("initialization_time"))
     data = diag.history(
         current_app.config["DIAG_PARQUET"],
         model,
@@ -147,7 +151,8 @@ def history(model, system, domain, background, frequency, variable, loop):
         frequency,
         diag.Variable(variable),
         diag.MinimLoop(loop),
-        request.args,
+        initialization_time,
+        args,
     )
 
     return data.to_json(orient="records", date_format="iso"), {
