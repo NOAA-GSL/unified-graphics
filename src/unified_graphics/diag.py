@@ -344,7 +344,7 @@ def history(
         variable.value,
     )
 
-    start = initialization_time - timedelta(weeks=2)
+    start = initialization_time - timedelta(days=2)
     df = pd.read_parquet(
         parquet_file,
         columns=["initialization_time", "obs_minus_forecast_unadjusted"],
