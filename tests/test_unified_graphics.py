@@ -164,7 +164,10 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T04:00")
+    response = client.get(
+        "/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/"
+        "?initialization_time=2022-05-16T04:00"
+    )
 
     # Assert
     assert response.json == [
@@ -210,7 +213,10 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T07:00")
+    response = client.get(
+        "/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/"
+        "?initialization_time=2022-05-16T07:00"
+    )
 
     # Assert
     assert response.json == [
@@ -260,7 +266,10 @@ def test_scalar_history_empty(model, diag_parquet, test_dataset, client):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T07:00")
+    response = client.get(
+        "/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/"
+        "?initialization_time=2022-05-16T07:00"
+    )
 
     # Assert
     assert response.json == []
