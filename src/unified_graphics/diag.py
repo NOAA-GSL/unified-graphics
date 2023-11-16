@@ -351,8 +351,8 @@ def history(
         filters=(
             ("loop", "=", loop.value),
             ("is_used", "=", True),
-            ("initialization_time", ">=", start.isoformat()),
-            ("initialization_time", "<=", initialization_time.isoformat()),
+            ("initialization_time", ">=", start),
+            ("initialization_time", "<=", initialization_time),
         ),
     )
 

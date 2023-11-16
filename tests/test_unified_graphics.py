@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 import pytest  # noqa: F401
@@ -136,14 +137,14 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
     # Arrange
     run_list = [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T04:00"),
             "observation": [10, 20],
             "forecast_unadjusted": [5, 10],
             "is_used": [True, True],
             # O - F [5, 10]
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T07:00"),
             "observation": [1, 2, 3],
             "forecast_unadjusted": [5, 10, 3],
             "longitude": [0, 0, 0],
@@ -168,7 +169,7 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
     # Assert
     assert response.json == [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": "2022-05-16T04:00:00.000",
             "min": 5.0,
             "25%": 6.25,
             "50%": 7.5,
@@ -184,14 +185,14 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
     # Arrange
     run_list = [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T04:00"),
             "observation": [10, 20],
             "forecast_unadjusted": [5, 10],
             "is_used": [True, False],
             # O - F [5, 10]
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T07:00"),
             "observation": [1, 2],
             "forecast_unadjusted": [5, 10],
             "is_used": [False, True],
@@ -214,7 +215,7 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
     # Assert
     assert response.json == [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": "2022-05-16T04:00:00.000",
             "min": 5.0,
             "25%": 5.0,
             "50%": 5.0,
@@ -224,7 +225,7 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
             "count": 1.0,
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": "2022-05-16T07:00:00.000",
             "min": -8.0,
             "25%": -8.0,
             "50%": -8.0,
@@ -240,11 +241,11 @@ def test_scalar_history_empty(model, diag_parquet, test_dataset, client):
     # Arrange
     run_list = [
         {
-            "initialization_time": "2022-05-16T04:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T04:00"),
             "is_used": [False, False],
         },
         {
-            "initialization_time": "2022-05-16T07:00",
+            "initialization_time": datetime.fromisoformat("2022-05-16T07:00"),
             "is_used": [False, False],
         },
     ]
