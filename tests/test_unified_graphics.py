@@ -163,7 +163,7 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T04:00")
 
     # Assert
     assert response.json == [
@@ -176,16 +176,6 @@ def test_scalar_history(model, diag_parquet, client, test_dataset):
             "max": 10.0,
             "mean": 7.5,
             "count": 2.0,
-        },
-        {
-            "initialization_time": "2022-05-16T07:00",
-            "min": -8.0,
-            "25%": -6.0,
-            "50%": -4.0,
-            "75%": -2.0,
-            "max": 0.0,
-            "mean": -4.0,
-            "count": 3.0,
         },
     ]
 
@@ -219,7 +209,7 @@ def test_scalar_history_unused(model, diag_parquet, client, test_dataset):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T07:00")
 
     # Assert
     assert response.json == [
@@ -269,7 +259,7 @@ def test_scalar_history_empty(model, diag_parquet, test_dataset, client):
         diag_parquet(data)
 
     # Act
-    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/")
+    response = client.get("/diag/3DRTMA/WCOSS/CONUS/HRRR/REALTIME/ps/ges/?initialization_time=2022-05-16T07:00")
 
     # Assert
     assert response.json == []
