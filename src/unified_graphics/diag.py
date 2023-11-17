@@ -108,6 +108,15 @@ def diag_observations(
 ) -> pd.DataFrame | pd.Series:
     model_config = "_".join((model, background, system, domain, frequency))
 
+    is_used = filters.pop("is_used", True)
+    parquet_filters = [
+        ("loop", "=", loop),
+        ("initialization_time", "=", init_time),
+    ]
+
+    if isinstance(is_used, bool):
+        parquet_filters.append(("is_used", "=", is_used))
+
     df = pd.read_parquet(
         "/".join((uri, model_config, variable)),
         columns=[
@@ -118,10 +127,7 @@ def diag_observations(
             "longitude",
             "is_used",
         ],
-        filters=(
-            ("loop", "=", loop),
-            ("initialization_time", "=", init_time),
-        ),
+        filters=parquet_filters,
     )
 
     # To apply the filters, we need the vector components in the columns, not
@@ -148,11 +154,6 @@ def diag_observations(
 
         # Apply the mask
         df = df[mask]
-
-    # Default to only used observations in the data, unless is_used is
-    # specified in the filters
-    if "is_used" not in filters:
-        df = df[df["is_used"] == 1]
 
     return df
 

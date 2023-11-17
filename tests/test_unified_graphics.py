@@ -65,7 +65,7 @@ def t(model, tmp_path, test_dataset):
         forecast_unadjusted=[0, 1, -1],
         longitude=[90, 91, 89],
         latitude=[22, 23, 24],
-        is_used=[1, 1, 0],
+        is_used=[True, True, False],
     )
 
     save(tmp_path, ds)
@@ -84,7 +84,7 @@ def uv(model, tmp_path, test_dataset):
         forecast_unadjusted=[[0, 0], [1, 1]],
         longitude=[90, 91],
         latitude=[22, 23],
-        is_used=[1, 1],
+        is_used=[True, True],
         component=["u", "v"],
     )
 
