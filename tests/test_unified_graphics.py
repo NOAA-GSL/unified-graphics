@@ -5,6 +5,7 @@ import pytest  # noqa: F401
 import xarray as xr
 
 from unified_graphics import create_app
+from unified_graphics.etl.diag import prep_dataframe
 
 
 def get_group(ds: xr.Dataset) -> str:
@@ -23,8 +24,16 @@ def get_group(ds: xr.Dataset) -> str:
 
 
 def save(store: Path, data: xr.Dataset):
-    data.to_zarr(store, group=get_group(data), consolidated=False)
-
+    # FIXME: We should really use etl.diag.save here instead of trying to copy
+    # the saving logic.
+    parquet_file = (
+        store
+        / "_".join((data.model, data.background, data.system, data.domain, data.frequency))
+        / data.name
+    )
+    prep_dataframe(data).to_parquet(
+        parquet_file, engine="pyarrow", index=True, partition_cols=["loop"]
+    )
 
 @pytest.fixture(scope="module")
 def model():
@@ -43,7 +52,7 @@ def diag_zarr_path(tmp_path):
 
 
 @pytest.fixture
-def t(model, diag_zarr_path, test_dataset):
+def t(model, tmp_path, test_dataset):
     ds = test_dataset(
         **model,
         initialization_time="2022-05-16T04:00",
@@ -56,13 +65,13 @@ def t(model, diag_zarr_path, test_dataset):
         is_used=[1, 1, 0],
     )
 
-    save(diag_zarr_path, ds)
+    save(tmp_path, ds)
 
     return ds
 
 
 @pytest.fixture
-def uv(model, diag_zarr_path, test_dataset):
+def uv(model, tmp_path, test_dataset):
     ds = test_dataset(
         **model,
         variable="uv",
@@ -76,7 +85,7 @@ def uv(model, diag_zarr_path, test_dataset):
         component=["u", "v"],
     )
 
-    save(diag_zarr_path, ds)
+    save(tmp_path, ds)
 
     return ds
 
