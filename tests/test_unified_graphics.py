@@ -522,7 +522,7 @@ def test_diag_not_found(variable, client):
     )
 
     assert response.status_code == 404
-    assert response.json == {"msg": "Diagnostic file group not found"}
+    assert response.json == {"msg": "Diagnostic file not found"}
 
 
 @pytest.mark.parametrize(
