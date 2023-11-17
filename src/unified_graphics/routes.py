@@ -10,12 +10,34 @@ from flask import (
     stream_template,
     url_for,
 )
+from werkzeug.datastructures import MultiDict
 from zarr.errors import FSPathExistNotDir, GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import db
 
 bp = Blueprint("api", __name__)
+
+
+def parse_filters(query: MultiDict) -> dict:
+    def parse_value(value):
+        if "::" in value:
+            return [parse_value(tok) for tok in value.split("::")]
+
+        if value in ["true", "false"]:
+            return value == "true"
+
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    filters = {}
+    for col, value_list in query.lists():
+        val = [parse_value(val) for val in value_list]
+        filters[col] = val if len(val) > 1 else val[0]
+
+    return filters
 
 
 @bp.errorhandler(GroupNotFoundError)
@@ -167,22 +189,19 @@ def history(model, system, domain, background, frequency, variable, loop):
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    try:
-        v = diag.Variable(variable)
-    except ValueError:
-        return jsonify(msg=f"Variable not found: '{variable}'"), 404
+    filters = parse_filters(request.args)
 
-    variable_diagnostics = getattr(diag, v.name.lower())
-    data = variable_diagnostics(
-        current_app.config["DIAG_ZARR"],
+    data = diag.diag_observations(
         model,
         system,
         domain,
         background,
         frequency,
-        initialization_time,
-        diag.MinimLoop(loop),
-        request.args,
+        variable,
+        datetime.fromisoformat(initialization_time),
+        loop,
+        current_app.config["DIAG_PARQUET"],
+        filters,
     )[
         [
             "obs_minus_forecast_adjusted",
@@ -207,22 +226,19 @@ def diagnostics(
 def magnitude(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    try:
-        v = diag.Variable(variable)
-    except ValueError:
-        return jsonify(msg=f"Variable not found: '{variable}'"), 404
+    filters = parse_filters(request.args)
 
-    variable_diagnostics = getattr(diag, v.name.lower())
-    data = variable_diagnostics(
-        current_app.config["DIAG_ZARR"],
+    data = diag.diag_observations(
         model,
         system,
         domain,
         background,
         frequency,
-        initialization_time,
-        diag.MinimLoop(loop),
-        request.args,
+        variable,
+        datetime.fromisoformat(initialization_time),
+        loop,
+        current_app.config["DIAG_PARQUET"],
+        filters,
     )[
         [
             "obs_minus_forecast_adjusted",

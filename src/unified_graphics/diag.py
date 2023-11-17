@@ -2,17 +2,11 @@ import os
 from collections import namedtuple
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Union
-from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
-import xarray as xr
-import zarr  # type: ignore
-from s3fs import S3FileSystem, S3Map  # type: ignore
 from werkzeug.datastructures import MultiDict
-from xarray.core.dataset import Dataset
 
 from .models import Analysis, WeatherModel
 
@@ -88,217 +82,6 @@ def get_model_metadata(session) -> ModelMetadata:
     )
 
 
-def get_store(url: str) -> Union[str, S3Map]:
-    result = urlparse(url)
-    if result.scheme in ["", "file"]:
-        return result.path
-
-    if result.scheme != "s3":
-        raise ValueError(f"Unsupported protocol '{result.scheme}' for URI: '{url}'")
-
-    region = os.environ.get("AWS_REGION", "us-east-1")
-    s3 = S3FileSystem(
-        key=os.environ.get("AWS_ACCESS_KEY_ID"),
-        secret=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-        token=os.environ.get("AWS_SESSION_TOKEN"),
-        client_kwargs={"region_name": region},
-    )
-
-    return S3Map(root=f"{result.netloc}{result.path}", s3=s3, check=False)
-
-
-def open_diagnostic(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    variable: Variable,
-    initialization_time: str,
-    loop: MinimLoop,
-) -> xr.Dataset:
-    store = get_store(diag_zarr)
-    group = (
-        f"/{model}/{system}/{domain}/{background}/{frequency}"
-        f"/{variable.value}/{initialization_time}/{loop.value}"
-    )
-    return xr.open_zarr(store, group=group, consolidated=False)
-
-
-def parse_filter_value(value):
-    if value == "true":
-        return 1
-
-    if value == "false":
-        return 0
-
-    try:
-        return float(value)
-    except ValueError:
-        return value
-
-
-# TODO: Refactor to a class
-# I think this might belong in a different module. It could be a class or set of classes
-# that represent different filters that can be added together into a filtering pipeline
-def get_bounds(filters: MultiDict):
-    for coord, value in filters.items():
-        extent = np.array(
-            [
-                [parse_filter_value(digit) for digit in pair.split(",")]
-                for pair in value.split("::")
-            ]
-        )
-        yield coord, extent.min(axis=0), extent.max(axis=0)
-
-
-def apply_filters(dataset: xr.Dataset, filters: MultiDict) -> Dataset:
-    for coord, lower, upper in get_bounds(filters):
-        data_array = dataset[coord]
-        dataset = dataset.where((data_array >= lower) & (data_array <= upper)).dropna(
-            dim="nobs"
-        )
-
-    # If the is_used filter is not passed, our default behavior is to include only used
-    # observations.
-    if "is_used" not in filters:
-        dataset = dataset.where(dataset["is_used"]).dropna(dim="nobs")
-
-    return dataset
-
-
-def scalar(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    variable: Variable,
-    initialization_time: str,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> pd.DataFrame:
-    data = open_diagnostic(
-        diag_zarr,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        variable,
-        initialization_time,
-        loop,
-    )
-    data = apply_filters(data, filters)
-
-    return data.to_dataframe()
-
-
-def temperature(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    initialization_time: str,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> pd.DataFrame:
-    return scalar(
-        diag_zarr,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        Variable.TEMPERATURE,
-        initialization_time,
-        loop,
-        filters,
-    )
-
-
-def moisture(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    initialization_time: str,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> pd.DataFrame:
-    return scalar(
-        diag_zarr,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        Variable.MOISTURE,
-        initialization_time,
-        loop,
-        filters,
-    )
-
-
-def pressure(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    initialization_time: str,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> pd.DataFrame:
-    return scalar(
-        diag_zarr,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        Variable.PRESSURE,
-        initialization_time,
-        loop,
-        filters,
-    )
-
-
-def wind(
-    diag_zarr: str,
-    model: str,
-    system: str,
-    domain: str,
-    background: str,
-    frequency: str,
-    initialization_time: str,
-    loop: MinimLoop,
-    filters: MultiDict,
-) -> pd.DataFrame | pd.Series:
-    data = open_diagnostic(
-        diag_zarr,
-        model,
-        system,
-        domain,
-        background,
-        frequency,
-        Variable.WIND,
-        initialization_time,
-        loop,
-    )
-
-    data = apply_filters(data, filters)
-
-    return data.to_dataframe()
-
-
 def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
     return dataset.groupby(level=0).aggregate(
         {
@@ -311,19 +94,63 @@ def magnitude(dataset: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def get_model_run_list(
-    diag_zarr: str,
+def diag_observations(
     model: str,
     system: str,
     domain: str,
     background: str,
     frequency: str,
-    variable: Variable,
-):
-    store = get_store(diag_zarr)
-    path = "/".join([model, system, domain, background, frequency, variable.value])
-    with zarr.open_group(store, mode="r", path=path) as group:
-        return group.group_keys()
+    variable: str,
+    init_time: datetime,
+    loop: str,
+    uri: str,
+    filters: dict = {},
+) -> pd.DataFrame:
+    def matches(df: pd.DataFrame, filters: dict) -> bool:
+        result = True
+
+        for col_name, filter_value in filters.items():
+            arr = np.array(filter_value)
+            result &= (df[col_name] >= arr.min(axis=0)).all()
+            result &= (df[col_name] <= arr.max(axis=0)).all()
+
+        if "is_used" not in filters:
+            result &= df["is_used"].any()
+
+        return result
+
+    model_config = "_".join((model, background, system, domain, frequency))
+
+    df = pd.read_parquet(
+        "/".join((uri, model_config, variable)),
+        columns=[
+            "obs_minus_forecast_adjusted",
+            "obs_minus_forecast_unadjusted",
+            "observation",
+            "latitude",
+            "longitude",
+            "is_used",
+        ],
+        filters=(
+            ("loop", "=", loop),
+            ("initialization_time", "=", init_time),
+        ),
+    )
+
+    # Group the rows of the DataFrame by nobs (effectively the observation ID) and test
+    # each group against our filters. This is necessary because we use a MultiIndex for
+    # vectors where the second level of the index is the vector component. If we don't
+    # group the components like this, we run the risk that one component matches the
+    # filters and the other doesn't, leaving us with a partial observation.
+    matching_obs = [obs for _, obs in df.groupby("nobs") if matches(obs, filters)]
+
+    # If no observations match the filters, return an empty DataFrame by masking out all
+    # the values in the DataFrame using a list of repeated False values
+    if len(matching_obs) < 1:
+        return df[[False] * len(df)]
+
+    # Otherwise concatenate the matching DataFrames back into a single DataFrame
+    return pd.concat(matching_obs)
 
 
 def history(
