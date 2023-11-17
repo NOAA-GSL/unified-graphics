@@ -105,20 +105,7 @@ def diag_observations(
     loop: str,
     uri: str,
     filters: dict = {},
-) -> pd.DataFrame:
-    def matches(df: pd.DataFrame, filters: dict) -> bool:
-        result = True
-
-        for col_name, filter_value in filters.items():
-            arr = np.array(filter_value)
-            result &= (df[col_name] >= arr.min(axis=0)).all()
-            result &= (df[col_name] <= arr.max(axis=0)).all()
-
-        if "is_used" not in filters:
-            result &= df["is_used"].any()
-
-        return result
-
+) -> pd.DataFrame | pd.Series:
     model_config = "_".join((model, background, system, domain, frequency))
 
     df = pd.read_parquet(
@@ -137,20 +124,37 @@ def diag_observations(
         ),
     )
 
-    # Group the rows of the DataFrame by nobs (effectively the observation ID) and test
-    # each group against our filters. This is necessary because we use a MultiIndex for
-    # vectors where the second level of the index is the vector component. If we don't
-    # group the components like this, we run the risk that one component matches the
-    # filters and the other doesn't, leaving us with a partial observation.
-    matching_obs = [obs for _, obs in df.groupby("nobs") if matches(obs, filters)]
+    # To apply the filters, we need the vector components in the columns, not
+    # the rows.
+    # FIXME: We should consider changing how we store the vector data so we
+    # don't have to unstack it every time.
+    if "component" in df.index.names:
+        df = df.unstack()  # type: ignore
 
-    # If no observations match the filters, return an empty DataFrame by masking out all
-    # the values in the DataFrame using a list of repeated False values
-    if len(matching_obs) < 1:
-        return df[[False] * len(df)]
+    # Iterate over each filter and apply it
+    for col_name, filter_value in filters.items():
+        arr = np.array(filter_value)
 
-    # Otherwise concatenate the matching DataFrames back into a single DataFrame
-    return pd.concat(matching_obs)
+        # Boolean mask for the rows in the data that are within the range
+        # specified by the filter
+        mask = (df[col_name] >= arr.min(axis=0)) & (df[col_name] <= arr.max(axis=0))
+
+        # In the event of a vector variable, we will have a DataFrame mask
+        # instead of a Series, which we need to flatten to a series which
+        # evaluates to True only when every column in the frame is True. If any
+        # column is False, this row should be excluded from the data
+        if len(mask.shape) > 1:
+            mask = mask.all(axis="columns")
+
+        # Apply the mask
+        df = df[mask]
+
+    # Default to only used observations in the data, unless is_used is
+    # specified in the filters
+    if "is_used" not in filters:
+        df = df[df["is_used"] == 1]
+
+    return df
 
 
 def history(

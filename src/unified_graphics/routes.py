@@ -212,8 +212,7 @@ def diagnostics(
         ]
     ]
 
-    if "component" in data.index.names:
-        data = data.unstack()
+    if "component" in data.columns.names:
         data.columns = ["_".join(col) for col in data.columns]
 
     return data.to_json(orient="records"), {"Content-Type": "application/json"}
@@ -248,6 +247,6 @@ def magnitude(
             "latitude",
         ]
     ]
-    data = diag.magnitude(data)
+    data = diag.magnitude(data.stack())
 
     return data.to_json(orient="records"), {"Content-Type": "application/json"}
