@@ -135,7 +135,10 @@ def diag_observations(
     # FIXME: We should consider changing how we store the vector data so we
     # don't have to unstack it every time.
     if "component" in df.index.names:
-        df = df.unstack()  # type: ignore
+        # FIXME: Specifically unstack the component level of the index because
+        # I'm seeing some data where the index is (component, nobs) instead of
+        # (nobs, component)
+        df = df.unstack("component")  # type: ignore
 
     # Iterate over each filter and apply it
     for col_name, filter_value in filters.items():
