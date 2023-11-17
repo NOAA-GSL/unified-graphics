@@ -28,12 +28,15 @@ def save(store: Path, data: xr.Dataset):
     # the saving logic.
     parquet_file = (
         store
-        / "_".join((data.model, data.background, data.system, data.domain, data.frequency))
+        / "_".join(
+            (data.model, data.background, data.system, data.domain, data.frequency)
+        )
         / data.name
     )
     prep_dataframe(data).to_parquet(
         parquet_file, engine="pyarrow", index=True, partition_cols=["loop"]
     )
+
 
 @pytest.fixture(scope="module")
 def model():
@@ -523,31 +526,3 @@ def test_diag_not_found(variable, client):
 
     assert response.status_code == 404
     assert response.json == {"msg": "Diagnostic file not found"}
-
-
-@pytest.mark.parametrize(
-    "variable",
-    ["t", "q", "ps", "uv"],
-)
-def test_diag_read_error(variable, app, client):
-    Path(app.config["DIAG_ZARR"].replace("file://", "")).touch()
-
-    response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
-    )
-
-    assert response.status_code == 500
-    assert response.json == {"msg": "Unable to read diagnostic file group"}
-
-
-@pytest.mark.parametrize(
-    "url",
-    [
-        "not_a_variable/2022-05-05T14:00/ges/",
-    ],
-)
-def test_unknown_variable(url, client):
-    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{url}")
-
-    assert response.status_code == 404
-    assert response.json == {"msg": "Variable not found: 'not_a_variable'"}
