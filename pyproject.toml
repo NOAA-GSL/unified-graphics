@@ -11,16 +11,16 @@ authors = [
 python = "~3.10"
 Flask = "^3.0.0"
 netCDF4 = "^1.6.5"
-xarray = "^2023.10.1"
+xarray = "^2023.11.0"
 h5netcdf = "^1.3.0"
-scipy = "^1.11.3"
+scipy = "^1.11.4"
 # Use permissive versions to resolve dependency hell with boto3 & aiobotocore
 aiobotocore = {version = "*", extras = ["boto3"]}
 fsspec = "*"
 s3fs = "*"
 zarr = "^2.16.1"
 flask-sqlalchemy = "^3.1.1"
-psycopg = {version = "^3.1.12", extras = ["binary", "pool"]}
+psycopg = {version = "^3.1.13", extras = ["binary", "pool"]}
 alembic = "^1.12.1"
 pyarrow = "^14.0.1"
 
