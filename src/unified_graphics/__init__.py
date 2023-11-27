@@ -35,6 +35,17 @@ def create_app(config: Optional[Mapping[str, Any]] = None):
     app.config.from_prefixed_env()
     app.config.from_mapping(config)
 
+    if app.debug and app.config.get("PROFILE", "False") == "True":
+        from werkzeug.middleware.profiler import ProfilerMiddleware
+
+        app.wsgi_app = ProfilerMiddleware(  # type: ignore
+            app.wsgi_app,
+            restrictions=[30],
+            stream=None,  # Disable stdout
+            profile_dir="tmp/profiler",
+            filename_format="{method}-{path}-{time:.0f}-{elapsed:.0f}ms.prof",
+        )
+
     models.db.init_app(app)
 
     app.register_blueprint(routes.bp)
