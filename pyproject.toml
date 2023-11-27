@@ -33,7 +33,7 @@ coverage = "^7.3.2"
 isort = "^5.10.1"
 python-dotenv = "^1.0.0"
 pandas-stubs = "^2.1.1.230928"
-moto = {extras = ["server"], version = "^4.2.8"}
+moto = {extras = ["server"], version = "^4.2.10"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
