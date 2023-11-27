@@ -39,6 +39,7 @@ def parse_filters(query: MultiDict) -> dict:
     >>> parse_filters(query)
     ... {"obs_minus_forecast_adjusted": [[0.0, 0.3], [-1.0, 1.0]], "is_used": True}
     """
+
     def parse_value(value):
         """Parse the string value from the query string into a usable filter value"""
 
