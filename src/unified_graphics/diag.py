@@ -118,7 +118,7 @@ def diag_observations(
         parquet_filters.append(("is_used", "=", is_used))
 
     df = pd.read_parquet(
-        os.path.join((uri, model_config, variable)),
+        os.path.join(uri, model_config, variable),
         columns=[
             "obs_minus_forecast_adjusted",
             "obs_minus_forecast_unadjusted",
