@@ -10,12 +10,71 @@ from flask import (
     stream_template,
     url_for,
 )
+from werkzeug.datastructures import MultiDict
 from zarr.errors import FSPathExistNotDir, GroupNotFoundError  # type: ignore
 
 from unified_graphics import diag
 from unified_graphics.models import db
 
 bp = Blueprint("api", __name__)
+
+
+def parse_filters(query: MultiDict) -> dict:
+    """Return a dictionary defining filters for diagnostic data
+
+    You can pass a MultiDict (which is typically provided by Werkzeug/Flask to
+    represent the query string in a request) to this function to convert it
+    into a regular dictionary that defines a set of filters to limit
+    observations in diagnostic data. It will convert strings of "true" or
+    "false" to their boolean equivalents, and it treats two values separated by
+    a "::" as a range that is converted to a list. Order is preserved in the
+    ranges, so there is no guarantee that the first item in the list is the
+    lower bound.
+
+    >>> query = MultiDict([
+    ... ("obs_minus_forecast_adjusted", "0::0.3"),
+    ... ("obs_minus_forecast_adjusted", "-1::1"),
+    ... ("is_used", "true"),
+    ... ])
+    >>> parse_filters(query)
+    ... {"obs_minus_forecast_adjusted": [[0.0, 0.3], [-1.0, 1.0]], "is_used": True}
+    """
+
+    def parse_value(value):
+        """Parse the string value from the query string into a usable filter value"""
+
+        # If this value defines a range, split it into multiple values and
+        # parse each one individually.
+        if "::" in value:
+            return [parse_value(tok) for tok in value.split("::")]
+
+        # If this is a true/false value, convert it to a boolean. We use "true"
+        # and "false" instead of the Pythonic "True" or "False" because these
+        # values are probably coming from a browser, the lower case forms are
+        # correct for JavaScript/JSON.
+        if value in ["true", "false"]:
+            return value == "true"
+
+        # If the value is neither a range nor a boolean, we will assume it's a
+        # number. If the conversion to a float fails, this is an invalid value.
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+    filters = {}
+    for col, value_list in query.lists():
+        # Query strings can have the same key repeated multiple times - e.g.
+        # ?longitude=12&longitude=13 - so the MultiDict gives us a list of
+        # values for each key in the query string, which we iterate through and
+        # parse
+        val = [parse_value(val) for val in value_list]
+
+        # If there was only one value for this key, we extract it from the list
+        # as a single value, otherwise we keep the list of parsed values as-is
+        filters[col] = val if len(val) > 1 else val[0]
+
+    return filters
 
 
 @bp.errorhandler(GroupNotFoundError)
@@ -167,22 +226,19 @@ def history(model, system, domain, background, frequency, variable, loop):
 def diagnostics(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    try:
-        v = diag.Variable(variable)
-    except ValueError:
-        return jsonify(msg=f"Variable not found: '{variable}'"), 404
+    filters = parse_filters(request.args)
 
-    variable_diagnostics = getattr(diag, v.name.lower())
-    data = variable_diagnostics(
-        current_app.config["DIAG_ZARR"],
+    data = diag.diag_observations(
         model,
         system,
         domain,
         background,
         frequency,
-        initialization_time,
-        diag.MinimLoop(loop),
-        request.args,
+        variable,
+        datetime.fromisoformat(initialization_time),
+        loop,
+        current_app.config["DIAG_PARQUET"],
+        filters,
     )[
         [
             "obs_minus_forecast_adjusted",
@@ -193,8 +249,7 @@ def diagnostics(
         ]
     ]
 
-    if "component" in data.index.names:
-        data = data.unstack()
+    if "component" in data.columns.names:
         data.columns = ["_".join(col) for col in data.columns]
 
     return data.to_json(orient="records"), {"Content-Type": "application/json"}
@@ -207,22 +262,19 @@ def diagnostics(
 def magnitude(
     model, system, domain, background, frequency, variable, initialization_time, loop
 ):
-    try:
-        v = diag.Variable(variable)
-    except ValueError:
-        return jsonify(msg=f"Variable not found: '{variable}'"), 404
+    filters = parse_filters(request.args)
 
-    variable_diagnostics = getattr(diag, v.name.lower())
-    data = variable_diagnostics(
-        current_app.config["DIAG_ZARR"],
+    data = diag.diag_observations(
         model,
         system,
         domain,
         background,
         frequency,
-        initialization_time,
-        diag.MinimLoop(loop),
-        request.args,
+        variable,
+        datetime.fromisoformat(initialization_time),
+        loop,
+        current_app.config["DIAG_PARQUET"],
+        filters,
     )[
         [
             "obs_minus_forecast_adjusted",
@@ -232,6 +284,6 @@ def magnitude(
             "latitude",
         ]
     ]
-    data = diag.magnitude(data)
+    data = diag.magnitude(data.stack())
 
     return data.to_json(orient="records"), {"Content-Type": "application/json"}

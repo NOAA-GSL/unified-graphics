@@ -5,6 +5,7 @@ import pytest  # noqa: F401
 import xarray as xr
 
 from unified_graphics import create_app
+from unified_graphics.etl.diag import prep_dataframe
 
 
 def get_group(ds: xr.Dataset) -> str:
@@ -23,7 +24,18 @@ def get_group(ds: xr.Dataset) -> str:
 
 
 def save(store: Path, data: xr.Dataset):
-    data.to_zarr(store, group=get_group(data), consolidated=False)
+    # FIXME: We should really use etl.diag.save here instead of trying to copy
+    # the saving logic.
+    parquet_file = (
+        store
+        / "_".join(
+            (data.model, data.background, data.system, data.domain, data.frequency)
+        )
+        / data.name
+    )
+    prep_dataframe(data).to_parquet(
+        parquet_file, engine="pyarrow", index=True, partition_cols=["loop"]
+    )
 
 
 @pytest.fixture(scope="module")
@@ -43,7 +55,7 @@ def diag_zarr_path(tmp_path):
 
 
 @pytest.fixture
-def t(model, diag_zarr_path, test_dataset):
+def t(model, tmp_path, test_dataset):
     ds = test_dataset(
         **model,
         initialization_time="2022-05-16T04:00",
@@ -53,16 +65,16 @@ def t(model, diag_zarr_path, test_dataset):
         forecast_unadjusted=[0, 1, -1],
         longitude=[90, 91, 89],
         latitude=[22, 23, 24],
-        is_used=[1, 1, 0],
+        is_used=[True, True, False],
     )
 
-    save(diag_zarr_path, ds)
+    save(tmp_path, ds)
 
     return ds
 
 
 @pytest.fixture
-def uv(model, diag_zarr_path, test_dataset):
+def uv(model, tmp_path, test_dataset):
     ds = test_dataset(
         **model,
         variable="uv",
@@ -72,11 +84,11 @@ def uv(model, diag_zarr_path, test_dataset):
         forecast_unadjusted=[[0, 0], [1, 1]],
         longitude=[90, 91],
         latitude=[22, 23],
-        is_used=[1, 1],
+        is_used=[True, True],
         component=["u", "v"],
     )
 
-    save(diag_zarr_path, ds)
+    save(tmp_path, ds)
 
     return ds
 
@@ -513,32 +525,4 @@ def test_diag_not_found(variable, client):
     )
 
     assert response.status_code == 404
-    assert response.json == {"msg": "Diagnostic file group not found"}
-
-
-@pytest.mark.parametrize(
-    "variable",
-    ["t", "q", "ps", "uv"],
-)
-def test_diag_read_error(variable, app, client):
-    Path(app.config["DIAG_ZARR"].replace("file://", "")).touch()
-
-    response = client.get(
-        f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{variable}/2022-05-05T14:00/ges/"
-    )
-
-    assert response.status_code == 500
-    assert response.json == {"msg": "Unable to read diagnostic file group"}
-
-
-@pytest.mark.parametrize(
-    "url",
-    [
-        "not_a_variable/2022-05-05T14:00/ges/",
-    ],
-)
-def test_unknown_variable(url, client):
-    response = client.get(f"/diag/RTMA/WCOSS/CONUS/HRRR/REALTIME/{url}")
-
-    assert response.status_code == 404
-    assert response.json == {"msg": "Variable not found: 'not_a_variable'"}
+    assert response.json == {"msg": "Diagnostic file not found"}

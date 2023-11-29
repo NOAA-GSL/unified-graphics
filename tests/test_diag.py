@@ -1,21 +1,15 @@
-import uuid
 from datetime import datetime
 from functools import partial
 
 import numpy as np
 import pandas as pd
 import pytest
-import xarray as xr
 from botocore.session import Session
 from moto.server import ThreadedMotoServer
-from s3fs import S3FileSystem, S3Map
 from werkzeug.datastructures import MultiDict
 
 from unified_graphics import diag
 from unified_graphics.models import Analysis, WeatherModel
-
-# Global resources for s3
-test_bucket_name = "osti-modeling-dev-rtma-vis"
 
 
 @pytest.fixture
@@ -48,11 +42,6 @@ def s3_client(aws_credentials, moto_server):
     return session.create_client("s3", endpoint_url=moto_server)
 
 
-@pytest.fixture
-def test_key_prefix():
-    return f"/test/{uuid.uuid4()}/"
-
-
 def test_get_model_metadata(session):
     model_run_list = [
         ("RTMA", "WCOSS", "CONUS", "REALTIME", "HRRR", "2023-03-17T14:00"),
@@ -83,181 +72,6 @@ def test_get_model_metadata(session):
         init_time_list=["2023-03-17T14:00", "2023-03-17T15:00"],
         variable_list=variable_list,
     )
-
-
-@pytest.mark.parametrize(
-    "uri,expected",
-    [
-        ("file:///tmp/diag.zarr", "/tmp/diag.zarr"),
-        ("/tmp/diag.zarr", "/tmp/diag.zarr"),
-    ],
-)
-def test_get_store_file(uri, expected):
-    result = diag.get_store(uri)
-
-    assert result == expected
-
-
-def test_get_store_s3(moto_server, s3_client, monkeypatch):
-    client = {"region_name": "us-east-1"}
-    uri = "s3://bucket/prefix/diag.zarr"
-    s3_client.create_bucket(Bucket="bucket")
-    s3_client.put_object(Bucket="bucket", Body=b"Test object", Key="prefix/diag.zarr")
-
-    monkeypatch.setattr(
-        diag,
-        "S3FileSystem",
-        partial(diag.S3FileSystem, endpoint_url=moto_server),
-    )
-
-    result = diag.get_store(uri)
-
-    assert result == S3Map(
-        root=uri,
-        s3=S3FileSystem(
-            client_kwargs=client,
-            endpoint_url=moto_server,
-        ),
-        check=False,
-    )
-
-
-def test_open_diagnostic(tmp_path, test_dataset):
-    diag_zarr_file = str(tmp_path / "test_diag.zarr")
-    expected = test_dataset()
-    group = "/".join(
-        (
-            expected.model,
-            expected.system,
-            expected.domain,
-            expected.background,
-            expected.frequency,
-            expected.name,
-            expected.initialization_time,
-            expected.loop,
-        )
-    )
-
-    expected.to_zarr(diag_zarr_file, group=group, consolidated=False)
-
-    result = diag.open_diagnostic(
-        diag_zarr_file,
-        expected.model,
-        expected.system,
-        expected.domain,
-        expected.background,
-        expected.frequency,
-        diag.Variable(expected.name),
-        expected.initialization_time,
-        diag.MinimLoop(expected.loop),
-    )
-
-    xr.testing.assert_equal(result, expected)
-
-
-@pytest.mark.parametrize(
-    "uri,expected",
-    [
-        (
-            "foo://an/unknown/uri.zarr",
-            "Unsupported protocol 'foo' for URI: 'foo://an/unknown/uri.zarr'",
-        ),
-        (
-            "ftp://an/unsupported/uri.zarr",
-            "Unsupported protocol 'ftp' for URI: 'ftp://an/unsupported/uri.zarr'",
-        ),
-    ],
-)
-def test_open_diagnostic_unknown_uri(uri, expected):
-    model = "RTMA"
-    system = "WCOSS"
-    domain = "CONUS"
-    background = "HRRR"
-    frequency = "REALTIME"
-    init_time = "2022-05-16T04:00"
-
-    with pytest.raises(ValueError, match=expected):
-        diag.open_diagnostic(
-            uri,
-            model,
-            system,
-            domain,
-            background,
-            frequency,
-            init_time,
-            diag.Variable.WIND,
-            diag.MinimLoop.GUESS,
-        )
-
-
-@pytest.mark.usefixtures("aws_credentials")
-def test_open_diagnostic_s3(moto_server, test_dataset, monkeypatch):
-    store = "s3://test_open_diagnostic_s3/test_diag.zarr"
-    expected = test_dataset()
-    group = "/".join(
-        (
-            expected.model,
-            expected.system,
-            expected.domain,
-            expected.background,
-            expected.frequency,
-            expected.name,
-            expected.initialization_time,
-            expected.loop,
-        )
-    )
-
-    monkeypatch.setattr(
-        diag,
-        "S3FileSystem",
-        partial(diag.S3FileSystem, endpoint_url=moto_server),
-    )
-
-    expected.to_zarr(
-        store,
-        group=group,
-        consolidated=False,
-        storage_options={"endpoint_url": moto_server},
-    )
-
-    result = diag.open_diagnostic(
-        store,
-        expected.model,
-        expected.system,
-        expected.domain,
-        expected.background,
-        expected.frequency,
-        diag.Variable(expected.name),
-        expected.initialization_time,
-        diag.MinimLoop(expected.loop),
-    )
-
-    xr.testing.assert_equal(result, expected)
-
-
-@pytest.mark.parametrize(
-    "mapping,expected",
-    [
-        ([("a", "1")], [("a", np.array([1.0]), np.array([1.0]))]),
-        ([("a", "1::2")], [("a", np.array([1.0]), np.array([2.0]))]),
-        ([("a", "2,4::3,1")], [("a", np.array([2.0, 1.0]), np.array([3.0, 4.0]))]),
-    ],
-    scope="class",
-)
-class TestGetBounds:
-    @pytest.fixture(scope="class")
-    def result(self, mapping):
-        filters = MultiDict(mapping)
-        return list(diag.get_bounds(filters))
-
-    def test_coord(self, result, expected):
-        assert result[0][0] == expected[0][0]
-
-    def test_lower_bounds(self, result, expected):
-        assert (result[0][1] == expected[0][1]).all()
-
-    def test_upper_bounds(self, result, expected):
-        assert (result[0][2] == expected[0][2]).all()
 
 
 def test_history(tmp_path, test_dataset, diag_parquet):
