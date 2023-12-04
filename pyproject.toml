@@ -20,8 +20,8 @@ fsspec = "*"
 s3fs = "*"
 zarr = "^2.16.1"
 flask-sqlalchemy = "^3.1.1"
-psycopg = {version = "^3.1.13", extras = ["binary", "pool"]}
-alembic = "^1.12.1"
+psycopg = {version = "^3.1.14", extras = ["binary", "pool"]}
+alembic = "^1.13.0"
 pyarrow = "^14.0.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -33,7 +33,7 @@ coverage = "^7.3.2"
 isort = "^5.10.1"
 python-dotenv = "^1.0.0"
 pandas-stubs = "^2.1.1.230928"
-moto = {extras = ["server"], version = "^4.2.10"}
+moto = {extras = ["server"], version = "^4.2.11"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
