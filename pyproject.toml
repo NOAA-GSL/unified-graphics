@@ -11,7 +11,7 @@ authors = [
 python = "~3.10"
 Flask = "^3.0.0"
 netCDF4 = "^1.6.5"
-xarray = "^2023.11.0"
+xarray = "^2023.12.0"
 h5netcdf = "^1.3.0"
 scipy = "^1.11.4"
 # Use permissive versions to resolve dependency hell with boto3 & aiobotocore
@@ -30,7 +30,7 @@ mypy = "^1.7"
 black = "^23.11.0"
 flake8 = "^6.1.0"
 coverage = "^7.3.2"
-isort = "^5.10.1"
+isort = "^5.13.0"
 python-dotenv = "^1.0.0"
 pandas-stubs = "^2.1.1.230928"
 moto = {extras = ["server"], version = "^4.2.11"}
