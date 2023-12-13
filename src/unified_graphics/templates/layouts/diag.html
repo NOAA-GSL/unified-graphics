@@ -31,9 +31,8 @@
 
         <chart-container class="padding-2 radius-md bg-white shadow-1">
           <span class="axis-y title" slot="title-y">Observation &minus; Forecast</span>
-          <chart-timeseries id="history-{{ minim_loop }}" src="{{ history_url[minim_loop] }}?initialization_time={{ form.get("initialization_time") }}"
-
-            current="{{ form.get("initialization_time") }}"></chart-timeseries>
+          <chart-ombhistory id="history-{{ minim_loop }}" src="{{ history_url[minim_loop] }}?initialization_time={{ form.get("initialization_time") }}"
+            current="{{ form.get("initialization_time") }}"></chart-ombhistory>
           <span class="axis-x title" slot="title-x">Initialization Time</span>
         </chart-container>
       </div>
