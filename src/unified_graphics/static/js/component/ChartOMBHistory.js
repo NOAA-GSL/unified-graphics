@@ -32,7 +32,7 @@ import ChartElement from "./ChartElement.js";
  *   in an HTML attribute called `src`
  * @property {number[]} data Values visualizaed by the time series.
  */
-export default class ChartTimeSeries extends ChartElement {
+export default class ChartOMBHistory extends ChartElement {
   static #TEMPLATE = `<svg>
     <g class="data">
       <path id="range"></path>
@@ -76,8 +76,8 @@ export default class ChartTimeSeries extends ChartElement {
     super();
 
     const root = this.attachShadow({ mode: "open" });
-    root.innerHTML = `<style>${ChartTimeSeries.#STYLE}</style>
-      ${ChartTimeSeries.#TEMPLATE}`;
+    root.innerHTML = `<style>${ChartOMBHistory.#STYLE}</style>
+      ${ChartOMBHistory.#TEMPLATE}`;
     this.#svg = select(root.querySelector("svg"));
   }
 
@@ -243,4 +243,4 @@ export default class ChartTimeSeries extends ChartElement {
   }
 }
 
-customElements.define("chart-timeseries", ChartTimeSeries);
+customElements.define("chart-ombhistory", ChartOMBHistory);
