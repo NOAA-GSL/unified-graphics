@@ -201,7 +201,26 @@ export default class ChartMap extends ChartElement {
 
     if (!(borders || observations)) return;
 
-    this.#projection.fitSize([width, height], borders);
+    if (observations) {
+      // Build a GeoJSON object to provide D3's fitSize method so that we can always
+      // zoom the map to the available data.
+      const points = {
+        type: "FeatureCollection",
+        features: observations.map((obs) => {
+          return {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [obs.longitude, obs.latitude],
+            },
+          };
+        }),
+      };
+
+      this.#projection.fitSize([width, height], points);
+    } else {
+      this.#projection.fitSize([width, height], borders);
+    }
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
