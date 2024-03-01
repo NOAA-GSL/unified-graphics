@@ -109,7 +109,7 @@ jobs:
       - name: Extract branch/tag name
         run: python3 ./.github/scripts/extract_git_ref.py # Provides env.BRANCH
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@0.17.0
+        uses: aquasecurity/trivy-action@0.18.0
         with:
           image-ref: "${{ env.REGISTRY }}:${{ env.BRANCH }}"
           format: "sarif"
