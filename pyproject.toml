@@ -10,30 +10,30 @@ authors = [
 [tool.poetry.dependencies]
 python = "~3.10"
 Flask = "^3.0.3"
-netCDF4 = "^1.6.5"
-xarray = "^2024.3.0"
+netCDF4 = "^1.7.1"
+xarray = "^2024.6.0"
 h5netcdf = "^1.3.0"
-scipy = "^1.13.0"
+scipy = "^1.14.0"
 # Use permissive versions to resolve dependency hell with boto3 & aiobotocore
 aiobotocore = {version = "*", extras = ["boto3"]}
 fsspec = "*"
 s3fs = "*"
-zarr = "^2.17.2"
+zarr = "^2.18.2"
 flask-sqlalchemy = "^3.1.1"
-psycopg = {version = "^3.1.18", extras = ["binary", "pool"]}
-alembic = "^1.13.1"
-pyarrow = "^14.0.2"
+psycopg = {version = "^3.2.1", extras = ["binary", "pool"]}
+alembic = "^1.13.2"
+pyarrow = "^16.1.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4"
-mypy = "^1.9"
+pytest = "^8.2"
+mypy = "^1.10"
 black = "^24.3.0"
-flake8 = "^7.0.0"
-coverage = "^7.4.4"
+flake8 = "^7.1.0"
+coverage = "^7.5.4"
 isort = "^5.13.2"
 python-dotenv = "^1.0.1"
-pandas-stubs = "^2.2.1.240316"
-moto = {extras = ["server"], version = "^5.0.4"}
+pandas-stubs = "^2.2.2.240603"
+moto = {extras = ["server"], version = "^5.0.10"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
