@@ -1,0 +1,16 @@
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR/REALTIME
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR/REALTIME/ps
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR/REALTIME/q
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR/REALTIME/t
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/HRRR/REALTIME/uv
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/ps
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/q
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/t
+osti-modeling-dev-rtma-vis-prod/diagnostics.zarr/RTMA/WCOSS/CONUS/RRFS/REALTIME/uv
