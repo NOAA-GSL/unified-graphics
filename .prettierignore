@@ -1,6 +1,9 @@
 tmp/
 .github/
 
+# Ignore the data_samples
+data_samples/
+
 # FIXME: Maybe we should lint/format the k8s files?
 kubernetes/
 

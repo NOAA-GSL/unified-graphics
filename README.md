@@ -1,6 +1,8 @@
 # Unified Graphics
 
-An experimental visualization system for 3D-RTMA &amp; RRFS model output.
+An experimental visualization system for 3D-RTMA & RRFS model output. This project ended Sept 2024.
+
+An example of the input data and internal application data can be found in the `data_samples` directory.
 
 ## Get in Touch
 
